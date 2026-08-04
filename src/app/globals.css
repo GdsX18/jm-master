@@ -19,16 +19,16 @@
   }
 }
 
-/* Orbes de Iluminação Ambiente Flutuantes (Ambient Lighting style Stripe/Vercel) */
+/* Orbes de Iluminação Ambiente Flutuantes Otimizadas (Zero Custo de GPU Filter) */
 .ambient-orb-laranja {
   position: absolute;
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(230, 79, 20, 0.18) 0%, rgba(230, 79, 20, 0) 70%);
-  filter: blur(140px);
+  background: radial-gradient(circle, rgba(230, 79, 20, 0.12) 0%, rgba(230, 79, 20, 0) 70%);
   pointer-events: none;
   z-index: 0;
+  will-change: opacity;
 }
 
 .ambient-orb-azul {
@@ -36,25 +36,25 @@
   width: 700px;
   height: 700px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(8, 43, 97, 0.16) 0%, rgba(8, 43, 97, 0) 70%);
-  filter: blur(160px);
+  background: radial-gradient(circle, rgba(8, 43, 97, 0.12) 0%, rgba(8, 43, 97, 0) 70%);
   pointer-events: none;
   z-index: 0;
+  will-change: opacity;
 }
 
-/* Glassmorphism Ultra Premium */
+/* Glassmorphism Alta Performance */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 20px 50px rgba(8, 43, 97, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .glass-panel-dark {
-  background: rgba(8, 43, 97, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(8, 43, 97, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 25px 60px rgba(5, 28, 66, 0.4);
 }
@@ -81,31 +81,33 @@
 
 /* Carrossel Infinito Marquee Keyframes */
 @keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
+  0% { transform: translate3d(0%, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
 }
 
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 25s linear infinite;
+  will-change: transform;
+  animation: marquee 30s linear infinite;
 }
 
-/* Floating animation */
+/* Floating animation suave de baixa carga */
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(1deg); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
 }
 
 .animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.08); }
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.75; }
 }
 
 .animate-pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
+  animation: pulse-glow 5s ease-in-out infinite;
 }

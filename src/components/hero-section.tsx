@@ -35,9 +35,8 @@ export const HeroSection: React.FC = () => {
                     x: { duration: 0.6 },
                     y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
                   }}
-                  className="group relative w-56 p-4 rounded-2xl bg-white/40 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_rgba(8,43,97,0.08)] hover:shadow-[0_20px_40px_rgba(8,43,97,0.16)] hover:bg-white/65 transition-all duration-300 -rotate-3 hover:rotate-0"
+                  className="group relative w-56 p-4 rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-[0_12px_32px_rgba(8,43,97,0.08)] hover:shadow-[0_20px_40px_rgba(8,43,97,0.16)] transition-all duration-300 -rotate-3 hover:rotate-0"
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#082B61]/10 to-[#E64F14]/10 rounded-2xl blur-lg opacity-40 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center space-x-3 text-left">
                     <div className="p-2.5 rounded-xl bg-[#082B61]/10 text-[#082B61] shrink-0 group-hover:scale-110 transition-transform">
                       <MessageCircle className="w-5 h-5" />
@@ -58,9 +57,8 @@ export const HeroSection: React.FC = () => {
                     x: { duration: 0.6, delay: 0.2 },
                     y: { duration: 5.2, repeat: Infinity, ease: "easeInOut", delay: 0.5 },
                   }}
-                  className="group relative w-56 p-4 rounded-2xl bg-white/40 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_rgba(230,79,20,0.08)] hover:shadow-[0_20px_40px_rgba(230,79,20,0.16)] hover:bg-white/65 transition-all duration-300 translate-x-4 rotate-2 hover:rotate-0"
+                  className="group relative w-56 p-4 rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-[0_12px_32px_rgba(230,79,20,0.08)] hover:shadow-[0_20px_40px_rgba(230,79,20,0.16)] transition-all duration-300 translate-x-4 rotate-2 hover:rotate-0"
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#E64F14]/10 to-[#082B61]/10 rounded-2xl blur-lg opacity-40 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center space-x-3 text-left">
                     <div className="p-2.5 rounded-xl bg-[#E64F14]/10 text-[#E64F14] shrink-0 group-hover:scale-110 transition-transform">
                       <Zap className="w-5 h-5" />
@@ -86,9 +84,8 @@ export const HeroSection: React.FC = () => {
                     x: { duration: 0.6, delay: 0.1 },
                     y: { duration: 4.8, repeat: Infinity, ease: "easeInOut", delay: 0.3 },
                   }}
-                  className="group relative w-56 p-4 rounded-2xl bg-white/40 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_rgba(8,43,97,0.08)] hover:shadow-[0_20px_40px_rgba(8,43,97,0.16)] hover:bg-white/65 transition-all duration-300 rotate-3 hover:rotate-0"
+                  className="group relative w-56 p-4 rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-[0_12px_32px_rgba(8,43,97,0.08)] hover:shadow-[0_20px_40px_rgba(8,43,97,0.16)] transition-all duration-300 rotate-3 hover:rotate-0"
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#082B61]/10 to-[#E64F14]/10 rounded-2xl blur-lg opacity-40 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center space-x-3 text-left">
                     <div className="p-2.5 rounded-xl bg-[#082B61]/10 text-[#082B61] shrink-0 group-hover:scale-110 transition-transform">
                       <TrendingUp className="w-5 h-5" />
@@ -109,9 +106,8 @@ export const HeroSection: React.FC = () => {
                     x: { duration: 0.6, delay: 0.3 },
                     y: { duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 },
                   }}
-                  className="group relative w-56 p-4 rounded-2xl bg-white/40 backdrop-blur-2xl border border-white/80 shadow-[0_12px_32px_rgba(230,79,20,0.08)] hover:shadow-[0_20px_40px_rgba(230,79,20,0.16)] hover:bg-white/65 transition-all duration-300 -translate-x-4 -rotate-2 hover:rotate-0"
+                  className="group relative w-56 p-4 rounded-2xl bg-white/85 backdrop-blur-md border border-white/90 shadow-[0_12px_32px_rgba(230,79,20,0.08)] hover:shadow-[0_20px_40px_rgba(230,79,20,0.16)] transition-all duration-300 -translate-x-4 -rotate-2 hover:rotate-0"
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#E64F14]/10 to-[#082B61]/10 rounded-2xl blur-lg opacity-40 group-hover:opacity-100 transition-opacity" />
                   <div className="relative flex items-center space-x-3 text-left">
                     <div className="p-2.5 rounded-xl bg-[#E64F14]/10 text-[#E64F14] shrink-0 group-hover:scale-110 transition-transform">
                       <ShieldCheck className="w-5 h-5" />

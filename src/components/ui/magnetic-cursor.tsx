@@ -28,33 +28,39 @@ export const MagneticCursor: React.FC = () => {
     };
     checkTouch();
 
+    let rafId: number | null = null;
+
     const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
+      if (rafId) cancelAnimationFrame(rafId);
 
-      if (!isVisible) setIsVisible(true);
+      rafId = requestAnimationFrame(() => {
+        mouseX.set(e.clientX);
+        mouseY.set(e.clientY);
 
-      // Mapeamento automático de interatividade magnética para botões e links
-      const target = e.target as HTMLElement | null;
-      if (target) {
-        const isInteractive =
-          target.closest("a, button, [data-magnetic], input, textarea, select, .magnetic-target") !== null;
-        setIsHovered(isInteractive);
-      }
+        setIsVisible(true);
+
+        const target = e.target as HTMLElement | null;
+        if (target) {
+          const isInteractive =
+            target.closest("a, button, [data-magnetic], input, textarea, select, .magnetic-target") !== null;
+          setIsHovered((prev) => (prev !== isInteractive ? isInteractive : prev));
+        }
+      });
     };
 
     const handleMouseLeave = () => {
       setIsVisible(false);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [mouseX, mouseY, isVisible]);
+  }, [mouseX, mouseY]);
 
   // Desativa a renderização durante SSR/Hydration inicial e em aparelhos touch
   if (!mounted || isTouchDevice) return null;
