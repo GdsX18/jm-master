@@ -27,8 +27,8 @@ export const HeroBentoVisualizer: React.FC = () => {
 
   return (
     <div className="relative w-full">
-      {/* Decorative Glow behind the visualizer */}
-      <div className="absolute -inset-4 bg-gradient-to-tr from-[#E64F14]/20 via-[#082B61]/20 to-[#E64F14]/10 rounded-[40px] blur-2xl -z-10" />
+      {/* Decorative Glow behind the visualizer Otimizado */}
+      <div className="absolute -inset-4 bg-[radial-gradient(ellipse_at_center,_rgba(230,79,20,0.12)_0%,_rgba(8,43,97,0.15)_60%,_transparent_100%)] rounded-[40px] pointer-events-none -z-10" />
 
       {/* Main Bento Container */}
       <div className="glass-panel rounded-3xl p-5 sm:p-6 md:p-8 border border-white/90 shadow-2xl space-y-5">

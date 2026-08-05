@@ -42,21 +42,21 @@
   will-change: opacity;
 }
 
-/* Glassmorphism Alta Performance */
+/* Glassmorphism Alta Performance com Baixo Custo GPU */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 50px rgba(8, 43, 97, 0.06), 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(8, 43, 97, 0.05), 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .glass-panel-dark {
-  background: rgba(8, 43, 97, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(8, 43, 97, 0.95);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 25px 60px rgba(5, 28, 66, 0.4);
+  box-shadow: 0 15px 40px rgba(5, 28, 66, 0.3);
 }
 
 /* Shimmer Border Gradient Effect */

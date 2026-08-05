@@ -29,6 +29,7 @@ export const MagneticCursor: React.FC = () => {
     checkTouch();
 
     let rafId: number | null = null;
+    let lastCheck = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (rafId) cancelAnimationFrame(rafId);
@@ -37,13 +38,17 @@ export const MagneticCursor: React.FC = () => {
         mouseX.set(e.clientX);
         mouseY.set(e.clientY);
 
-        setIsVisible(true);
+        if (!isVisible) setIsVisible(true);
 
-        const target = e.target as HTMLElement | null;
-        if (target) {
-          const isInteractive =
-            target.closest("a, button, [data-magnetic], input, textarea, select, .magnetic-target") !== null;
-          setIsHovered((prev) => (prev !== isInteractive ? isInteractive : prev));
+        const now = Date.now();
+        if (now - lastCheck > 100) {
+          lastCheck = now;
+          const target = e.target as HTMLElement | null;
+          if (target) {
+            const isInteractive =
+              target.closest("a, button, [data-magnetic], input, textarea, select, .magnetic-target") !== null;
+            setIsHovered((prev) => (prev !== isInteractive ? isInteractive : prev));
+          }
         }
       });
     };
@@ -60,7 +65,7 @@ export const MagneticCursor: React.FC = () => {
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [mouseX, mouseY]);
+  }, [mouseX, mouseY, isVisible]);
 
   // Desativa a renderização durante SSR/Hydration inicial e em aparelhos touch
   if (!mounted || isTouchDevice) return null;
@@ -74,12 +79,14 @@ export const MagneticCursor: React.FC = () => {
         translateY: "-50%",
       }}
       animate={{
-        scale: isHovered ? 1.3 : 1,
+        scale: isHovered ? 1.4 : 1,
         opacity: isVisible ? 1 : 0,
       }}
-      transition={{ type: "spring", damping: 25, stiffness: 300, mass: 0.2 }}
-      className={`fixed top-0 left-0 pointer-events-none z-[9999] rounded-full hidden md:block mix-blend-difference bg-white ${
-        isHovered ? "w-6 h-6 border border-white/60 shadow-sm" : "w-4 h-4"
+      transition={{ type: "spring", damping: 28, stiffness: 350, mass: 0.15 }}
+      className={`fixed top-0 left-0 pointer-events-none z-[9999] rounded-full hidden md:block border ${
+        isHovered
+          ? "w-6 h-6 bg-[#E64F14]/20 border-[#E64F14] shadow-md shadow-[#E64F14]/30"
+          : "w-3.5 h-3.5 bg-[#E64F14]/80 border-[#E64F14]/50"
       }`}
     />
   );

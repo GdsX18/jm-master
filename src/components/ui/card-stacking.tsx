@@ -58,11 +58,12 @@ const SingleCard: React.FC<SingleCardProps> = ({
         style={{
           scale,
           opacity,
+          willChange: "transform, opacity",
         }}
-        className="group relative w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-slate-200/90 shadow-[0_20px_50px_rgba(8,43,97,0.08)] hover:shadow-[0_30px_60px_rgba(8,43,97,0.14)] transition-shadow duration-300 overflow-hidden origin-top"
+        className="group relative w-full max-w-4xl bg-white rounded-3xl p-6 sm:p-8 md:p-10 border border-slate-200/90 shadow-[0_15px_35px_rgba(8,43,97,0.06)] hover:shadow-[0_20px_45px_rgba(8,43,97,0.12)] transition-shadow duration-300 overflow-hidden origin-top"
       >
-        {/* Brilho decorativo no topo direito do card */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#E64F14]/5 via-transparent to-[#082B61]/5 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+        {/* Brilho decorativo no topo direito do card Otimizado */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[radial-gradient(circle_at_top_right,_rgba(230,79,20,0.06)_0%,_rgba(8,43,97,0.04)_50%,_transparent_70%)] pointer-events-none group-hover:scale-110 transition-transform duration-500" />
 
         {/* Cabeçalho: Ícone em destaque + Badge */}
         <div className="flex items-start justify-between mb-5 relative z-10">

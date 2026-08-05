@@ -229,26 +229,21 @@ export const RuixenGradientFooter: React.FC = () => {
       </div>
 
       {/* ---------------------------------------------------- */}
-      {/* 4. RUIXEN SIGNATURE BOTTOM GRADIENT GLOW (AURA)     */}
+      {/* 4. RUIXEN SIGNATURE BOTTOM GRADIENT GLOW (AURA OTIMIZADA) */}
       {/* ---------------------------------------------------- */}
       <div className="absolute bottom-0 inset-x-0 pointer-events-none h-44 md:h-56 overflow-hidden z-0 flex items-end justify-center">
-        {/* Layer 1: Base Deep Blue & Electric Cyan Glow */}
+        {/* Layer 1: Base Deep Blue Radial Glow (Custo Zero de Blur GPU) */}
         <div 
-          className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[110%] md:w-[90%] h-48 rounded-[100%] bg-gradient-to-t from-[#082B61] via-[#0070F3] to-transparent blur-3xl opacity-80"
+          className="absolute -bottom-24 left-1/2 -translate-x-1/2 w-[100%] md:w-[80%] h-48 rounded-[100%] bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-[#0070F3]/30 via-[#082B61]/15 to-transparent pointer-events-none"
         />
 
-        {/* Layer 2: Radiant Brand Orange & Magenta Aurora Curve */}
+        {/* Layer 2: Radiant Brand Orange Highlight */}
         <div 
-          className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[95%] md:w-[75%] h-36 rounded-[100%] bg-gradient-to-t from-[#FF5722] via-[#E64F14] to-transparent blur-2xl opacity-75 mix-blend-screen"
+          className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-[80%] md:w-[60%] h-36 rounded-[100%] bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-[#E64F14]/25 via-transparent to-transparent pointer-events-none"
         />
 
-        {/* Layer 3: High-Intensity Golden/Coral Center Highlight Wave */}
-        <div 
-          className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-[80%] md:w-[55%] h-28 rounded-[100%] bg-gradient-to-t from-[#FFB800] via-[#FF5722] to-transparent blur-xl opacity-90 mix-blend-color-dodge"
-        />
-
-        {/* Layer 4: Crisp Linear Bottom Border Ribbon */}
-        <div className="absolute bottom-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#0070F3] via-[#FF5722] to-[#0070F3] opacity-90 shadow-[0_0_25px_#FF5722]" />
+        {/* Layer 3: Crisp Linear Bottom Border Ribbon */}
+        <div className="absolute bottom-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#0070F3] via-[#FF5722] to-[#0070F3] opacity-90" />
       </div>
     </footer>
   );

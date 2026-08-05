@@ -47,9 +47,9 @@ const PILARES = [
 export const MetodologiaSection: React.FC = () => {
   return (
     <section id="metodologia" className="py-32 relative overflow-hidden bg-[#070d19] text-white">
-      {/* Ambient Lighting Orbs */}
-      <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[#E64F14]/15 blur-[160px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[#082B61]/30 blur-[180px] rounded-full pointer-events-none" />
+      {/* Ambient Lighting Orbs Otimizadas */}
+      <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-[radial-gradient(circle,_rgba(230,79,20,0.12)_0%,_transparent_70%)] rounded-full pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[radial-gradient(circle,_rgba(8,43,97,0.25)_0%,_transparent_70%)] rounded-full pointer-events-none" />
 
       <div className="w-full px-6 md:px-12 lg:px-16 max-w-[1500px] mx-auto relative z-10">
         

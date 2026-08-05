@@ -98,9 +98,9 @@ export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({
 
   return (
     <section className="relative py-24 md:py-32 bg-[#040814] text-white overflow-hidden border-t border-b border-white/5">
-      {/* Background Decorative Glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-96 bg-gradient-to-r from-[#0070F3]/15 via-[#FF5722]/10 to-[#0070F3]/15 blur-[120px] pointer-events-none" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[#0070F3]/10 blur-[140px] pointer-events-none" />
+      {/* Background Decorative Glows Otimizados */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-96 bg-[radial-gradient(ellipse_at_center,_rgba(0,112,243,0.15)_0%,_rgba(255,87,34,0.08)_50%,_transparent_70%)] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[radial-gradient(circle,_rgba(0,112,243,0.12)_0%,_transparent_70%)] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 space-y-16">
         
