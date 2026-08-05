@@ -25,7 +25,7 @@ export const HeroSection: React.FC = () => {
               {/* ========================================================
                   CARDS FLUTUANTES ESQUERDA (Desktop - Abstratos & Fluidos)
                  ======================================================== */}
-              <div className="hidden lg:flex flex-col gap-12 absolute left-0 xl:-left-6 top-2 z-20 pointer-events-auto">
+              <div className="hidden lg:flex flex-col gap-8 absolute left-0 xl:-left-6 top-20 xl:top-24 z-20 pointer-events-auto">
                 {/* Card 1 - Esquerda Superior */}
                 <motion.div
                   initial={{ opacity: 0, x: -30 }}
@@ -66,7 +66,7 @@ export const HeroSection: React.FC = () => {
               {/* ========================================================
                   CARDS FLUTUANTES DIREITA (Desktop - Abstratos & Fluidos)
                  ======================================================== */}
-              <div className="hidden lg:flex flex-col gap-12 absolute right-0 xl:-right-6 top-2 z-20 pointer-events-auto">
+              <div className="hidden lg:flex flex-col gap-8 absolute right-0 xl:-right-6 top-20 xl:top-24 z-20 pointer-events-auto">
                 {/* Card 3 - Direita Superior */}
                 <motion.div
                   initial={{ opacity: 0, x: 30 }}
