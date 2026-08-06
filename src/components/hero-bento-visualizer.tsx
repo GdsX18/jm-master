@@ -36,7 +36,7 @@ export const HeroBentoVisualizer: React.FC = () => {
         {/* Top Header of Visualizer */}
         <div className="flex items-center justify-between border-b border-slate-200/80 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="text-xs font-extrabold uppercase tracking-wider text-[#082B61]">
               JM MASTER AGENT — PLATAFORMA AO VIVO
             </span>
