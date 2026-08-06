@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 const MARCAS_LOGOS = [
   { src: "/logos/Marca JM Master 1.png", alt: "Marca JM Master 1" },
@@ -33,9 +34,11 @@ export const Marquee: React.FC = () => {
             key={idx}
             className="flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-110"
           >
-            <img
+            <Image
               src={marca.src}
               alt={marca.alt}
+              width={160}
+              height={48}
               className="h-10 md:h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity duration-300 filter drop-shadow-sm"
             />
           </div>

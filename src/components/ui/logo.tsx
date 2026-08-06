@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface LogoProps {
   className?: string;
@@ -28,9 +29,12 @@ export const Logo: React.FC<LogoProps> = ({
 
   return (
     <div className={`relative flex items-center ${className}`}>
-      <img
+      <Image
         src={logoFile}
         alt="JM MASTER GROUP — Comunicação que engaja e converte"
+        width={240}
+        height={70}
+        priority
         className={`${heightClasses[size]} w-auto object-contain transition-transform duration-300 hover:scale-[1.02] ${
           variant === "dark" ? "brightness-0 invert" : ""
         }`}

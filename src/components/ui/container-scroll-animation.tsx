@@ -23,7 +23,7 @@ export const ContainerScroll = ({
       setIsMobile(window.innerWidth <= 768);
     };
     checkMobile();
-    window.addEventListener("resize", checkMobile);
+    window.addEventListener("resize", checkMobile, { passive: true });
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
@@ -93,7 +93,7 @@ export const Card = ({
         boxShadow:
           "0 15px 35px -10px rgba(8, 43, 97, 0.1), 0 8px 18px -4px rgba(230, 79, 20, 0.08)",
       }}
-      className="max-w-5xl -mt-6 sm:-mt-10 md:-mt-14 mx-auto min-h-[22rem] sm:min-h-[28rem] md:min-h-[34rem] lg:min-h-[38rem] w-full border-2 sm:border-4 border-white p-2 sm:p-4 md:p-6 bg-slate-50/95 rounded-[24px] sm:rounded-[36px] shadow-xl overflow-hidden"
+      className="transform-gpu max-w-5xl -mt-6 sm:-mt-10 md:-mt-14 mx-auto min-h-[22rem] sm:min-h-[28rem] md:min-h-[34rem] lg:min-h-[38rem] w-full border-2 sm:border-4 border-white p-2 sm:p-4 md:p-6 bg-slate-50/95 rounded-[24px] sm:rounded-[36px] shadow-xl overflow-hidden"
     >
       <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-white p-1 sm:p-3 md:p-4 border border-slate-200/80">
         {children}
