@@ -160,22 +160,24 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           </div>
 
           {/* ========================================================
-              6. CARD CTA EXECUTIVO PARA O WHATSAPP
+              6. CARD CTA EXECUTIVO PARA O WHATSAPP (CLEAN GLASSMORPHISM)
              ======================================================== */}
-          <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-[#082B61] via-[#051C42] to-[#040914] text-white relative overflow-hidden shadow-2xl border border-white/10 mt-12">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#E64F14]/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="p-8 sm:p-12 rounded-3xl bg-white/70 backdrop-blur-2xl border border-white/90 shadow-[0_15px_40px_rgba(8,43,97,0.06)] relative overflow-hidden mt-12">
+            {/* Orbes de Iluminação Translúcidas Sutis */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#E64F14]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#082B61]/5 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 space-y-4 max-w-2xl">
-              <span className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 text-emerald-400 text-[11px] font-black uppercase tracking-wider border border-white/10">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/90 text-[#082B61] text-[11px] font-black uppercase tracking-wider border border-slate-200/80 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                 <span>ATENDIMENTO OFICIAL JM MASTER GROUP</span>
               </span>
 
-              <h3 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
+              <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#082B61] tracking-tight leading-tight">
                 Deseja implementar essa tecnologia no seu negócio?
               </h3>
 
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+              <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed font-normal">
                 Nossos consultores estão prontos para desenhar a régua de automação ideal para sua empresa via WhatsApp API Oficial e IA Conversacional.
               </p>
 
@@ -184,7 +186,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-2.5 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#E64F14] via-[#F06228] to-[#C43E0A] hover:from-[#c43e0a] hover:to-[#E64F14] text-white text-xs sm:text-sm font-extrabold uppercase tracking-wider shadow-lg shadow-[#E64F14]/30 hover:scale-[1.02] active:scale-95 transition-all"
+                  className="inline-flex items-center space-x-2.5 px-6 py-3.5 rounded-full bg-gradient-to-r from-[#E64F14] via-[#F06228] to-[#C43E0A] hover:from-[#c43e0a] hover:to-[#E64F14] text-white text-xs sm:text-sm font-extrabold uppercase tracking-wider shadow-lg shadow-[#E64F14]/25 hover:shadow-xl hover:shadow-[#E64F14]/35 hover:scale-[1.02] active:scale-95 transition-all"
                 >
                   <MessageSquare className="w-4 h-4 text-white" />
                   <span>Falar com o Time de Engenharia</span>
