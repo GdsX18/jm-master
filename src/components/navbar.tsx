@@ -6,7 +6,7 @@ import { MessageSquare, Menu, X, ArrowUpRight, Sparkles } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { Magnetic } from "@/components/ui/magnetic-cursor";
 
-const WHATSAPP_NUMBER = "5521951011616";
+const WHATSAPP_NUMBER = "5521998567051";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20JM%20MASTER%20GROUP%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20solu%C3%A7%C3%B5es.`;
 
 const NAV_LINKS = [

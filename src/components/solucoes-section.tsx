@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { CardStacking, StackingCardItem } from "@/components/ui/card-stacking";
 import { MessageCircle, Bot, Mail, Smartphone, Layers } from "lucide-react";
 
-const WHATSAPP_NUMBER = "5521951011616";
+const WHATSAPP_NUMBER = "5521998567051";
 
 const SOLUCOES_ITEMS: StackingCardItem[] = [
   {

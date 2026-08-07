@@ -17,7 +17,7 @@ import {
 import { Logo } from "@/components/ui/logo";
 import { Magnetic } from "@/components/ui/magnetic-cursor";
 
-const WHATSAPP_NUMBER = "5521951011616";
+const WHATSAPP_NUMBER = "5521998567051";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20JM%20MASTER%20GROUP.`;
 
 export const RuixenGradientFooter: React.FC = () => {
@@ -146,7 +146,7 @@ export const RuixenGradientFooter: React.FC = () => {
                   className="hover:text-[#FF5722] transition-colors flex items-center space-x-2 font-bold text-white group"
                 >
                   <Phone className="w-3.5 h-3.5 text-[#0070F3] group-hover:text-[#FF5722] shrink-0" />
-                  <span>(21) 95101-1616</span>
+                  <span>(21) 99856-7051</span>
                 </a>
               </li>
               <li>

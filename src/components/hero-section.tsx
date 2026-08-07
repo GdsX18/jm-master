@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles, MessageCircle, Zap, ShieldCheck, TrendingUp } fro
 import { HeroBentoVisualizer } from "@/components/hero-bento-visualizer";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 
-const WHATSAPP_NUMBER = "5521951011616";
+const WHATSAPP_NUMBER = "5521998567051";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Quero%20acelerar%20meu%20neg%C3%B3cio%20com%20as%20solu%C3%A7%C3%B5es%20da%20JM%20MASTER%20GROUP.`;
 
 export const HeroSection: React.FC = () => {
