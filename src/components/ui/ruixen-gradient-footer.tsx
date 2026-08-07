@@ -108,23 +108,29 @@ export const RuixenGradientFooter: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-300 font-medium">
               <li>
-                <a href="#sobre" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
+                <a href="/#sobre" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
                   Sobre Nós
                 </a>
               </li>
               <li>
-                <a href="#metodologia" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
+                <a href="/#metodologia" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
                   Metodologia
                 </a>
               </li>
               <li>
-                <a href="#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
+                <a href="/#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
                   Soluções
                 </a>
               </li>
               <li>
-                <a href="#clientes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
+                <a href="/#clientes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
                   Clientes
+                </a>
+              </li>
+              <li>
+                <a href="/blog" className="hover:text-[#FF5722] text-white font-bold hover:translate-x-1 transition-all inline-flex items-center space-x-1 py-0.5">
+                  <span>Blog & Notícias</span>
+                  <span className="text-[9px] bg-[#FF5722] text-white px-1.5 py-0.2 rounded-full">Novo</span>
                 </a>
               </li>
             </ul>
