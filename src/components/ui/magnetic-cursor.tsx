@@ -7,7 +7,7 @@ export const MagneticCursor: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(true);
 
   // Valores de posição do mouse
   const mouseX = useMotionValue(-100);
@@ -21,12 +21,21 @@ export const MagneticCursor: React.FC = () => {
   useEffect(() => {
     setMounted(true);
 
-    // Verificação de suporte a dispositivos touch ou telas menores
+    // Verificação estrita de suporte a dispositivos touch ou telas menores que 1024px
     const checkTouch = () => {
-      const isTouch = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+      const isTouch =
+        window.matchMedia("(pointer: coarse)").matches ||
+        "ontouchstart" in window ||
+        window.innerWidth < 1024;
       setIsTouchDevice(isTouch);
     };
+
     checkTouch();
+    window.addEventListener("resize", checkTouch, { passive: true });
+
+    if (window.innerWidth < 1024 || window.matchMedia("(pointer: coarse)").matches) {
+      return;
+    }
 
     let rafId: number | null = null;
     let lastCheck = 0;
@@ -41,7 +50,7 @@ export const MagneticCursor: React.FC = () => {
         if (!isVisible) setIsVisible(true);
 
         const now = Date.now();
-        if (now - lastCheck > 100) {
+        if (now - lastCheck > 120) {
           lastCheck = now;
           const target = e.target as HTMLElement | null;
           if (target) {
@@ -62,12 +71,13 @@ export const MagneticCursor: React.FC = () => {
 
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", checkTouch);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, [mouseX, mouseY, isVisible]);
 
-  // Desativa a renderização durante SSR/Hydration inicial e em aparelhos touch
+  // Desativa a renderização durante SSR/Hydration inicial e em aparelhos touch/telas menores
   if (!mounted || isTouchDevice) return null;
 
   return (
@@ -83,7 +93,7 @@ export const MagneticCursor: React.FC = () => {
         opacity: isVisible ? 1 : 0,
       }}
       transition={{ type: "spring", damping: 28, stiffness: 350, mass: 0.15 }}
-      className={`fixed top-0 left-0 pointer-events-none z-[9999] rounded-full hidden md:block border ${
+      className={`fixed top-0 left-0 pointer-events-none z-[9999] rounded-full hidden lg:block border ${
         isHovered
           ? "w-6 h-6 bg-[#E64F14]/20 border-[#E64F14] shadow-md shadow-[#E64F14]/30"
           : "w-3.5 h-3.5 bg-[#E64F14]/80 border-[#E64F14]/50"
@@ -101,13 +111,23 @@ export const Magnetic: React.FC<{
   const ref = useRef<HTMLDivElement>(null);
   const positionX = useMotionValue(0);
   const positionY = useMotionValue(0);
+  const [isMobile, setIsMobile] = useState(true);
 
   const springConfig = { damping: 18, stiffness: 220, mass: 0.15 };
   const x = useSpring(positionX, springConfig);
   const y = useSpring(positionY, springConfig);
 
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 1024 || window.matchMedia("(pointer: coarse)").matches);
+    };
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile, { passive: true });
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
+    if (isMobile || !ref.current) return;
     const { left, top, width, height } = ref.current.getBoundingClientRect();
     const middleX = e.clientX - (left + width / 2);
     const middleY = e.clientY - (top + height / 2);
@@ -117,9 +137,14 @@ export const Magnetic: React.FC<{
   };
 
   const handleMouseLeave = () => {
+    if (isMobile) return;
     positionX.set(0);
     positionY.set(0);
   };
+
+  if (isMobile) {
+    return <div className={`inline-block ${className}`}>{children}</div>;
+  }
 
   return (
     <motion.div

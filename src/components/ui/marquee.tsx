@@ -16,33 +16,28 @@ const MARCAS_LOGOS = [
 ];
 
 export const Marquee: React.FC = () => {
-  // Quadruplicamos a lista para garantir um fluxo contínuo e sem interrupções
-  const logosList = [
-    ...MARCAS_LOGOS,
-    ...MARCAS_LOGOS,
-    ...MARCAS_LOGOS,
-    ...MARCAS_LOGOS,
-  ];
+  // Duplicamos com arrays controlados para loop contínuo leve e eficiente
+  const logosList = [...MARCAS_LOGOS, ...MARCAS_LOGOS, ...MARCAS_LOGOS];
 
   return (
-    <div className="w-full overflow-hidden py-10 relative">
+    <div className="w-full overflow-hidden py-6 sm:py-8 relative select-none">
       {/* Máscaras de Gradiente Suave nas Laterais */}
-      <div className="absolute left-0 top-0 bottom-0 w-28 md:w-40 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-28 md:w-40 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-28 md:w-40 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-28 md:w-40 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none" />
 
-      {/* Marquee de Rolagem Contínua (Sem Pausa no Hover) */}
-      <div className="animate-marquee flex items-center space-x-8 md:space-x-12">
+      {/* Marquee de Rolagem Contínua Acelerada por Hardware */}
+      <div className="animate-marquee flex items-center space-x-6 sm:space-x-10 md:space-x-12">
         {logosList.map((marca, idx) => (
           <div
             key={idx}
-            className="flex items-center justify-center flex-shrink-0 w-36 md:w-44 h-16 transition-transform duration-300 hover:scale-110"
+            className="flex items-center justify-center shrink-0 w-28 sm:w-36 md:w-44 h-12 sm:h-14 transition-transform duration-200 hover:scale-105"
           >
             <Image
               src={marca.src}
               alt={marca.alt}
-              width={200}
-              height={60}
-              className="h-12 md:h-14 w-auto object-contain brightness-0 opacity-85 hover:opacity-100 transition-all duration-300 filter drop-shadow-sm"
+              width={160}
+              height={50}
+              className="h-9 sm:h-11 md:h-12 w-auto object-contain brightness-0 opacity-80 hover:opacity-100 transition-opacity duration-200"
             />
           </div>
         ))}

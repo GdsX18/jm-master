@@ -1,73 +1,107 @@
 "use client";
+
 import React, { useRef, useState, useEffect } from "react";
 import { useScroll, useTransform, motion, MotionValue } from "framer-motion";
 
-export const ContainerScroll = ({
-  titleComponent,
-  children,
-}: {
+interface ContainerScrollProps {
   titleComponent: string | React.ReactNode;
   children: React.ReactNode;
-}) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-  const [mounted, setMounted] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+}
+
+const ContainerScrollContent: React.FC<{
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  titleComponent: string | React.ReactNode;
+  children: React.ReactNode;
+}> = ({ containerRef, titleComponent, children }) => {
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+    const checkViewport = () => {
+      setIsDesktop(window.innerWidth >= 1024);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile, { passive: true });
-    return () => window.removeEventListener("resize", checkMobile);
+    checkViewport();
+    window.addEventListener("resize", checkViewport, { passive: true });
+    return () => window.removeEventListener("resize", checkViewport);
   }, []);
 
-  const scaleDimensions = () => {
-    return isMobile ? [0.9, 0.98] : [1.01, 1];
-  };
+  const { scrollYProgress } = useScroll({
+    target: containerRef as React.RefObject<HTMLDivElement>,
+    offset: ["start start", "end end"],
+  });
 
-  const rotate = useTransform(scrollYProgress, [0, 0.8], [isMobile ? 4 : 8, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.8], scaleDimensions());
-  const translate = useTransform(scrollYProgress, [0, 0.8], [0, -35]);
+  const rotate = useTransform(scrollYProgress, [0, 0.8], [isDesktop ? 6 : 0, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.8], [isDesktop ? 1.02 : 1, 1]);
+  const translate = useTransform(scrollYProgress, [0, 0.8], [0, isDesktop ? -25 : 0]);
 
   return (
     <div
-      className="h-[48rem] sm:h-[56rem] md:h-[64rem] lg:h-[70rem] flex items-center justify-center relative px-4 sm:px-6 md:px-12 lg:px-16"
+      className="py-6 sm:py-10 md:py-14 w-full relative max-w-[1400px] mx-auto"
+      style={{
+        perspective: isDesktop ? "1000px" : "none",
+      }}
+    >
+      <Header translate={translate} isDesktop={isDesktop} titleComponent={titleComponent} />
+      <Card rotate={rotate} translate={translate} scale={scale} isDesktop={isDesktop}>
+        {children}
+      </Card>
+    </div>
+  );
+};
+
+export const ContainerScroll: React.FC<ContainerScrollProps> = ({
+  titleComponent,
+  children,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <div
+      className="flex items-center justify-center relative px-3 sm:px-6 md:px-8 lg:px-12 w-full"
       ref={containerRef}
     >
-      <div
-        className="py-4 sm:py-8 md:py-14 w-full relative max-w-[1400px] mx-auto"
-        style={{
-          perspective: "1000px",
-        }}
-      >
-        <Header translate={translate} titleComponent={titleComponent} />
-        <Card rotate={rotate} translate={translate} scale={scale}>
+      {mounted ? (
+        <ContainerScrollContent
+          containerRef={containerRef}
+          titleComponent={titleComponent}
+        >
           {children}
-        </Card>
-      </div>
+        </ContainerScrollContent>
+      ) : (
+        <div className="py-6 sm:py-10 md:py-14 w-full relative max-w-[1400px] mx-auto">
+          <div className="max-w-7xl mx-auto text-center z-10 relative mb-6 sm:mb-8">
+            {titleComponent}
+          </div>
+          <div className="max-w-5xl mx-auto w-full border border-white/90 sm:border-2 md:border-4 p-1.5 sm:p-3 md:p-5 bg-slate-50/90 rounded-2xl sm:rounded-3xl md:rounded-[32px] shadow-lg overflow-hidden">
+            <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2 sm:p-4 md:p-5 border border-slate-200/70">
+              {children}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export const Header = ({
   translate,
+  isDesktop,
   titleComponent,
 }: {
   translate: MotionValue<number>;
+  isDesktop: boolean;
   titleComponent: string | React.ReactNode;
 }) => {
   return (
     <motion.div
       style={{
-        translateY: translate,
+        translateY: isDesktop ? translate : 0,
       }}
-      className="div max-w-7xl mx-auto text-center z-10 relative"
+      className="max-w-7xl mx-auto text-center z-10 relative mb-6 sm:mb-8"
     >
       {titleComponent}
     </motion.div>
@@ -77,25 +111,27 @@ export const Header = ({
 export const Card = ({
   rotate,
   scale,
+  isDesktop,
   children,
 }: {
   rotate: MotionValue<number>;
   scale: MotionValue<number>;
   translate: MotionValue<number>;
+  isDesktop: boolean;
   children: React.ReactNode;
 }) => {
   return (
     <motion.div
       style={{
-        rotateX: rotate,
-        scale,
-        willChange: "transform",
+        rotateX: isDesktop ? rotate : 0,
+        scale: isDesktop ? scale : 1,
+        willChange: isDesktop ? "transform" : "auto",
         boxShadow:
-          "0 15px 35px -10px rgba(8, 43, 97, 0.1), 0 8px 18px -4px rgba(230, 79, 20, 0.08)",
+          "0 15px 35px -10px rgba(8, 43, 97, 0.08), 0 8px 18px -4px rgba(230, 79, 20, 0.06)",
       }}
-      className="transform-gpu max-w-5xl -mt-6 sm:-mt-10 md:-mt-14 mx-auto min-h-[22rem] sm:min-h-[28rem] md:min-h-[34rem] lg:min-h-[38rem] w-full border-2 sm:border-4 border-white p-2 sm:p-4 md:p-6 bg-slate-50/95 rounded-[24px] sm:rounded-[36px] shadow-xl overflow-hidden"
+      className="transform-gpu max-w-5xl mx-auto w-full border border-white/90 sm:border-2 md:border-4 p-1.5 sm:p-3 md:p-5 bg-slate-50/90 rounded-2xl sm:rounded-3xl md:rounded-[32px] shadow-lg sm:shadow-xl overflow-hidden"
     >
-      <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-white p-1 sm:p-3 md:p-4 border border-slate-200/80">
+      <div className="h-full w-full overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2 sm:p-4 md:p-5 border border-slate-200/70">
         {children}
       </div>
     </motion.div>
