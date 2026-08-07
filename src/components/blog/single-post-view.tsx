@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BlogPost, BLOG_POSTS } from "@/data/posts";
-import { ArrowLeft, Calendar, Clock, Sparkles, MessageSquare, ArrowRight, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Sparkles, MessageSquare, ArrowRight, Share2, Check } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
@@ -15,7 +15,43 @@ interface SinglePostViewProps {
 }
 
 export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
+  const [copied, setCopied] = useState(false);
   const relatedPosts = BLOG_POSTS.filter((p) => p.id !== post.id).slice(0, 3);
+
+  const handleShare = async () => {
+    if (typeof window !== "undefined") {
+      const shareData = {
+        title: post.title,
+        text: post.excerpt,
+        url: window.location.href,
+      };
+
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {
+          // Fallback para cópia
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch (err) {
+        // Fallback legado
+        const dummy = document.createElement("input");
+        document.body.appendChild(dummy);
+        dummy.value = window.location.href;
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    }
+  };
 
   const whatsappMessage = encodeURIComponent(
     `Olá! Estava lendo o artigo "${post.title}" no Blog da JM MASTER GROUP e gostaria de saber mais sobre as soluções.`
@@ -131,7 +167,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           </div>
 
           {/* ========================================================
-              5. TAGS E COMPARTILHAMENTO
+              5. TAGS E BOTÃO DE COMPARTILHAMENTO INTERATIVO
              ======================================================== */}
           <div className="pt-6 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -148,15 +184,28 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
               ))}
             </div>
 
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 text-xs font-bold text-[#E64F14] hover:underline"
+            {/* Botão de Compartilhar Artigo com Cópia de Link e Feedback Visual */}
+            <button
+              onClick={handleShare}
+              className={`inline-flex items-center space-x-2 text-xs font-extrabold px-4 py-2 rounded-full border shadow-2xs transition-all duration-200 active:scale-95 cursor-pointer ${
+                copied
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-600"
+                  : "bg-white/90 hover:bg-white border-slate-200 text-[#082B61] hover:text-[#E64F14] hover:border-[#E64F14]/40"
+              }`}
+              title="Copiar link para enviar às pessoas"
             >
-              <Share2 className="w-4 h-4" />
-              <span>Compartilhar ou Tirar Dúvidas</span>
-            </a>
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-500 animate-bounce" />
+                  <span>Link Copiado com Sucesso!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4 text-[#E64F14]" />
+                  <span>Compartilhar Artigo</span>
+                </>
+              )}
+            </button>
           </div>
 
           {/* ========================================================
