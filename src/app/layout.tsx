@@ -30,6 +30,16 @@ export const metadata: Metadata = {
     "Email Marketing",
   ],
   authors: [{ name: "JM MASTER GROUP" }],
+  icons: {
+    icon: [
+      { url: "/logos/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/logos/Icone.png", type: "image/png" },
+    ],
+    shortcut: "/logos/favicon-32x32.png",
+    apple: [
+      { url: "/logos/Icone.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   openGraph: {
     title: "JM MASTER GROUP | Comunicação que engaja e converte",
     description:
