@@ -7,7 +7,7 @@ import { DisplayCards, DisplayCard } from "@/components/ui/display-cards";
 
 const PILARES = [
   {
-    number: "01",
+    id: "estrategia",
     subtitle: "NAVEGAÇÃO SEM DESVIOS",
     title: "Direção Estratégica",
     description:
@@ -16,7 +16,7 @@ const PILARES = [
     icon: <Compass className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    number: "02",
+    id: "crescimento",
     subtitle: "VETOR CONTÍNUO DE ESCALA",
     title: "Crescimento Acelerado",
     description:
@@ -25,7 +25,7 @@ const PILARES = [
     icon: <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    number: "03",
+    id: "rapidez",
     subtitle: "RESPOSTAS EM TEMPO REAL",
     title: "Rapidez de Disparo",
     description:
@@ -34,7 +34,7 @@ const PILARES = [
     icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6" />,
   },
   {
-    number: "04",
+    id: "omnichannel",
     subtitle: "ALCANCE SEM RUÍDO",
     title: "Precisão Omnichannel",
     description:
@@ -92,8 +92,7 @@ export const MetodologiaSection: React.FC = () => {
         <DisplayCards>
           {PILARES.map((pilar) => (
             <DisplayCard
-              key={pilar.number}
-              number={pilar.number}
+              key={pilar.id}
               subtitle={pilar.subtitle}
               title={pilar.title}
               description={pilar.description}
