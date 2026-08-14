@@ -1,0 +1,70 @@
+[
+  {
+    "id": "usr_admin_master",
+    "name": "Administrador JM Master",
+    "email": "admin@jmmaster.com.br",
+    "password": "admin",
+    "role": "Super administrador",
+    "isBlocked": false,
+    "permissions": {
+      "manageBlog": true,
+      "manageUsers": true,
+      "manageCrm": true,
+      "manageFinance": true,
+      "manageProducts": true,
+      "createCampaign": true,
+      "executeDispatches": true,
+      "manageTriggers": true,
+      "surveyManagement": true,
+      "structuralManagement": true
+    },
+    "prohibitions": {
+      "manageBlog": false,
+      "manageUsers": false,
+      "manageCrm": false,
+      "manageFinance": false,
+      "manageProducts": false,
+      "createCampaign": false,
+      "executeDispatches": false,
+      "manageTriggers": false,
+      "surveyManagement": false,
+      "structuralManagement": false
+    },
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-08-14T00:00:00.000Z"
+  },
+  {
+    "id": "usr_redator_blog",
+    "name": "Blog Creator",
+    "email": "blog@jmmaster.com.br",
+    "password": "blog2131.",
+    "role": "Criador de Blog",
+    "isBlocked": false,
+    "permissions": {
+      "manageBlog": true,
+      "manageUsers": false,
+      "manageCrm": false,
+      "manageFinance": false,
+      "manageProducts": false,
+      "createCampaign": false,
+      "executeDispatches": false,
+      "manageTriggers": false,
+      "surveyManagement": false,
+      "structuralManagement": false
+    },
+    "prohibitions": {
+      "manageBlog": false,
+      "manageUsers": true,
+      "manageCrm": true,
+      "manageFinance": true,
+      "manageProducts": true,
+      "createCampaign": true,
+      "executeDispatches": true,
+      "manageTriggers": true,
+      "surveyManagement": true,
+      "structuralManagement": true
+    },
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-08-14T00:47:45.834Z"
+  }
+]

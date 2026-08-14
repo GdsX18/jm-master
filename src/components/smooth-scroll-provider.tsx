@@ -1,9 +1,17 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export const SmoothScrollProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // Desativa o Lenis se estiver em qualquer rota do Painel / CRM para permitir scroll nativo 100% livre
+    if (pathname?.startsWith("/painel")) {
+      return;
+    }
+
     let lenisInstance: { raf: (time: number) => void; destroy: () => void } | null = null;
     let rafId: number | null = null;
 
@@ -52,7 +60,7 @@ export const SmoothScrollProvider: React.FC<{ children: React.ReactNode }> = ({ 
         lenisInstance = null;
       }
     };
-  }, []);
+  }, [pathname]);
 
   return <>{children}</>;
 };

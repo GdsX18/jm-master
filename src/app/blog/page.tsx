@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BlogPageContent } from "@/components/blog/blog-page-content";
+import { getStoredPosts } from "@/lib/blog-storage";
 
 export const metadata: Metadata = {
   title: "Blog & Notícias | JM MASTER GROUP — Estratégias & Automação",
@@ -26,5 +27,6 @@ export const metadata: Metadata = {
 };
 
 export default function BlogPage() {
-  return <BlogPageContent />;
+  const posts = getStoredPosts();
+  return <BlogPageContent initialPosts={posts} />;
 }

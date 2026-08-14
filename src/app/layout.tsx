@@ -56,8 +56,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${outfit.variable}`}>
-      <body className="antialiased selection:bg-[#E64F14] selection:text-white relative">
+    <html lang="pt-BR" className={`${inter.variable} ${outfit.variable}`} suppressHydrationWarning>
+      <body className="antialiased selection:bg-[#E64F14] selection:text-white relative" suppressHydrationWarning>
         {/* Glow de Iluminação Decorativa de Fundo estilo Kinto.app */}
         <div className="ambient-glow" />
 

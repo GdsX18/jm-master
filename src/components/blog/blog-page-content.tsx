@@ -5,9 +5,15 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { BlogHero } from "@/components/blog/blog-hero";
 import { BlogListing } from "@/components/blog/blog-listing";
-import { BLOG_POSTS, CategoryType } from "@/data/posts";
+import { BLOG_POSTS, BlogPost, CategoryType } from "@/data/posts";
 
-export const BlogPageContent: React.FC = () => {
+interface BlogPageContentProps {
+  initialPosts?: BlogPost[];
+}
+
+export const BlogPageContent: React.FC<BlogPageContentProps> = ({
+  initialPosts = BLOG_POSTS,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>("Todos");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -19,8 +25,8 @@ export const BlogPageContent: React.FC = () => {
   // Contagem de posts na categoria selecionada
   const countForCurrentCategory =
     selectedCategory === "Todos"
-      ? BLOG_POSTS.length
-      : BLOG_POSTS.filter((p) => p.category === selectedCategory).length;
+      ? initialPosts.length
+      : initialPosts.filter((p) => p.category === selectedCategory).length;
 
   return (
     <main className="min-h-screen relative z-10 bg-[#FAFAFA] flex flex-col justify-between">
@@ -39,7 +45,7 @@ export const BlogPageContent: React.FC = () => {
 
         {/* Seção Principal de Listagem com Grid 3x2x1 e Título Alinhado à Esquerda */}
         <BlogListing
-          initialPosts={BLOG_POSTS}
+          initialPosts={initialPosts}
           selectedCategory={selectedCategory}
           onResetFilter={handleResetFilter}
           searchQuery={searchQuery}

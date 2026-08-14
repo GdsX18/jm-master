@@ -10,13 +10,15 @@ export interface BlogPost {
   title: string;
   excerpt: string;
   content: string[];
-  category: "Todos" | "WhatsApp API" | "Automação" | "Inteligência Artificial" | "Marketing Digital" | "Vendas & CRM";
+  contentHtml?: string;
+  category: string;
   date: string;
   readTime: string;
   coverImage: string;
   coverImageAlt: string;
   author: Author;
   featured?: boolean;
+  status?: 'draft' | 'published';
   tags: string[];
 }
 
@@ -29,7 +31,7 @@ export const CATEGORIES = [
   "Vendas & CRM",
 ] as const;
 
-export type CategoryType = (typeof CATEGORIES)[number];
+export type CategoryType = string;
 
 const DEFAULT_AUTHOR: Author = {
   name: "JM MASTER GROUP",

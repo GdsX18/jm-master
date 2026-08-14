@@ -152,19 +152,26 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           </div>
 
           {/* ========================================================
-              4. CONTEÚDO DO ARTIGO
+              4. CONTEÚDO DO ARTIGO (SUPORTE A HTML RICO DO EDITOR)
              ======================================================== */}
-          <div className="space-y-6 text-slate-700 leading-relaxed font-normal text-base sm:text-lg">
-            {post.content && post.content.length > 0 ? (
-              post.content.map((paragraph, index) => (
-                <p key={index} className="leading-relaxed">
-                  {paragraph}
-                </p>
-              ))
-            ) : (
-              <p className="leading-relaxed">{post.excerpt}</p>
-            )}
-          </div>
+          {post.contentHtml ? (
+            <div
+              className="blog-wysiwyg-rendered-content text-slate-800 leading-relaxed font-normal text-base sm:text-lg space-y-4"
+              dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+            />
+          ) : (
+            <div className="space-y-6 text-slate-700 leading-relaxed font-normal text-base sm:text-lg">
+              {post.content && post.content.length > 0 ? (
+                post.content.map((paragraph, index) => (
+                  <p key={index} className="leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))
+              ) : (
+                <p className="leading-relaxed">{post.excerpt}</p>
+              )}
+            </div>
+          )}
 
           {/* ========================================================
               5. TAGS E BOTÃO DE COMPARTILHAMENTO INTERATIVO
