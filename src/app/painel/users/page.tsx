@@ -228,13 +228,17 @@ export default function UsersManagementPage() {
       const res = await fetch('/api/users');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setUsers(data);
-          if (!selectedUser && !isNewUser) {
-            selectUser(data[0]);
-          } else if (selectedUser) {
-            const updated = data.find((u: User) => u.id === selectedUser.id);
-            if (updated) selectUser(updated);
+          if (data.length > 0) {
+            if (!selectedUser && !isNewUser) {
+              selectUser(data[0]);
+            } else if (selectedUser) {
+              const updated = data.find((u: User) => u.id === selectedUser.id);
+              if (updated) selectUser(updated);
+            }
+          } else {
+            setSelectedUser(null);
           }
           return;
         }
@@ -243,7 +247,7 @@ export default function UsersManagementPage() {
       console.error('Erro ao carregar usuários da API:', e);
     }
 
-    // Fallback local
+    // Fallback local se a requisição falhar
     setUsers(INITIAL_USERS);
     selectUser(INITIAL_USERS[0]);
   };

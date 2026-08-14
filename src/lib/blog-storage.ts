@@ -34,15 +34,15 @@ export async function getStoredPosts(): Promise<BlogPost[]> {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (posts && posts.length > 0) {
+    if (Array.isArray(posts)) {
       return posts.map(mapDbToBlogPost);
     }
   } catch (err) {
     console.error('[BlogStorage] Erro ao buscar posts no Supabase:', err);
   }
 
-  // Fallback para posts estáticos se banco não responder
-  return BLOG_POSTS.map((p) => ({ ...p, status: 'published' as const }));
+  // Fallback vazio seguro caso o banco ainda esteja inicializando
+  return [];
 }
 
 // Retorna um post específico pelo slug

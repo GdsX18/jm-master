@@ -65,17 +65,14 @@ export default function BlogDashboardPage() {
           faqs: Array.isArray(p.faqs) ? p.faqs : [],
         }));
 
-        if (mapped.length > 0) {
-          setArticles(mapped);
-          saveStoredArticles(mapped);
-          return;
-        }
+        setArticles(mapped);
+        saveStoredArticles(mapped);
+        return;
       }
     } catch (err) {
       console.error('Erro ao conectar com API de posts:', err);
     }
 
-    // Fallback: carregar do localStorage ou mock padrão
     const local = getStoredArticles();
     setArticles(local);
   };
