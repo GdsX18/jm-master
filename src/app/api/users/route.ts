@@ -1,46 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import prisma from '@/lib/prisma';
 
-const USERS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'users.json');
-
-function readUsers() {
-  try {
-    if (!fs.existsSync(USERS_FILE_PATH)) {
-      fs.mkdirSync(path.dirname(USERS_FILE_PATH), { recursive: true });
-      fs.writeFileSync(USERS_FILE_PATH, JSON.stringify([], null, 2), 'utf-8');
-      return [];
-    }
-    const data = fs.readFileSync(USERS_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Erro ao ler users.json:', error);
-    return [];
-  }
-}
-
-function writeUsers(users: any[]) {
-  try {
-    fs.mkdirSync(path.dirname(USERS_FILE_PATH), { recursive: true });
-    fs.writeFileSync(USERS_FILE_PATH, JSON.stringify(users, null, 2), 'utf-8');
-    return true;
-  } catch (error) {
-    console.error('Erro ao salvar users.json:', error);
-    return false;
-  }
-}
-
-// GET /api/users - Listar usuários
+// GET /api/users - Listar usuários do Supabase
 export async function GET() {
   try {
-    const users = readUsers();
+    const users = await prisma.user.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
     return NextResponse.json(users);
-  } catch (error) {
-    return NextResponse.json({ error: 'Erro ao obter usuários' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[API Users GET Error]:', error);
+    return NextResponse.json({ error: error.message || 'Erro ao obter usuários' }, { status: 500 });
   }
 }
 
-// POST /api/users - Criar ou Atualizar usuário
+// POST /api/users - Criar ou Atualizar usuário no Supabase
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -50,51 +24,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nome e e-mail são obrigatórios' }, { status: 400 });
     }
 
-    const users = readUsers();
-    const existingIndex = users.findIndex((u: any) => u.id === id || u.email.toLowerCase() === email.toLowerCase());
+    const cleanEmail = email.toLowerCase().trim();
 
-    const now = new Date().toISOString();
+    // Verifica se usuário já existe por ID ou E-mail
+    let existingUser = null;
+    if (id) {
+      existingUser = await prisma.user.findUnique({ where: { id } });
+    }
+    if (!existingUser) {
+      existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    }
 
-    if (existingIndex >= 0) {
+    if (existingUser) {
       // Atualização
-      const existingUser = users[existingIndex];
-      users[existingIndex] = {
-        ...existingUser,
-        name,
-        email: email.toLowerCase(),
-        password: password !== undefined && password !== '' && password !== '********' ? password : existingUser.password,
-        role: role || existingUser.role,
-        isBlocked: isBlocked !== undefined ? isBlocked : existingUser.isBlocked,
-        permissions: permissions || existingUser.permissions,
-        prohibitions: prohibitions || existingUser.prohibitions,
-        updatedAt: now,
-      };
-      writeUsers(users);
-      return NextResponse.json({ success: true, user: users[existingIndex] });
+      const updatedUser = await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          name,
+          email: cleanEmail,
+          password: password !== undefined && password !== '' && password !== '********' ? password : existingUser.password,
+          role: role || existingUser.role,
+          isBlocked: isBlocked !== undefined ? isBlocked : existingUser.isBlocked,
+          permissions: permissions !== undefined ? permissions : existingUser.permissions,
+          prohibitions: prohibitions !== undefined ? prohibitions : existingUser.prohibitions,
+        },
+      });
+
+      return NextResponse.json({ success: true, user: updatedUser });
     } else {
       // Novo usuário
-      const newUser = {
-        id: id || `usr_${Date.now()}`,
-        name,
-        email: email.toLowerCase(),
-        password: password || '123456',
-        role: role || 'Criador de Blog',
-        isBlocked: isBlocked || false,
-        permissions: permissions || {},
-        prohibitions: prohibitions || {},
-        createdAt: now,
-        updatedAt: now,
-      };
-      users.push(newUser);
-      writeUsers(users);
+      const newUser = await prisma.user.create({
+        data: {
+          id: id || undefined,
+          name,
+          email: cleanEmail,
+          password: password || '123456',
+          role: role || 'Criador de Blog',
+          isBlocked: isBlocked || false,
+          permissions: permissions || {},
+          prohibitions: prohibitions || {},
+        },
+      });
+
       return NextResponse.json({ success: true, user: newUser });
     }
   } catch (error: any) {
+    console.error('[API Users POST Error]:', error);
     return NextResponse.json({ error: error.message || 'Erro ao salvar usuário' }, { status: 500 });
   }
 }
 
-// DELETE /api/users?id=... - Excluir usuário
+// DELETE /api/users?id=... - Excluir usuário do Supabase
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -104,16 +84,13 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'ID do usuário é obrigatório' }, { status: 400 });
     }
 
-    const users = readUsers();
-    const filtered = users.filter((u: any) => u.id !== id);
+    await prisma.user.delete({
+      where: { id },
+    });
 
-    if (filtered.length === users.length) {
-      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
-    }
-
-    writeUsers(filtered);
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error: any) {
+    console.error('[API Users DELETE Error]:', error);
     return NextResponse.json({ error: error.message || 'Erro ao excluir usuário' }, { status: 500 });
   }
 }

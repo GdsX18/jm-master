@@ -34,6 +34,8 @@ export default function MediaUploader({
   const [showPresets, setShowPresets] = useState(false);
   const [showBodyImageModal, setShowBodyImageModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingBody, setIsUploadingBody] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -53,19 +55,45 @@ export default function MediaUploader({
     onCoverChange(coverImage, val);
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
-      setAltText(defaultAlt);
-      onCoverChange(result, defaultAlt);
-    };
-    reader.readAsDataURL(file);
+    const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+    setAltText(defaultAlt);
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'blog-images');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        onCoverChange(data.url, defaultAlt);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          onCoverChange(e.target?.result as string, defaultAlt);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (err) {
+      console.error('Erro no upload para o Supabase Storage:', err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        onCoverChange(e.target?.result as string, defaultAlt);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -91,20 +119,43 @@ export default function MediaUploader({
     setShowPresets(false);
   };
 
-  const handleBodyFileSelect = (file: File) => {
+  const handleBodyFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       alert('Selecione uma imagem válida.');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      setBodyImgUrl(result);
-      if (!bodyImgAlt) {
-        setBodyImgAlt(file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
+    const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+    if (!bodyImgAlt) {
+      setBodyImgAlt(defaultAlt);
+    }
+    setIsUploadingBody(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('bucket', 'blog-images');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success && data.url) {
+        setBodyImgUrl(data.url);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => setBodyImgUrl(e.target?.result as string);
+        reader.readAsDataURL(file);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Erro no upload da imagem:', err);
+      const reader = new FileReader();
+      reader.onload = (e) => setBodyImgUrl(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingBody(false);
+    }
   };
 
   const handleInsertBodyImage = () => {
@@ -221,11 +272,12 @@ export default function MediaUploader({
               <div className="pt-2 flex items-center justify-center gap-2">
                 <button
                   type="button"
+                  disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-bold rounded-lg hover:opacity-90 transition cursor-pointer flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-bold rounded-lg hover:opacity-90 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <UploadCloud className="w-3.5 h-3.5" />
-                  <span>Upload do Arquivo</span>
+                  <UploadCloud className={`w-3.5 h-3.5 ${isUploading ? 'animate-bounce text-[#E85D26]' : ''}`} />
+                  <span>{isUploading ? 'Enviando para Supabase...' : 'Upload do Arquivo'}</span>
                 </button>
                 <button
                   type="button"
@@ -365,11 +417,12 @@ export default function MediaUploader({
                   />
                   <button
                     type="button"
+                    disabled={isUploadingBody}
                     onClick={() => bodyFileInputRef.current?.click()}
-                    className="px-3 py-2 bg-neutral-800 dark:bg-neutral-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition shrink-0 cursor-pointer flex items-center gap-1"
+                    className="px-3 py-2 bg-neutral-800 dark:bg-neutral-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition shrink-0 cursor-pointer flex items-center gap-1 disabled:opacity-50"
                   >
-                    <UploadCloud className="w-3.5 h-3.5" />
-                    <span>Upload</span>
+                    <UploadCloud className={`w-3.5 h-3.5 ${isUploadingBody ? 'animate-bounce text-[#E85D26]' : ''}`} />
+                    <span>{isUploadingBody ? 'Enviando...' : 'Upload'}</span>
                   </button>
                   <input
                     ref={bodyFileInputRef}

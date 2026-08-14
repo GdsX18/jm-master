@@ -1,0 +1,117 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         String   @default("Criador de Blog")
+  isBlocked    Boolean  @default(false)
+  permissions  Json     @default("{}")
+  prohibitions Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model BlogPost {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  title         String
+  excerpt       String    @db.Text
+  content       Json      @default("[]")
+  contentHtml   String?   @db.Text
+  category      String    @default("WhatsApp API")
+  date          String?   @default("Hoje")
+  readTime      String?   @default("4 min")
+  coverImage    String    @default("/images/blog/whatsapp-thumb.jpg")
+  coverImageAlt String?   @default("")
+  authorName    String    @default("JM MASTER GROUP")
+  authorRole    String    @default("Especialistas em Mensageria & IA")
+  authorAvatar  String    @default("/logos/Icone.png")
+  featured      Boolean   @default(false)
+  status        String    @default("published")
+  tags          Json      @default("[]")
+  seo           Json?
+  faqs          Json?
+  views         Int       @default(0)
+  publishedAt   DateTime? @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("blog_posts")
+}
+
+model Customer {
+  id           String           @id @default(cuid())
+  name         String
+  company      String?
+  email        String?
+  phone        String?
+  status       String           @default("ATIVO")
+  segment      String?          @default("Enterprise")
+  notes        String?          @db.Text
+  data         Json?            @default("{}")
+  interactions CrmInteraction[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@map("customers")
+}
+
+model CrmInteraction {
+  id          String    @id @default(cuid())
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  operator    String
+  customerName String?
+  title       String
+  description String    @db.Text
+  date        String
+  type        String    @default("COMERCIAL")
+  badge       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([customerId])
+  @@map("crm_interactions")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  price       Float    @default(0.0)
+  category    String?
+  active      Boolean  @default(true)
+  features    Json?    @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
+
+model FinancialRecord {
+  id          String    @id @default(cuid())
+  description String
+  amount      Float
+  type        String    @default("RECEITA") // RECEITA, DESPESA
+  category    String
+  status      String    @default("PAGO") // PENDENTE, PAGO, CANCELADO
+  dueDate     DateTime?
+  paymentDate DateTime?
+  metadata    Json?     @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("financial_records")
+}

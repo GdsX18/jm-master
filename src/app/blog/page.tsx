@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BlogPage() {
-  const posts = getStoredPosts();
+export default async function BlogPage() {
+  const posts = await getStoredPosts();
   return <BlogPageContent initialPosts={posts} />;
 }

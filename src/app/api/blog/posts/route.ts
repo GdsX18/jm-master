@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getStoredPosts, saveStoredPosts } from '@/lib/blog-storage';
+import { getStoredPosts, saveStoredPost, deleteStoredPost } from '@/lib/blog-storage';
 import { BlogPost } from '@/data/posts';
 
 export async function GET() {
   try {
-    const posts = getStoredPosts();
+    const posts = await getStoredPosts();
     return NextResponse.json({ success: true, posts });
   } catch (error: any) {
     return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       category: postData.category || 'WhatsApp API',
       coverImage: postData.coverImage || '/images/blog/whatsapp-thumb.jpg',
       coverImageAlt: postData.coverImageAlt || postData.title,
-      date: postData.date || postData.publishedAt ? new Date(postData.publishedAt || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Hoje',
+      date: postData.date || (postData.publishedAt ? new Date(postData.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Hoje'),
       readTime: postData.readTime || `${postData.readingTimeMinutes || 4} min`,
       author: {
         name: postData.author?.name || 'JM MASTER GROUP',
@@ -52,29 +52,15 @@ export async function POST(request: Request) {
       faqs: Array.isArray(postData.faqs) ? postData.faqs : [],
     };
 
-    const currentPosts = getStoredPosts();
-    const existingIndex = currentPosts.findIndex((p) => p.id === post.id || p.slug === post.slug);
-
-    let updatedPosts: BlogPost[];
-    if (existingIndex >= 0) {
-      // Atualiza post existente
-      updatedPosts = [...currentPosts];
-      updatedPosts[existingIndex] = {
-        ...updatedPosts[existingIndex],
-        ...post,
-      };
-    } else {
-      // Adiciona novo post no topo
-      updatedPosts = [post, ...currentPosts];
-    }
-
-    const saved = saveStoredPosts(updatedPosts);
-    if (!saved) {
+    const savedPost = await saveStoredPost(post);
+    if (!savedPost) {
       return NextResponse.json(
-        { success: false, error: 'Falha ao salvar no banco de posts' },
+        { success: false, error: 'Falha ao salvar no banco de posts do Supabase' },
         { status: 500 }
       );
     }
+
+    const updatedPosts = await getStoredPosts();
 
     // Invalida o cache do blog para publicação imediata
     try {
@@ -86,7 +72,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Artigo salvo e publicado no site oficial com sucesso!',
-      post,
+      post: savedPost,
       posts: updatedPosts,
     });
   } catch (error: any) {
@@ -109,18 +95,20 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const currentPosts = getStoredPosts();
-    const postToDelete = currentPosts.find((p) => p.id === id || p.slug === id);
-    const updatedPosts = currentPosts.filter((p) => p.id !== id && p.slug !== id);
-
-    saveStoredPosts(updatedPosts);
-
-    if (postToDelete) {
-      try {
-        revalidatePath('/blog');
-        revalidatePath(`/blog/${postToDelete.slug}`);
-      } catch {}
+    const success = await deleteStoredPost(id);
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: 'Erro ao excluir artigo do banco de dados' },
+        { status: 500 }
+      );
     }
+
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${id}`);
+    } catch {}
+
+    const updatedPosts = await getStoredPosts();
 
     return NextResponse.json({
       success: true,

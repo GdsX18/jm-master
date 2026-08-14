@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-
-const USERS_FILE_PATH = path.join(process.cwd(), 'src', 'data', 'users.json');
-
-function readUsers() {
-  try {
-    if (!fs.existsSync(USERS_FILE_PATH)) {
-      return [];
-    }
-    const data = fs.readFileSync(USERS_FILE_PATH, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-}
+import prisma from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,10 +9,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios' }, { status: 400 });
     }
 
-    const users = readUsers();
-    const user = users.find(
-      (u: any) => u.email.toLowerCase() === email.toLowerCase().trim()
-    );
+    const cleanEmail = email.toLowerCase().trim();
+
+    const user = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+    });
 
     if (!user) {
       return NextResponse.json({ error: 'E-mail não encontrado no sistema' }, { status: 401 });
@@ -37,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Este usuário está bloqueado pelo administrador' }, { status: 403 });
     }
 
-    // Validação de senha simples e direta
+    // Validação de senha
     if (user.password && user.password !== password.trim()) {
       return NextResponse.json({ error: 'Senha incorreta' }, { status: 401 });
     }
@@ -59,6 +45,7 @@ export async function POST(req: NextRequest) {
       redirectUrl,
     });
   } catch (error: any) {
+    console.error('[Auth Login Error]:', error);
     return NextResponse.json({ error: error.message || 'Erro ao processar autenticação' }, { status: 500 });
   }
 }

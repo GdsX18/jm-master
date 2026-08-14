@@ -8,7 +8,7 @@ interface PostPageProps {
 }
 
 export async function generateStaticParams() {
-  const posts = getStoredPosts();
+  const posts = await getStoredPosts();
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return {
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
 
 export default async function SinglePostPage({ params }: PostPageProps) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
