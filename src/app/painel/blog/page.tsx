@@ -25,6 +25,7 @@ import ArticleList from './components/ArticleList';
 import BlogEditor from './components/BlogEditor';
 import ArticleMetadata from './components/ArticleMetadata';
 import LivePreview from './components/LivePreview';
+import FAQModule from './components/FAQModule';
 
 export default function BlogDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -436,7 +437,7 @@ export default function BlogDashboardPage() {
           {/* CORPO DO WORKSPACE DE EDIÇÃO */}
           {editorSubMode === 'editor_meta' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <div className="lg:col-span-8">
+              <div className="lg:col-span-8 space-y-6">
                 <BlogEditor
                   title={currentArticle.title}
                   contentHtml={currentArticle.contentHtml}
@@ -450,6 +451,12 @@ export default function BlogDashboardPage() {
                     const time = calculateReadingTime(contentHtml);
                     handleUpdateCurrentArticle({ contentHtml, readingTimeMinutes: time });
                   }}
+                />
+
+                {/* FAQ & PERGUNTAS FREQUENTES (POSICIONADO ABAIXO DO TEXTO DO ARTIGO) */}
+                <FAQModule
+                  article={currentArticle}
+                  onChange={handleUpdateCurrentArticle}
                 />
               </div>
 
@@ -479,6 +486,13 @@ export default function BlogDashboardPage() {
                     handleUpdateCurrentArticle({ contentHtml, readingTimeMinutes: time });
                   }}
                 />
+
+                {/* FAQ & PERGUNTAS FREQUENTES */}
+                <FAQModule
+                  article={currentArticle}
+                  onChange={handleUpdateCurrentArticle}
+                />
+
                 <ArticleMetadata
                   article={currentArticle}
                   onChange={handleUpdateCurrentArticle}
