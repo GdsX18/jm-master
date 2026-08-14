@@ -20,13 +20,13 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "JM MASTER GROUP | Marketing Digital, Automação & Mensageria",
   description:
-    "Elevando a presença digital do seu negócio com automações avançadas, inteligência conversacional, API Oficial do WhatsApp, SMS e E-mail Marketing.",
+    "Elevando a presença digital do seu negócio com automações avançadas, chatbots inteligentes, API Oficial do WhatsApp, SMS e E-mail Marketing.",
   keywords: [
     "JM MASTER GROUP",
     "Marketing Digital",
     "Automação WhatsApp",
     "API Oficial WhatsApp Meta",
-    "Chatbot IA",
+    "Chatbot de Atendimento",
     "SMS Marketing",
     "Email Marketing",
   ],
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "JM MASTER GROUP | Comunicação que engaja e converte",
     description:
-      "Elevando a presença digital do seu negócio com automações avançadas, inteligência conversacional e alta performance de vendas.",
+      "Elevando a presença digital do seu negócio com automações avançadas, chatbots de atendimento e alta performance de vendas.",
     type: "website",
     locale: "pt_BR",
     siteName: "JM MASTER GROUP",

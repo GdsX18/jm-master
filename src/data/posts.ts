@@ -4,16 +4,17 @@ export interface Author {
   avatar: string;
 }
 
-export interface ArticleSEO {
+export interface SEOData {
   focusKeyphrase?: string;
   metaTitle?: string;
   metaDescription?: string;
   canonicalUrl?: string;
   noIndex?: boolean;
+  noFollow?: boolean;
 }
 
-export interface ArticleFAQ {
-  id?: string;
+export interface FAQItem {
+  id: string;
   question: string;
   answer: string;
 }
@@ -30,19 +31,21 @@ export interface BlogPost {
   readTime: string;
   coverImage: string;
   coverImageAlt: string;
+  featured: boolean;
+  status?: string;
   author: Author;
-  featured?: boolean;
-  status?: 'draft' | 'published';
   tags: string[];
-  seo?: ArticleSEO;
-  faqs?: ArticleFAQ[];
+  seo?: SEOData;
+  faqs?: FAQItem[];
+  views?: number;
+  publishedAt?: string;
 }
 
 export const CATEGORIES = [
   "Todos",
   "WhatsApp API",
   "Automação",
-  "Inteligência Artificial",
+  "Chatbots",
   "Marketing Digital",
   "Vendas & CRM",
 ] as const;
@@ -51,7 +54,7 @@ export type CategoryType = string;
 
 const DEFAULT_AUTHOR: Author = {
   name: "JM MASTER GROUP",
-  role: "Especialistas em Mensageria & IA",
+  role: "Especialistas em Mensageria & Automação",
   avatar: "/logos/Icone.png",
 };
 
@@ -69,7 +72,7 @@ export const BLOG_POSTS: BlogPost[] = [
       "• Atendimento centralizado: Múltiplos operadores e departamentos atendendo no mesmo número corporativo.",
       "• Disparo de mensagens ativas: Envio segmentado de notificações com templates homologados pela Meta.",
       "• Integração com CRM: Registro automático de conversas, histórico de compras e métricas de desempenho.",
-      "• Inteligência Artificial Conversacional: Chatbots conectados 24/7 capazes de tirar dúvidas e qualificar leads.",
+      "• Chatbots de Atendimento: Robôs conectados 24/7 capazes de tirar dúvidas e qualificar leads.",
       "A equipe da JM MASTER GROUP é especializada na homologação rápida e configuração completa de infraestrutura para que sua empresa aproveite todo o potencial da mensageria corporativa com segurança jurídica e técnica."
     ],
     category: "WhatsApp API",
@@ -91,7 +94,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         id: "faq-1-1",
         question: "Qual a diferença entre o WhatsApp Business gratuito e a API Oficial da Meta?",
-        answer: "O aplicativo WhatsApp Business gratuito é limitado a poucos aparelhos conectados e não permite múltiplos atendentes em grande escala nem integrações robustas com CRM e robôs inteligentes. Já a API Oficial é uma infraestrutura em nuvem homologada pela Meta, permitindo milhares de atendimentos simultâneos em um único número, chatbots com IA e risco zero de bloqueio por disparo ativo."
+        answer: "O aplicativo WhatsApp Business gratuito é limitado a poucos aparelhos conectados e não permite múltiplos atendentes em grande escala nem integrações robustas com CRM e robôs inteligentes. Já a API Oficial é uma infraestrutura em nuvem homologada pela Meta, permitindo milhares de atendimentos simultâneos em um único número, chatbots automatizados e risco zero de bloqueio por disparo ativo."
       },
       {
         id: "faq-1-2",
@@ -107,126 +110,130 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     id: "post-2",
-    slug: "chatbot-ia-conversacional-aumento-conversao",
-    title: "Chatbots com IA Generativa: Como Criar Atendimentos que Convertem 3x Mais",
+    slug: "chatbot-automatizado-aumento-conversao",
+    title: "Chatbots Automatizados: Como Criar Atendimentos que Convertem 3x Mais",
     excerpt:
-      "Esqueça os robôs com menus engessados. Veja como treinar modelos de inteligência conversacional para responder dúvidas complexas e qualificar leads em tempo recorde.",
+      "Esqueça os robôs com menus engessados. Veja como estruturar fluxos modernos de atendimento para responder dúvidas e qualificar leads em tempo recorde.",
     content: [
-      "Os clientes modernos não toleram mais menus intermináveis do tipo 'digite 1 para financeiro, 2 para suporte'. Eles desejam respostas humanas, instantâneas e contextualizadas a qualquer hora do dia ou da noite.",
-      "Com a introdução de modelos de linguagem natural integrados aos bancos de dados de produtos e serviços da sua empresa, os novos agentes inteligentes conseguem interpretar nuances, gírias, dúvidas complexas de estoque e até objeções de preço em tempo real.",
+      "Os clientes modernos não toleram mais menus intermináveis do tipo 'digite 1 para financeiro, 2 para suporte'. Eles desejam respostas ágeis, instantâneas e contextualizadas a qualquer hora do dia ou da noite.",
+      "Com a estruturação inteligente de fluxos automatizados integrados aos bancos de dados de produtos e serviços da sua empresa, os novos chatbots conseguem responder dúvidas frequentes, informações de estoque e qualificação comercial em tempo real.",
       "As etapas fundamentais para um chatbot de alto desempenho incluem:",
-      "1. Engenharia de Prompt e Treinamento de Base: Alimentar a IA com as perguntas frequentes e políticas da empresa.",
+      "1. Estruturação de Fluxos e Respostas Claras: Configurar o chatbot com as principais dúvidas e políticas da empresa.",
       "2. Regras de Transbordo Inteligente: Saber exatamente quando transferir o cliente para um consultor humano.",
       "3. Disparo de Gatilhos Comerciais: Enviar links de checkout e formulários de qualificação no momento exato do interesse.",
-      "Na JM MASTER GROUP, desenvolvemos automações conversacionais que aumentam o engajamento e multiplicam as conversões diretas no WhatsApp."
+      "Na JM MASTER GROUP, desenvolvemos automações e chatbots que aumentam o engajamento e multiplicam as conversões diretas no WhatsApp."
     ],
-    category: "Inteligência Artificial",
+    category: "Chatbots",
     date: "22 de Jan, 2026",
     readTime: "6 min de leitura",
     coverImage:
-      "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80",
-    coverImageAlt: "Conceito visual de inteligência artificial e processamento de linguagem natural",
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+    coverImageAlt: "Fluxos de mensagens e automação de atendimento digital",
     featured: false,
     author: DEFAULT_AUTHOR,
-    tags: ["Inteligência Artificial", "Chatbots", "Vendas", "Atendimento 24/7"],
+    tags: ["Chatbots", "Automação", "Vendas", "Atendimento 24/7"],
     seo: {
-      focusKeyphrase: "Chatbots com IA Generativa",
-      metaTitle: "Chatbots com IA Generativa: Triplique as Vendas no WhatsApp",
-      metaDescription: "Descubra como os agentes de IA conversacional eliminam filas de espera, respondem dúvidas em 0.8s e convertem 3x mais leads.",
+      focusKeyphrase: "Chatbots Automatizados",
+      metaTitle: "Chatbots Automatizados: Triplique as Vendas no WhatsApp",
+      metaDescription: "Descubra como os chatbots automatizados eliminam filas de espera, respondem dúvidas em 0.8s e convertem 3x mais leads.",
     },
     faqs: [
       {
         id: "faq-2-1",
-        question: "A IA pode falar bobagem ou dar descontos indevidos aos clientes?",
-        answer: "Não. A inteligência artificial opera dentro de guardrails estritos e uma base de conhecimento corporativa fechada (RAG), garantindo que ela apenas responda com base nas regras, preços e termos oficiais da sua empresa."
+        question: "O chatbot pode dar informações erradas ou descontos indevidos?",
+        answer: "Não. O chatbot opera com fluxos e respostas estruturadas previamente aprovadas, garantindo que ele apenas responda com base nas regras, preços e termos oficiais da sua empresa."
       },
       {
         id: "faq-2-2",
-        question: "O que acontece se a IA não souber responder a dúvida do cliente?",
+        question: "O que acontece se o chatbot não souber responder a dúvida do cliente?",
         answer: "O sistema executa o transbordo inteligente instantâneo: a conversa é repassada com todo o histórico e contexto para um atendente humano da equipe comercial ou de suporte."
       }
     ]
   },
   {
     id: "post-3",
-    slug: "regua-relacionamento-email-sms-whatsapp",
-    title: "Omnichannel na Prática: Orquestrando E-mail, SMS e WhatsApp em Funis de Vendas",
+    slug: "email-marketing-estratego-taxas-abertura-2026",
+    title: "E-mail Marketing Estratégico: O Guia Definitivo para Superar 35% de Taxa de Abertura",
     excerpt:
-      "Aprenda a sincronizar canais de mensageria para criar uma jornada de compra sem atritos, reduzindo a taxa de abandono de carrinho e maximizando o Lifetime Value (LTV).",
+      "Aprenda técnicas avançadas de entregabilidade, segmentação comportamental e automação de fluxos para transformar sua base de contatos em uma máquina de faturamento recorrente.",
     content: [
-      "Depender de apenas um canal de comunicação é um dos maiores riscos estratégicos para empresas digitais. A verdadeira escala reside na orquestração inteligente entre WhatsApp, SMS e E-mail Marketing.",
-      "Cada canal cumpre uma função psicológica distinta na jornada do consumidor:",
-      "• E-mail: Ideal para conteúdos densos, notas fiscais, apresentações de proposta e newsletters de relacionamento.",
-      "• SMS: Perfeito para urgência máxima, como confirmação de 2FA, aviso de agendamento e alertas instantâneos com 98% de taxa de abertura.",
-      "• WhatsApp: O canal definitivo para negociação, suporte humanizado, recuperação de vendas e fechamento rápido.",
-      "Quando esses três canais operam de forma orquestrada com acionadores de CRM, o tempo de resposta diminui e o retorno sobre o investimento em tráfego pago sobe substancialmente."
+      "Ao contrário do que muitos pensam, o e-mail marketing continua sendo um dos canais com maior Retorno sobre Investimento (ROI) no mercado corporativo, gerando em média R$ 36 para cada R$ 1 investido.",
+      "Para alcançar taxas de abertura expressivas em 2026, é indispensável dominar três pilares:",
+      "1. Higienização e Autenticação de Domínio (DKIM, SPF e DMARC).",
+      "2. Assuntos magnéticos e pré-cabeçalhos persuasivos.",
+      "3. Segmentação baseada no comportamento e histórico de compra dos usuários.",
+      "Ao alinhar e-mail marketing com réguas automatizadas de WhatsApp e SMS, você cria uma experiência omnichannel à prova de falhas."
     ],
     category: "Marketing Digital",
-    date: "17 de Jan, 2026",
+    date: "18 de Jan, 2026",
     readTime: "4 min de leitura",
     coverImage:
-      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
-    coverImageAlt: "Gráficos de marketing digital, análise de métricas e conversão",
+      "https://images.unsplash.com/photo-1579275542618-a1dfed5f54ba?auto=format&fit=crop&w=1200&q=80",
+    coverImageAlt: "Pessoa analisando métricas de campanha de marketing digital no tablet",
     featured: false,
     author: DEFAULT_AUTHOR,
-    tags: ["Omnichannel", "E-mail Marketing", "SMS", "Funil de Vendas"],
+    tags: ["E-mail Marketing", "Entregabilidade", "ROI", "Automação"],
   },
   {
     id: "post-4",
-    slug: "automacao-de-processos-comerciais-crm",
-    title: "Automação de Processos Comerciais: Do Primeiro Lead ao Fechamento no CRM",
+    slug: "funis-de-venda-whatsapp-conversao-anuncios",
+    title: "Como Criar Funis de Vendas no WhatsApp que Convertem Tráfego Pago em Clientes",
     excerpt:
-      "Descubra como estruturar fluxos automatizados de follow-up que impedem que oportunidades esfriem no funil e aumentam a produtividade da sua equipe comercial.",
+      "Passo a passo prático para integrar campanhas do Meta Ads (Facebook/Instagram) diretamente com automações de WhatsApp, reduzindo o Custo de Aquisição de Clientes (CAC).",
     content: [
-      "Pesquisas comprovam que leads contatados nos primeiros 5 minutos após o preenchimento de um formulário têm até 21 vezes mais chances de fechar negócio do que aqueles respondidos após 30 minutos.",
-      "Com a automação de processos comerciais da JM MASTER GROUP, assim que um prospect entra pelo tráfego pago, site ou indicação, o sistema:",
-      "1. Registra instantaneamente os dados no CRM.",
-      "2. Dispara uma saudação personalizada no WhatsApp com opções de autoatendimento.",
-      "3. Notifica o vendedor responsável ou agenda automaticamente uma reunião no calendário.",
-      "Essa sincronização elimina o trabalho braçal e transforma a equipe de vendas em uma máquina focada em fechamentos."
+      "Investir milhares de reais em tráfego pago para enviar o lead a páginas lentas e formulários estáticos é uma das principais causas de desperdício de verba publicitária.",
+      "Ao conectar anúncios de 'Clique para o WhatsApp' com triagem por chatbot automatizado, você garante que nenhum lead seja desperdiçado por demora no atendimento.",
+      "Pontos-chave para o funil perfeito:",
+      "• Atendimento imediato em menos de 5 segundos.",
+      "• Qualificação rápida através de perguntas dinâmicas.",
+      "• Direcionamento para o vendedor certo com base na localização ou ticket médio.",
+      "Essa abordagem costuma reduzir o CAC em até 40% nas primeiras semanas de implantação."
     ],
     category: "Vendas & CRM",
-    date: "12 de Jan, 2026",
-    readTime: "5 min de leitura",
+    date: "14 de Jan, 2026",
+    readTime: "7 min de leitura",
     coverImage:
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80",
-    coverImageAlt: "Equipe corporativa analisando painel de vendas e CRM",
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+    coverImageAlt: "Gráficos de vendas ascendentes e relatórios de conversão financeira",
     featured: false,
     author: DEFAULT_AUTHOR,
-    tags: ["CRM", "Vendas B2B", "Follow-up", "Automação Comercial"],
+    tags: ["Tráfego Pago", "Meta Ads", "CAC", "Funil de Vendas"],
   },
   {
     id: "post-5",
-    slug: "reduzindo-cac-com-automacoes-inteligentes",
-    title: "Como Reduzir o CAC em até 40% Utilizando Automações de Alta Resposta",
+    slug: "integracao-crm-whatsapp-gestao-leads",
+    title: "Por que Integrar seu CRM ao WhatsApp é o Maior Diferencial Competitivo em 2026",
     excerpt:
-      "Análise aprofundada de cases reais que substituíram processos manuais por réguas de contato automáticas e inteligentes, gerando maior ROI nas campanhas de tráfego pago.",
+      "Descubra como unificar a comunicação da equipe comercial, ter visibilidade total do pipeline de vendas e nunca mais perder uma oportunidade por falta de follow-up.",
     content: [
-      "O Custo de Aquisição de Clientes (CAC) tem aumentado continuamente nas plataformas de anúncios (Meta Ads, Google Ads). A saída para manter margens saudáveis é aumentar a taxa de conversão sobre o mesmo volume de tráfego.",
-      "Ao conectar anúncios de 'Clique para o WhatsApp' com triagem por inteligência artificial, você garante que nenhum lead seja desperdiçado por demora no atendimento.",
-      "Casos práticos implementados por nossos consultores registraram redução de até 40% no CAC em 60 dias, graças ao follow-up programado e à recuperação ativa de oportunidades não finalizadas."
+      "Manter conversas de clientes espalhadas em celulares individuais dos vendedores é um risco operacional enorme: perda de histórico, falta de métricas e total descontrole da diretoria.",
+      "A integração do WhatsApp corporativo com plataformas de CRM centraliza:",
+      "• Linha do tempo completa de interações com cada cliente.",
+      "• Gravação de áudios, envio de propostas e contratos digitais.",
+      "• Alertas automáticos para follow-up quando o lead esfriar.",
+      "Com a JM MASTER GROUP, seus dados pertencem à sua empresa, com segurança e governança de ponta a ponta."
     ],
     category: "Automação",
-    date: "08 de Jan, 2026",
-    readTime: "7 min de leitura",
+    date: "09 de Jan, 2026",
+    readTime: "5 min de leitura",
     coverImage:
-      "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=80",
-    coverImageAlt: "Estratégia de negócios e análise de retorno sobre investimento",
+      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1200&q=80",
+    coverImageAlt: "Equipe corporativa analisando dados em dashboard de CRM",
     featured: false,
     author: DEFAULT_AUTHOR,
-    tags: ["CAC", "ROI", "Automação", "Performance"],
+    tags: ["CRM", "Follow-up", "Gestão Comercial", "WhatsApp API"],
   },
   {
     id: "post-6",
-    slug: "boas-praticas-entregabilidade-sms-marketing-2026",
-    title: "SMS Marketing Corporativo: Boas Práticas para Alcançar 98% de Taxa de Abertura",
+    slug: "sms-marketing-corporativo-taxa-abertura-98-porcento",
+    title: "SMS Corporativo: O Canal com 98% de Taxa de Abertura que Sua Empresa Deveria Usar Mais",
     excerpt:
-      "Saiba como usar o SMS de forma estratégica para notificações críticas, cobrança amigável, tokens de autenticação (2FA) e ofertas exclusivas de curtíssima duração.",
+      "Notificações transacionais, códigos de segurança (2FA), cobrança preventiva e ofertas relâmpago: entenda por que o SMS continua sendo imbatível em velocidade e alcance.",
     content: [
-      "O SMS continua sendo uma das ferramentas mais poderosas para mensagens urgentes e operacionais. Com 98% de taxa de abertura e leitura média em menos de 3 minutos, sua eficácia é insubstituível.",
-      "Para maximizar os resultados:",
-      "• Seja direto: Utilize no máximo 160 caracteres com chamadas para ação claras.",
-      "• Inclua links curtos personalizados com parâmetros UTM para rastreamento de cliques.",
+      "Enquanto canais digitais disputam a atenção do usuário entre centenas de notificações de redes sociais, o SMS se destaca pela urgência e leitura quase imediata: 90% das mensagens são lidas em até 3 minutos.",
+      "Casos de uso com alto retorno comprovado:",
+      "• Recuperação de carrinhos e boletos pendentes.",
+      "• Lembretes de consultas e reuniões agendadas (redução drástica de no-show).",
       "• Respeite as regras de opt-in e LGPD para preservar a reputação do remetente corporativo.",
       "A JM MASTER GROUP fornece rotas diretas de alta confiabilidade com operadoras de telecomunicações de todo o país."
     ],
@@ -242,18 +249,18 @@ export const BLOG_POSTS: BlogPost[] = [
   },
   {
     id: "post-7",
-    slug: "ia-e-atendimento-humano-simbiose-perfeita",
-    title: "IA + Atendimento Humano: O Segredo para Escalar Sem Perder a Empatia",
+    slug: "chatbot-e-atendimento-humano-simbiose-perfeita",
+    title: "Chatbot + Atendimento Humano: O Segredo para Escalar Sem Perder a Empatia",
     excerpt:
-      "Como calibrar o transbordo inteligente de chamados para que a inteligência artificial resolva 80% das solicitações simples e direcione os casos complexos aos seus melhores consultores.",
+      "Como calibrar o transbordo inteligente de chamados para que o chatbot resolva 80% das solicitações simples e direcione os casos complexos aos seus melhores consultores.",
     content: [
-      "A inteligência artificial não foi criada para substituir pessoas, mas para potencializar o talento humano eliminando tarefas repetitivas.",
+      "O chatbot automatizado não foi criado para substituir pessoas, mas para potencializar o talento humano eliminando tarefas repetitivas.",
       "Quando uma empresa utiliza automação inteligente:",
-      "• A IA resolve imediatamente solicitações rotineiras (2ª via de boleto, rastreamento de pedidos, horários de funcionamento).",
+      "• O chatbot resolve imediatamente solicitações rotineiras (2ª via de boleto, rastreamento de pedidos, horários de funcionamento).",
       "• Os consultores humanos ganham tempo para se dedicar a negociações de alto ticket e suporte especializado.",
       "O resultado é uma experiência de cliente (CX) de padrão internacional, com resolução rápida e alto índice de satisfação (CSAT)."
     ],
-    category: "Inteligência Artificial",
+    category: "Chatbots",
     date: "29 de Dez, 2025",
     readTime: "5 min de leitura",
     coverImage:
@@ -261,7 +268,7 @@ export const BLOG_POSTS: BlogPost[] = [
     coverImageAlt: "Equipe trabalhando em harmonia e colaboração com tecnologia",
     featured: false,
     author: DEFAULT_AUTHOR,
-    tags: ["IA", "Atendimento Humano", "Transbordo", "Experiência do Cliente"],
+    tags: ["Chatbot", "Atendimento Humano", "Transbordo", "Experiência do Cliente"],
   },
   {
     id: "post-8",
@@ -289,6 +296,6 @@ export const BLOG_POSTS: BlogPost[] = [
     coverImageAlt: "Dashboard de análise com gráficos de dados e métricas em tempo real",
     featured: false,
     author: DEFAULT_AUTHOR,
-    tags: ["Métricas", "KPIs", "WhatsApp", "Gestão de Atendimento"],
+    tags: ["Métricas", "KPIs", "WhatsApp Corporativo", "Gestão"],
   },
 ];

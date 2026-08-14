@@ -35,8 +35,8 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=250",
     rating: 5,
     quote:
-      "O chatbot com IA realmente parece humano. Qualifica nossos prospects 24/7 e passa para a equipe de vendas apenas quem tem real potencial de compra.",
-    highlightBadge: "Qualificação 24/7 com IA",
+      "O chatbot automatizado transformou nosso fluxo de mensagens. Qualifica nossos prospects 24/7 e passa para a equipe de vendas apenas quem tem real potencial de compra.",
+    highlightBadge: "Qualificação 24/7 Automática",
   },
   {
     id: 3,
@@ -73,7 +73,7 @@ interface StaggerTestimonialsProps {
 export const StaggerTestimonials: React.FC<StaggerTestimonialsProps> = ({
   testimonials = DEFAULT_TESTIMONIALS,
   title = "Resultados Reais de Quem Confia na JM MASTER GROUP",
-  subtitle = "Empresas que aceleraram vendas e revolucionaram o atendimento com automação inteligente e IA conversacional.",
+  subtitle = "Empresas que aceleraram vendas e revolucionaram o atendimento com automação inteligente e chatbots.",
   autoPlay = true,
   autoPlayInterval = 6000,
 }) => {

@@ -401,7 +401,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                 type="text"
                 value={seo.focusKeyphrase}
                 onChange={(e) => updateSEO({ focusKeyphrase: e.target.value })}
-                placeholder="Ex: WhatsApp Business API Oficial, Chatbot IA..."
+                placeholder="Ex: WhatsApp Business API Oficial, Chatbot de Atendimento..."
                 className="w-full pl-9 pr-4 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] transition font-medium"
               />
               <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-3 pointer-events-none" />

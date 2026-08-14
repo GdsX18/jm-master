@@ -56,7 +56,7 @@ export const HeroBentoVisualizer: React.FC = () => {
                 activeTab === "ai" ? "bg-[#E64F14] text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              IA Chatbot
+              Chatbot
             </button>
             <button
               onClick={() => setActiveTab("metrics")}
@@ -122,7 +122,7 @@ export const HeroBentoVisualizer: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 2: AI Chatbot Feature Highlight */}
+        {/* Tab 2: Chatbot Feature Highlight */}
         {activeTab === "ai" && (
           <div className="space-y-3 min-h-[220px] sm:min-h-[270px] flex flex-col justify-between">
             <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#E64F14]/10 to-[#082B61]/10 border border-[#E64F14]/20 flex items-center justify-between shadow-xs">
@@ -131,16 +131,16 @@ export const HeroBentoVisualizer: React.FC = () => {
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-[#082B61]">Agente de Inteligência Artificial</h4>
+                  <h4 className="text-xs sm:text-sm font-bold text-[#082B61]">Chatbot de Atendimento Automatizado</h4>
                   <p className="text-[10px] sm:text-[11px] text-slate-600">Qualificação e Atendimento 24/7 sem pausa</p>
                 </div>
               </div>
               <span className="text-[10px] sm:text-xs font-extrabold text-[#E64F14] bg-white px-2.5 py-1 rounded-full shadow-xs border border-[#E64F14]/20 shrink-0">
-                IA Ativa
+                Ativo 24/7
               </span>
             </div>
 
-            {/* Grid 2x2 com métricas de IA adaptadas para mobile */}
+            {/* Grid 2x2 com métricas do Chatbot adaptadas para mobile */}
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div className="p-3 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-0.5">
                 <span className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 truncate block">Tempo de Resposta</span>
@@ -167,7 +167,7 @@ export const HeroBentoVisualizer: React.FC = () => {
               </div>
             </div>
 
-            {/* Painel Inferior de Recursos da IA */}
+            {/* Painel Inferior de Recursos do Chatbot */}
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5">
               <div className="flex items-center justify-between text-[11px] font-bold text-[#082B61]">
                 <span>Recursos Ativos do Chatbot</span>
@@ -175,7 +175,7 @@ export const HeroBentoVisualizer: React.FC = () => {
               </div>
               <div className="flex flex-wrap gap-1.5 pt-0.5">
                 <span className="text-[9px] font-bold text-[#082B61] bg-white border border-slate-200 px-2 py-0.5 rounded-md">
-                  🧠 NLP Avançada
+                  ⚡ Respostas Rápidas
                 </span>
                 <span className="text-[9px] font-bold text-[#082B61] bg-white border border-slate-200 px-2 py-0.5 rounded-md">
                   🎯 Qualificação Lead

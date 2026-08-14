@@ -20,7 +20,7 @@ const HIGHLIGHT_CARDS = [
   {
     icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5" />,
     title: "Automação 24/7",
-    subtitle: "IA Conversacional",
+    subtitle: "Chatbot Inteligente",
     color: "#E64F14",
     bg: "bg-[#E64F14]/10 text-[#E64F14]",
   },
@@ -86,7 +86,7 @@ export const HeroSection: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-xs font-black text-[#082B61]">Automação 24/7</p>
-                      <p className="text-[10px] font-medium text-slate-500">IA Conversacional</p>
+                      <p className="text-[10px] font-medium text-slate-500">Chatbot Automatizado</p>
                     </div>
                   </div>
                 </motion.div>
@@ -175,7 +175,7 @@ export const HeroSection: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-xs sm:text-sm md:text-base lg:text-lg text-slate-600 max-w-2xl lg:max-w-3xl mx-auto leading-relaxed font-normal z-10 px-2"
               >
-                Elevamos a presença digital e a taxa de conversão do seu negócio com automações avançadas de atendimento, inteligência conversacional 24/7 e gestão de tráfego de alta performance.
+                Elevamos a presença digital e a taxa de conversão do seu negócio com automações avançadas de atendimento, chatbots automatizados 24/7 e gestão de tráfego de alta performance.
               </motion.p>
 
               {/* CTAs */}

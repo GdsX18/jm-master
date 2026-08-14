@@ -26,8 +26,8 @@ const SOLUCOES_ITEMS: StackingCardItem[] = [
   },
   {
     id: "chatbot",
-    title: "Chatbot Inteligente com IA",
-    subtitle: "INTELIGÊNCIA CONVERSACIONAL",
+    title: "Chatbot Inteligente & Automação",
+    subtitle: "ATENDIMENTO AUTOMATIZADO",
     badge: "Atendimento 24/7",
     description:
       "Atendimento automatizado sem parecer robô. Responda clientes instantaneamente, qualifique leads e transfira chamados para atendentes de forma fluida.",
@@ -37,7 +37,7 @@ const SOLUCOES_ITEMS: StackingCardItem[] = [
       "Transição inteligente para atendimento humano",
     ],
     icon: <Bot className="w-6 h-6 sm:w-7 sm:h-7 text-[#E64F14]" />,
-    whatsappMsg: "Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20o%20Chatbot%20Inteligente%20com%20IA.",
+    whatsappMsg: "Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20o%20Chatbot%20Inteligente%20e%20Automa%C3%A7%C3%A3o.",
   },
   {
     id: "email",

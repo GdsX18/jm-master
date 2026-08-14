@@ -315,7 +315,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
               </h3>
 
               <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed font-normal">
-                Nossos consultores estão prontos para desenhar a régua de automação ideal para sua empresa via WhatsApp API Oficial e IA Conversacional.
+                Nossos consultores estão prontos para desenhar a régua de automação ideal para sua empresa via WhatsApp API Oficial e Chatbots Automatizados.
               </p>
 
               <div className="pt-2">

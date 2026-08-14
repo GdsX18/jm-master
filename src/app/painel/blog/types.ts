@@ -1,7 +1,7 @@
 export type ArticleCategory =
   | 'WhatsApp API'
   | 'Automação'
-  | 'Inteligência Artificial'
+  | 'Chatbots'
   | 'Marketing Digital'
   | 'Vendas & CRM'
   | (string & {});

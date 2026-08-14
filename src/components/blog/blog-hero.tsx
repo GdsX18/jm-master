@@ -73,7 +73,7 @@ export const BlogHero: React.FC<BlogHeroProps> = ({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-sm sm:text-base md:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal"
           >
-            Estratégias avançadas, inteligência artificial, WhatsApp API Oficial e metodologias comprovadas para transformar a comunicação e acelerar o faturamento da sua empresa.
+            Estratégias avançadas, chatbots de atendimento, WhatsApp API Oficial e metodologias comprovadas para transformar a comunicação e acelerar o faturamento da sua empresa.
           </motion.p>
 
           {/* Barra de Pesquisa Rápida com Glassmorphism */}

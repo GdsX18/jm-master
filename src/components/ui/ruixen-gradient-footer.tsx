@@ -47,7 +47,7 @@ export const RuixenGradientFooter: React.FC = () => {
             </Magnetic>
 
             <p className="text-xs sm:text-sm text-slate-300 font-normal max-w-md leading-relaxed">
-              Comunicação que engaja e converte através de automações inteligentes, IA conversacional e tráfego de alta performance.
+              Comunicação que engaja e converte através de automações inteligentes, chatbots e tráfego de alta performance.
             </p>
 
             {/* Badge Homologado Meta */}
@@ -85,7 +85,7 @@ export const RuixenGradientFooter: React.FC = () => {
               </li>
               <li>
                 <a href="#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
-                  Chatbot Inteligente com IA
+                  Chatbot de Atendimento
                 </a>
               </li>
               <li>
