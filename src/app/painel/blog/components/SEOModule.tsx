@@ -357,7 +357,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-                Otimização SEO (Yoast Engine)
+                Otimização SEO
               </h3>
               <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
                 Google Rank
