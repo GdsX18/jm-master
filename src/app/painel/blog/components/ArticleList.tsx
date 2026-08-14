@@ -16,6 +16,7 @@ import {
   Calendar,
   User as UserIcon,
   CheckCircle2,
+  Radio,
 } from 'lucide-react';
 import { Article, ArticleCategory, ArticleStatus } from '../types';
 import { getStoredCategories } from '../mockData';
@@ -28,6 +29,7 @@ interface ArticleListProps {
   onDeleteArticle: (id: string) => void;
   onToggleFeatured: (id: string) => void;
   onDuplicateArticle: (article: Article) => void;
+  onOpenTracking?: () => void;
 }
 
 export default function ArticleList({
@@ -38,6 +40,7 @@ export default function ArticleList({
   onDeleteArticle,
   onToggleFeatured,
   onDuplicateArticle,
+  onOpenTracking,
 }: ArticleListProps) {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -108,14 +111,27 @@ export default function ArticleList({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onNewArticle}
-          className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 shrink-0 cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>CRIAR NOVO ARTIGO</span>
-        </button>
+        <div className="flex items-center gap-2.5 shrink-0">
+          {onOpenTracking && (
+            <button
+              type="button"
+              onClick={onOpenTracking}
+              className="bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+            >
+              <Radio className="w-4 h-4 text-[#E85D26]" />
+              <span>Pixels & Tags</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onNewArticle}
+            className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>CRIAR NOVO ARTIGO</span>
+          </button>
+        </div>
       </div>
 
       {/* CARDS DE MÉTRICAS REAIS */}

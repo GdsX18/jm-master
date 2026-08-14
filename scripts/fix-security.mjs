@@ -12,6 +12,7 @@ async function fixSecurity() {
     'crm_interactions',
     'products',
     'financial_records',
+    'site_settings',
   ];
 
   for (const table of tables) {

@@ -26,6 +26,7 @@ import BlogEditor from './components/BlogEditor';
 import ArticleMetadata from './components/ArticleMetadata';
 import LivePreview from './components/LivePreview';
 import FAQModule from './components/FAQModule';
+import TrackingSettingsModal from './components/TrackingSettingsModal';
 
 export default function BlogDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -35,6 +36,7 @@ export default function BlogDashboardPage() {
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
   const [lastSavedTime, setLastSavedTime] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
 
   // Carregar artigos reais da API do site oficial
   const loadPostsFromApi = async () => {
@@ -303,8 +305,16 @@ export default function BlogDashboardPage() {
           onDuplicateArticle={handleDuplicateArticle}
           onToggleFeatured={handleToggleFeatured}
           onPreviewArticle={handlePreviewFromList}
+          onOpenTracking={() => setIsTrackingOpen(true)}
         />
       )}
+
+      {/* MODAL DE CONFIGURAÇÕES DE PIXELS & TAGS */}
+      <TrackingSettingsModal
+        isOpen={isTrackingOpen}
+        onClose={() => setIsTrackingOpen(false)}
+        onSuccessToast={showToast}
+      />
 
       {/* 2. MODO PRÉVIA TELA CHEIA */}
       {viewMode === 'preview' && currentArticle && (

@@ -115,3 +115,16 @@ model FinancialRecord {
 
   @@map("financial_records")
 }
+
+model SiteSetting {
+  id                 String   @id @default("default")
+  gtmId              String?  @default("")
+  gaId               String?  @default("")
+  metaPixelId        String?  @default("")
+  tiktokPixelId      String?  @default("")
+  customHeaderScript String?  @db.Text @default("")
+  customBodyScript   String?  @db.Text @default("")
+  updatedAt          DateTime @updatedAt
+
+  @@map("site_settings")
+}
