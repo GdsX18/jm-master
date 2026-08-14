@@ -59,7 +59,7 @@ export default function ProductsPage() {
       const token = localStorage.getItem('@JMMaster:token');
       
       // Carregar produtos
-      const prodRes = await fetch('http://localhost:3000/products', {
+      const prodRes = await fetch('/api/products', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       let prodData: Product[] = [];
@@ -69,7 +69,7 @@ export default function ProductsPage() {
       }
 
       // Carregar grupos
-      const groupRes = await fetch('http://localhost:3000/products/groups', {
+      const groupRes = await fetch('/api/products/groups', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (groupRes.ok) {
@@ -95,7 +95,7 @@ export default function ProductsPage() {
     setMessage(null);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/products/group-prices/${group.id}`, {
+      const res = await fetch(`/api/products/group-prices/${group.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -169,7 +169,7 @@ export default function ProductsPage() {
         }))
       };
 
-      const response = await fetch(`http://localhost:3000/products/group-prices/${selectedGroup.id}`, {
+      const response = await fetch(`/api/products/group-prices/${selectedGroup.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -198,7 +198,7 @@ export default function ProductsPage() {
     setMessage(null);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch('http://localhost:3000/products', {
+      const res = await fetch('/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ export default function ProductsPage() {
     setMessage(null);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/products/${product.id}`, {
+      const res = await fetch(`/api/products/${product.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -269,7 +269,7 @@ export default function ProductsPage() {
     setMessage(null);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/products/${editingProduct.id}`, {
+      const res = await fetch(`/api/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

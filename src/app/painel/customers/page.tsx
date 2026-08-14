@@ -131,7 +131,7 @@ export default function CustomersDashboardPage() {
     setCreatingGroup(true);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch('http://localhost:3000/products/groups', {
+      const res = await fetch('/api/products/groups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export default function CustomersDashboardPage() {
     setLoadingDetails(true);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/customers/${id}`, {
+      const res = await fetch(`/api/customers/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -198,7 +198,7 @@ export default function CustomersDashboardPage() {
       formData.append('file', selectedFile);
       formData.append('name', docName || selectedFile.name);
 
-      const res = await fetch(`http://localhost:3000/customers/${editingId}/documents`, {
+      const res = await fetch(`/api/customers/${editingId}/documents`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -232,7 +232,7 @@ export default function CustomersDashboardPage() {
       }
       
       // Construir a URL direta para o backend passando o token via query parameter
-      const downloadUrl = `http://localhost:3000/customers/documents/${docId}/download?token=${token}`;
+      const downloadUrl = `/api/customers/documents/${docId}/download?token=${token}`;
       
       // Criar um elemento <a> temporário para disparar o download nativo do navegador
       const anchor = window.document.createElement('a');
@@ -268,7 +268,7 @@ export default function CustomersDashboardPage() {
     if (!confirmed) return;
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/customers/${editingId}/documents/${docId}`, {
+      const res = await fetch(`/api/customers/${editingId}/documents/${docId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -291,7 +291,7 @@ export default function CustomersDashboardPage() {
     setSavingNote(true);
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/customers/${editingId}/notes`, {
+      const res = await fetch(`/api/customers/${editingId}/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -327,7 +327,7 @@ export default function CustomersDashboardPage() {
     if (!confirmed) return;
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`http://localhost:3000/customers/${editingId}/notes/${noteId}`, {
+      const res = await fetch(`/api/customers/${editingId}/notes/${noteId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -370,7 +370,7 @@ export default function CustomersDashboardPage() {
       const token = localStorage.getItem('@JMMaster:token');
       
       // Fetch customers
-      const custRes = await fetch('http://localhost:3000/customers', {
+      const custRes = await fetch('/api/customers', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (custRes.ok) {
@@ -379,7 +379,7 @@ export default function CustomersDashboardPage() {
       }
 
       // Fetch groups
-      const grpRes = await fetch('http://localhost:3000/products/groups', {
+      const grpRes = await fetch('/api/products/groups', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (grpRes.ok) {
@@ -589,7 +589,7 @@ export default function CustomersDashboardPage() {
     if (!confirmed) return;
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const response = await fetch(`http://localhost:3000/customers/${id}`, {
+      const response = await fetch(`/api/customers/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -608,7 +608,7 @@ export default function CustomersDashboardPage() {
   const handleToggleGroupStatus = async (id: string, groupName: string) => {
     try {
       const token = localStorage.getItem('@JMMaster:token');
-      const response = await fetch(`http://localhost:3000/customers/groups/${id}/toggle`, {
+      const response = await fetch(`/api/customers/groups/${id}/toggle`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -669,8 +669,8 @@ export default function CustomersDashboardPage() {
       };
 
       const url = editingId 
-        ? `http://localhost:3000/customers/${editingId}`
-        : 'http://localhost:3000/customers';
+        ? `/api/customers/${editingId}`
+        : '/api/customers';
 
       const method = editingId ? 'PUT' : 'POST';
 
