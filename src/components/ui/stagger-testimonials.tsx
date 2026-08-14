@@ -21,7 +21,7 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     name: "Ricardo M.",
     role: "Diretor de Operações",
     company: "Grupo LogisTech",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
+    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=250",
     rating: 5,
     quote:
       "Automatizamos todo o nosso atendimento via WhatsApp. A velocidade de resposta e a retenção de leads aumentaram drasticamente já no primeiro mês!",
