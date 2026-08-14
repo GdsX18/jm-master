@@ -60,6 +60,8 @@ export default function BlogDashboardPage() {
           views: p.views || 0,
           createdAt: p.createdAt || new Date().toISOString(),
           updatedAt: p.updatedAt || new Date().toISOString(),
+          seo: p.seo || undefined,
+          faqs: Array.isArray(p.faqs) ? p.faqs : [],
         }));
 
         if (mapped.length > 0) {
@@ -120,6 +122,14 @@ export default function BlogDashboardPage() {
       views: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      seo: {
+        focusKeyphrase: '',
+        metaTitle: '',
+        metaDescription: '',
+        canonicalUrl: '',
+        noIndex: false,
+      },
+      faqs: [],
     };
     setCurrentArticle(newArt);
     setViewMode('editor');

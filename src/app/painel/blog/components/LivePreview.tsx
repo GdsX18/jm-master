@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Article, PreviewDevice, PreviewTab } from '../types';
 
 interface LivePreviewProps {
@@ -11,6 +12,7 @@ interface LivePreviewProps {
 export default function LivePreview({ article }: LivePreviewProps) {
   const [device, setDevice] = useState<PreviewDevice>('desktop');
   const [tab, setTab] = useState<PreviewTab>('full_post');
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const formattedDate = article.publishedAt
     ? new Date(article.publishedAt).toLocaleDateString('pt-BR', {
@@ -19,6 +21,10 @@ export default function LivePreview({ article }: LivePreviewProps) {
         year: 'numeric',
       })
     : 'Rascunho não publicado';
+
+  const validFaqs = (article.faqs || []).filter(
+    (f) => f.question && f.question.trim() && f.answer && f.answer.trim()
+  );
 
   return (
     <div className="flex flex-col h-full bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm overflow-hidden">
@@ -275,6 +281,65 @@ export default function LivePreview({ article }: LivePreviewProps) {
                 className="blog-wysiwyg-rendered-content text-base leading-relaxed text-neutral-800 dark:text-neutral-200 space-y-4"
                 dangerouslySetInnerHTML={{ __html: article.contentHtml || '<p>Nenhum conteúdo inserido ainda.</p>' }}
               />
+
+              {/* SEÇÃO DE PERGUNTAS FREQUENTES (FAQ ACCORDION) NO PREVIEW */}
+              {validFaqs.length > 0 && (
+                <div className="pt-8 border-t border-neutral-200 dark:border-neutral-800 space-y-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-[#E85D26]/10 text-[#E85D26] border border-[#E85D26]/20">
+                      <HelpCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-neutral-900 dark:text-white tracking-tight">
+                        Perguntas Frequentes sobre o Tema
+                      </h3>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {validFaqs.length} {validFaqs.length === 1 ? 'dúvida respondida' : 'dúvidas respondidas'} neste artigo
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5 pt-1">
+                    {validFaqs.map((faq, idx) => {
+                      const isExpanded = openFaqIndex === idx;
+
+                      return (
+                        <div
+                          key={faq.id || idx}
+                          className={`rounded-xl border transition-all ${
+                            isExpanded
+                              ? 'bg-white dark:bg-neutral-900 border-[#E85D26]/40 shadow-xs'
+                              : 'bg-neutral-50 dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setOpenFaqIndex(isExpanded ? null : idx)}
+                            className="w-full p-3.5 text-left flex items-center justify-between gap-3 cursor-pointer select-none"
+                          >
+                            <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                              {faq.question}
+                            </span>
+                            <div className="w-5 h-5 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                              {isExpanded ? (
+                                <ChevronUp className="w-3 h-3 text-[#E85D26]" />
+                              ) : (
+                                <ChevronDown className="w-3 h-3 text-neutral-500" />
+                              )}
+                            </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="px-3.5 pb-3.5 pt-1 text-xs text-neutral-600 dark:text-neutral-300 border-t border-neutral-100 dark:border-neutral-800/60 leading-relaxed font-normal">
+                              {faq.answer}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* BANNER DE CTA OFICIAL JM MASTER GROUP */}
               <div className="mt-12 bg-[#0C1E38] text-white rounded-2xl p-6 sm:p-8 border border-neutral-800 space-y-4 relative overflow-hidden">

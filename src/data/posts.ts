@@ -4,6 +4,20 @@ export interface Author {
   avatar: string;
 }
 
+export interface ArticleSEO {
+  focusKeyphrase?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+}
+
+export interface ArticleFAQ {
+  id?: string;
+  question: string;
+  answer: string;
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -20,6 +34,8 @@ export interface BlogPost {
   featured?: boolean;
   status?: 'draft' | 'published';
   tags: string[];
+  seo?: ArticleSEO;
+  faqs?: ArticleFAQ[];
 }
 
 export const CATEGORIES = [
@@ -65,6 +81,29 @@ export const BLOG_POSTS: BlogPost[] = [
     featured: true,
     author: DEFAULT_AUTHOR,
     tags: ["WhatsApp API", "Meta", "Atendimento", "Automação"],
+    seo: {
+      focusKeyphrase: "WhatsApp Business API Oficial",
+      metaTitle: "WhatsApp Business API Oficial: Guia Completo e Definitivo 2026",
+      metaDescription: "Aprenda a escalar o suporte e vendas da sua empresa com a API Oficial do WhatsApp Meta. Sem riscos de bloqueio e com atendimento 24/7.",
+      canonicalUrl: "https://jmmaster.com.br/blog/whatsapp-business-api-oficial-guia-completo-2026",
+    },
+    faqs: [
+      {
+        id: "faq-1-1",
+        question: "Qual a diferença entre o WhatsApp Business gratuito e a API Oficial da Meta?",
+        answer: "O aplicativo WhatsApp Business gratuito é limitado a poucos aparelhos conectados e não permite múltiplos atendentes em grande escala nem integrações robustas com CRM e robôs inteligentes. Já a API Oficial é uma infraestrutura em nuvem homologada pela Meta, permitindo milhares de atendimentos simultâneos em um único número, chatbots com IA e risco zero de bloqueio por disparo ativo."
+      },
+      {
+        id: "faq-1-2",
+        question: "É possível manter o mesmo número de telefone atual da minha empresa?",
+        answer: "Sim! Você pode migrar números fixos, números 0800 ou celulares corporativos já existentes para a API Oficial do WhatsApp através do processo oficial de portabilidade da Meta."
+      },
+      {
+        id: "faq-1-3",
+        question: "Como funciona o selo verde de verificação oficial no WhatsApp?",
+        answer: "O selo de conta comercial oficial (badge verde) é concedido diretamente pela Meta para empresas notáveis e com documentação empresarial validada no Gerenciador de Negócios (Meta Business Manager). A JM Master Group auxilia todo o processo de submissão e conformidade."
+      }
+    ]
   },
   {
     id: "post-2",
@@ -90,6 +129,23 @@ export const BLOG_POSTS: BlogPost[] = [
     featured: false,
     author: DEFAULT_AUTHOR,
     tags: ["Inteligência Artificial", "Chatbots", "Vendas", "Atendimento 24/7"],
+    seo: {
+      focusKeyphrase: "Chatbots com IA Generativa",
+      metaTitle: "Chatbots com IA Generativa: Triplique as Vendas no WhatsApp",
+      metaDescription: "Descubra como os agentes de IA conversacional eliminam filas de espera, respondem dúvidas em 0.8s e convertem 3x mais leads.",
+    },
+    faqs: [
+      {
+        id: "faq-2-1",
+        question: "A IA pode falar bobagem ou dar descontos indevidos aos clientes?",
+        answer: "Não. A inteligência artificial opera dentro de guardrails estritos e uma base de conhecimento corporativa fechada (RAG), garantindo que ela apenas responda com base nas regras, preços e termos oficiais da sua empresa."
+      },
+      {
+        id: "faq-2-2",
+        question: "O que acontece se a IA não souber responder a dúvida do cliente?",
+        answer: "O sistema executa o transbordo inteligente instantâneo: a conversa é repassada com todo o histórico e contexto para um atendente humano da equipe comercial ou de suporte."
+      }
+    ]
   },
   {
     id: "post-3",

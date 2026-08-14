@@ -1,29 +1,5 @@
 [
   {
-    "id": "post-1786667087027",
-    "title": "Teste",
-    "slug": "t",
-    "excerpt": "",
-    "content": [],
-    "contentHtml": "<div class=\"callout callout-info\">\n        <strong>Ponto de Atenção:</strong> teste\n      </div>\n      <pre class=\"bg-neutral-900 text-neutral-100 p-4 rounded-xl font-mono text-xs my-4 overflow-x-auto\"><code>teste<br><br></code></pre><a href=\"https://www.hltv.org/events/8261/esports-world-cup-2026\" class=\"text-[#E85D26] hover:underline font-semibold\" target=\"_blank\" rel=\"noopener noreferrer\">teste</a><br><blockquote style=\"text-align: left;\">teste</blockquote><hr class=\"my-8 border-t border-neutral-200 dark:border-neutral-800\"><hr class=\"my-8 border-t border-neutral-200 dark:border-neutral-800\"><p><br></p>",
-    "category": "WhatsApp API",
-    "coverImage": "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=1200&q=80",
-    "coverImageAlt": "Representação de redes neurais e processamento de linguagem natural",
-    "date": "13 de ago. de 2026",
-    "readTime": "1 min",
-    "author": {
-      "name": "JM Master Group",
-      "role": "Especialistas em Mensageria & IA",
-      "avatar": "/logos/Icone.png"
-    },
-    "featured": true,
-    "status": "published",
-    "tags": [
-      "WhatsApp API",
-      "JM Master"
-    ]
-  },
-  {
     "id": "post-1",
     "slug": "whatsapp-business-api-oficial-guia-completo-2026",
     "title": "WhatsApp Business API Oficial: Como Escalar o Atendimento sem Risco de Bloqueio",
@@ -55,7 +31,30 @@
       "Atendimento",
       "Automação"
     ],
-    "status": "published"
+    "status": "published",
+    "seo": {
+      "focusKeyphrase": "WhatsApp Business API Oficial",
+      "metaTitle": "WhatsApp Business API Oficial: Guia Completo e Definitivo 2026",
+      "metaDescription": "Aprenda a escalar o suporte e vendas da sua empresa com a API Oficial do WhatsApp Meta. Sem riscos de bloqueio e com atendimento 24/7.",
+      "canonicalUrl": "https://jmmaster.com.br/blog/whatsapp-business-api-oficial-guia-completo-2026"
+    },
+    "faqs": [
+      {
+        "id": "faq-1-1",
+        "question": "Qual a diferença entre o WhatsApp Business gratuito e a API Oficial da Meta?",
+        "answer": "O aplicativo WhatsApp Business gratuito é limitado a poucos aparelhos conectados e não permite múltiplos atendentes em grande escala nem integrações robustas com CRM e robôs inteligentes. Já a API Oficial é uma infraestrutura em nuvem homologada pela Meta, permitindo milhares de atendimentos simultâneos em um único número, chatbots com IA e risco zero de bloqueio por disparo ativo."
+      },
+      {
+        "id": "faq-1-2",
+        "question": "É possível manter o mesmo número de telefone atual da minha empresa?",
+        "answer": "Sim! Você pode migrar números fixos, números 0800 ou celulares corporativos já existentes para a API Oficial do WhatsApp através do processo oficial de portabilidade da Meta."
+      },
+      {
+        "id": "faq-1-3",
+        "question": "Como funciona o selo verde de verificação oficial no WhatsApp?",
+        "answer": "O selo de conta comercial oficial (badge verde) é concedido diretamente pela Meta para empresas notáveis e com documentação empresarial validada no Gerenciador de Negócios (Meta Business Manager). A JM Master Group auxilia todo o processo de submissão e conformidade."
+      }
+    ]
   },
   {
     "id": "post-2",
@@ -88,7 +87,24 @@
       "Vendas",
       "Atendimento 24/7"
     ],
-    "status": "published"
+    "status": "published",
+    "seo": {
+      "focusKeyphrase": "Chatbots com IA Generativa",
+      "metaTitle": "Chatbots com IA Generativa: Triplique as Vendas no WhatsApp",
+      "metaDescription": "Descubra como os agentes de IA conversacional eliminam filas de espera, respondem dúvidas em 0.8s e convertem 3x mais leads."
+    },
+    "faqs": [
+      {
+        "id": "faq-2-1",
+        "question": "A IA pode falar bobagem ou dar descontos indevidos aos clientes?",
+        "answer": "Não. A inteligência artificial opera dentro de guardrails estritos e uma base de conhecimento corporativa fechada (RAG), garantindo que ela apenas responda com base nas regras, preços e termos oficiais da sua empresa."
+      },
+      {
+        "id": "faq-2-2",
+        "question": "O que acontece se a IA não souber responder a dúvida do cliente?",
+        "answer": "O sistema executa o transbordo inteligente instantâneo: a conversa é repassada com todo o histórico e contexto para um atendente humano da equipe comercial ou de suporte."
+      }
+    ]
   },
   {
     "id": "post-3",

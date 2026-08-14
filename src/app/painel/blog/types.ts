@@ -29,6 +29,20 @@ export interface ArticleImageInsert {
   alignment: 'center' | 'full' | 'left' | 'right';
 }
 
+export interface ArticleSEO {
+  focusKeyphrase: string;
+  metaTitle: string;
+  metaDescription: string;
+  canonicalUrl?: string;
+  noIndex?: boolean;
+}
+
+export interface ArticleFAQ {
+  id: string;
+  question: string;
+  answer: string;
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -46,6 +60,8 @@ export interface Article {
   views?: number;
   createdAt: string;
   updatedAt: string;
+  seo?: ArticleSEO;
+  faqs?: ArticleFAQ[];
 }
 
 export type ViewMode = 'list' | 'editor' | 'split' | 'preview';

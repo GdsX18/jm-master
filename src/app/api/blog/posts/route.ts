@@ -48,6 +48,8 @@ export async function POST(request: Request) {
       featured: postData.featured ?? postData.isFeatured ?? false,
       status: postData.status === 'draft' ? 'draft' : 'published',
       tags: Array.isArray(postData.tags) ? postData.tags : [postData.category || 'Mensageria', 'JM Master'],
+      seo: postData.seo || undefined,
+      faqs: Array.isArray(postData.faqs) ? postData.faqs : [],
     };
 
     const currentPosts = getStoredPosts();

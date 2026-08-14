@@ -14,6 +14,8 @@ import {
 import { Article, ArticleCategory } from '../types';
 import { getStoredCategories, saveStoredCategories, DEFAULT_CATEGORIES, slugify } from '../mockData';
 import MediaUploader from './MediaUploader';
+import SEOModule from './SEOModule';
+import FAQModule from './FAQModule';
 
 interface ArticleMetadataProps {
   article: Article;
@@ -308,7 +310,13 @@ export default function ArticleMetadata({
         />
       </div>
 
-      {/* 3. AUTORIA & PUBLICAÇÃO 100% AUTOMÁTICAS */}
+      {/* 3. MÓDULO DE SEO AVANÇADO (ESTILO YOAST SEO) */}
+      <SEOModule article={article} onChange={onChange} />
+
+      {/* 4. MÓDULO DE FAQ & RICH SNIPPETS (SCHEMA JSON-LD) */}
+      <FAQModule article={article} onChange={onChange} />
+
+      {/* 5. AUTORIA & PUBLICAÇÃO 100% AUTOMÁTICAS */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
           <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 dark:text-white">

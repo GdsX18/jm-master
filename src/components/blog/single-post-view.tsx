@@ -4,7 +4,19 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BlogPost, BLOG_POSTS } from "@/data/posts";
-import { ArrowLeft, Calendar, Clock, Sparkles, MessageSquare, ArrowRight, Share2, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Sparkles,
+  MessageSquare,
+  ArrowRight,
+  Share2,
+  Check,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
@@ -16,13 +28,14 @@ interface SinglePostViewProps {
 
 export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
   const [copied, setCopied] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0); // Primeira FAQ aberta por padrão
   const relatedPosts = BLOG_POSTS.filter((p) => p.id !== post.id).slice(0, 3);
 
   const handleShare = async () => {
     if (typeof window !== "undefined") {
       const shareData = {
-        title: post.title,
-        text: post.excerpt,
+        title: post.seo?.metaTitle || post.title,
+        text: post.seo?.metaDescription || post.excerpt,
         url: window.location.href,
       };
 
@@ -40,7 +53,6 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
       } catch (err) {
-        // Fallback legado
         const dummy = document.createElement("input");
         document.body.appendChild(dummy);
         dummy.value = window.location.href;
@@ -57,6 +69,10 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
     `Olá! Estava lendo o artigo "${post.title}" no Blog da JM MASTER GROUP e gostaria de saber mais sobre as soluções.`
   );
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
+
+  const validFaqs = (post.faqs || []).filter(
+    (f) => f.question && f.question.trim() && f.answer && f.answer.trim()
+  );
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] text-slate-900 relative z-10 flex flex-col justify-between">
@@ -174,7 +190,72 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           )}
 
           {/* ========================================================
-              5. TAGS E BOTÃO DE COMPARTILHAMENTO INTERATIVO
+              5. SEÇÃO DE PERGUNTAS FREQUENTES (FAQ ACCORDION)
+             ======================================================== */}
+          {validFaqs.length > 0 && (
+            <section className="pt-8 sm:pt-12 border-t border-slate-200/80 space-y-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 rounded-2xl bg-[#E64F14]/10 text-[#E64F14] border border-[#E64F14]/20 shadow-2xs">
+                  <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#082B61] tracking-tight">
+                    Perguntas Frequentes sobre o Tema
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                    Tire as principais dúvidas técnicas e comerciais abordadas neste artigo
+                  </p>
+                </div>
+              </div>
+
+              {/* Accordion List */}
+              <div className="space-y-3 pt-2">
+                {validFaqs.map((faq, idx) => {
+                  const isExpanded = openFaqIndex === idx;
+
+                  return (
+                    <div
+                      key={faq.id || idx}
+                      className={`rounded-2xl border transition-all duration-300 overflow-hidden shadow-2xs ${
+                        isExpanded
+                          ? "bg-white border-[#E64F14]/40 ring-2 ring-[#E64F14]/10 shadow-md"
+                          : "bg-white/80 hover:bg-white border-slate-200/90"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(isExpanded ? null : idx)}
+                        className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 cursor-pointer select-none"
+                        aria-expanded={isExpanded}
+                      >
+                        <h3 className="text-sm sm:text-base font-extrabold text-[#082B61] leading-snug">
+                          {faq.question}
+                        </h3>
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                            isExpanded
+                              ? "bg-[#E64F14] text-white rotate-180"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="px-4 sm:px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 font-normal animate-fadeIn">
+                          <p>{faq.answer}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* ========================================================
+              6. TAGS E BOTÃO DE COMPARTILHAMENTO INTERATIVO
              ======================================================== */}
           <div className="pt-6 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -216,7 +297,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           </div>
 
           {/* ========================================================
-              6. CARD CTA EXECUTIVO PARA O WHATSAPP (CLEAN GLASSMORPHISM)
+              7. CARD CTA EXECUTIVO PARA O WHATSAPP (CLEAN GLASSMORPHISM)
              ======================================================== */}
           <div className="p-8 sm:p-12 rounded-3xl bg-white/70 backdrop-blur-2xl border border-white/90 shadow-[0_15px_40px_rgba(8,43,97,0.06)] relative overflow-hidden mt-12">
             {/* Orbes de Iluminação Translúcidas Sutis */}
@@ -253,7 +334,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           </div>
 
           {/* ========================================================
-              7. ARTIGOS RELACIONADOS
+              8. ARTIGOS RELACIONADOS
              ======================================================== */}
           <div className="pt-12 sm:pt-16 space-y-6">
             <div className="flex items-center justify-between">
