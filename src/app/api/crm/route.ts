@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         customerName: customerName || 'Cliente Geral',
         title,
         description,
-        date: date || 'Hoje',
+        date: date || new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }),
         type: type || 'COMERCIAL',
         badge: badge || 'bg-orange-500/10 text-[#E85D26] border border-orange-500/20',
         customerId: customerId || undefined,
@@ -42,5 +42,26 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API CRM POST Error]:', error);
     return NextResponse.json({ error: error.message || 'Erro ao registrar interação' }, { status: 500 });
+  }
+}
+
+// DELETE /api/crm - Excluir interação
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
+    }
+
+    await prisma.crmInteraction.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: 'Interação excluída com sucesso' });
+  } catch (error: any) {
+    console.error('[API CRM DELETE Error]:', error);
+    return NextResponse.json({ error: error.message || 'Erro ao excluir interação' }, { status: 500 });
   }
 }
