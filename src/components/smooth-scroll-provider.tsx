@@ -1,64 +1,83 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 
 export const SmoothScrollProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
+  const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // Desativa o Lenis se estiver em qualquer rota do Painel / CRM para permitir scroll nativo 100% livre
+    // Desativa o Lenis se estiver em qualquer rota do Painel / CRM para garantir scroll nativo 100% livre
     if (pathname?.startsWith("/painel")) {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
       return;
     }
 
-    let lenisInstance: { raf: (time: number) => void; destroy: () => void } | null = null;
-    let rafId: number | null = null;
+    // Inicialização calibrada do Lenis oficial
+    const lenis = new Lenis({
+      duration: 1.1,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      smoothWheel: true,
+      wheelMultiplier: 0.9, // Calibração para evitar aceleração excessiva em mouses físicos e monitores de alta frequência
+      touchMultiplier: 1.0,
+      syncTouch: false, // Dispositivos touch (mobile/tablet) utilizam scroll nativo sem travamentos
+      autoRaf: false,
+    });
 
-    if (typeof window !== "undefined") {
-      const isTouch = window.matchMedia("(pointer: coarse)").matches || "ontouchstart" in window || window.innerWidth < 1024;
-      if (isTouch) {
-        return;
-      }
+    lenisRef.current = lenis;
 
-      // Dynamic import seguro que nunca quebra o bundling do Webpack no Next.js
-      import("@studio-freight/lenis")
-        .then((LenisModule) => {
-          const LenisConstructor = (LenisModule as unknown as { default?: new (options?: unknown) => typeof lenisInstance }).default || (LenisModule as unknown as new (options?: unknown) => typeof lenisInstance);
-
-          if (typeof LenisConstructor === "function") {
-            try {
-              lenisInstance = new LenisConstructor({
-                duration: 1.0,
-                easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                orientation: "vertical",
-                gestureOrientation: "vertical",
-                smoothWheel: true,
-                wheelMultiplier: 1,
-              });
-
-              const raf = (time: number) => {
-                if (lenisInstance) {
-                  lenisInstance.raf(time);
-                  rafId = requestAnimationFrame(raf);
-                }
-              };
-
-              rafId = requestAnimationFrame(raf);
-            } catch (e) {
-              console.warn("Lenis init error:", e);
-            }
-          }
-        })
-        .catch(() => {});
+    // Conexão com o loop RAF
+    let rafId: number;
+    function raf(time: number) {
+      lenis.raf(time);
+      rafId = requestAnimationFrame(raf);
     }
+    rafId = requestAnimationFrame(raf);
+
+    // Suporte aprimorado para links âncora (#sobre, #metodologia, etc.) com offset para compensar a navbar
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      const href = anchor.getAttribute("href");
+      if (!href) return;
+
+      // Se for um link âncora interno (ex: #solucoes ou /#solucoes estando na home)
+      const hashIndex = href.indexOf("#");
+      if (hashIndex !== -1) {
+        const hash = href.substring(hashIndex);
+        const path = href.substring(0, hashIndex);
+
+        const isCurrentPage = path === "" || path === "/" || path === pathname;
+        if (isCurrentPage && hash.length > 1) {
+          const targetEl = document.querySelector(hash);
+          if (targetEl) {
+            e.preventDefault();
+            lenis.scrollTo(targetEl as HTMLElement, {
+              offset: -80, // Compensação da barra de navegação flutuante
+              duration: 1.2,
+            });
+          }
+        }
+      }
+    };
+
+    document.addEventListener("click", handleAnchorClick, { capture: true });
 
     return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      if (lenisInstance && typeof lenisInstance.destroy === "function") {
-        lenisInstance.destroy();
-        lenisInstance = null;
-      }
+      cancelAnimationFrame(rafId);
+      document.removeEventListener("click", handleAnchorClick, { capture: true });
+      lenis.destroy();
+      lenisRef.current = null;
     };
   }, [pathname]);
 
