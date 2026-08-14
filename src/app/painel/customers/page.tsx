@@ -58,6 +58,8 @@ interface Customer {
   zipCode: string;
   code?: string;
   type: 'PRE_PAGO' | 'POS_PAGO';
+  groupId?: string;
+  groupIds?: string[];
   groups?: Group[];
   isActive: boolean;
   contacts: ContactInput[];
@@ -735,14 +737,45 @@ export default function CustomersDashboardPage() {
   );
 
   // Group Corporate Mapping and calculations (Tab Grupos)
-  // Agora usamos a lista completa que vem do backend (allGroups) que inclui grupos vazios
-  const groupsList = allGroups;
+  // Mapeamos os clientes para cada grupo garantindo que customers seja sempre um array
+  const groupsList = (allGroups || []).map(g => {
+    const groupCusts = (customers || []).filter((c: any) => 
+      c.groupId === g.id || 
+      (Array.isArray(c.groupIds) && c.groupIds.includes(g.id))
+    );
+    return {
+      ...g,
+      customers: groupCusts,
+    };
+  });
 
   // Search Filter Implementation for Grupos
   const filteredGroups = groupsList.filter(g => 
     g.name.toLowerCase().includes(groupSearch.toLowerCase()) ||
     (g.customers && g.customers.some((c: any) => c.name.toLowerCase().includes(groupSearch.toLowerCase())))
   );
+
+  const handleDeleteGroup = async (id: string, groupName: string) => {
+    const confirmed = await confirm({
+      title: 'Excluir Grupo',
+      message: `Deseja realmente excluir o grupo "${groupName}"?`,
+      confirmLabel: 'Sim, excluir',
+      cancelLabel: 'Cancelar',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+    try {
+      const res = await fetch(`/api/products/groups?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        addToast('success', 'Grupo excluído', `O grupo ${groupName} foi removido com sucesso.`);
+        await loadData();
+      } else {
+        addToast('error', 'Erro ao excluir', 'Não foi possível excluir o grupo.');
+      }
+    } catch {
+      addToast('error', 'Erro de conexão', 'Falha ao conectar com o servidor.');
+    }
+  };
 
   // Guarantee dynamically fetched ViaCEP city is inside the select dropdown options list
   const currentCities = [...citiesList];
@@ -1002,7 +1035,9 @@ export default function CustomersDashboardPage() {
                 </div>
                 <div className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-md transition duration-300">
                   <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">Empresas Integrantes</p>
-                  <h3 className="text-3xl font-extrabold mt-2 text-master-orange">{customers.filter(c => c.groups && c.groups.length > 0).length}</h3>
+                  <h3 className="text-3xl font-extrabold mt-2 text-master-orange">
+                    {customers.filter(c => c.groupId || (c.groupIds && c.groupIds.length > 0)).length}
+                  </h3>
                 </div>
               </div>
 
@@ -1021,7 +1056,9 @@ export default function CustomersDashboardPage() {
               {loadingList ? (
                 <div className="p-10 text-center font-bold text-neutral-500">Carregando grupos corporativos...</div>
               ) : filteredGroups.length === 0 ? (
-                <div className="p-10 text-center text-neutral-500 font-medium">Nenhum grupo corporativo encontrado.</div>
+                <div className="p-10 text-center text-neutral-500 font-medium bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                  Nenhum grupo corporativo cadastrado. Clique no botão "+ Cadastrar Grupo" acima para criar o primeiro.
+                </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6">
                   {filteredGroups.map((grp) => (
@@ -1045,7 +1082,7 @@ export default function CustomersDashboardPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleToggleGroupStatus(grp.id, grp.name)}
-                            className={`px-3 py-1.5 text-xxs font-bold rounded-lg border transition ${
+                            className={`px-3 py-1.5 text-xxs font-bold rounded-lg border transition cursor-pointer ${
                               grp.isActive 
                                 ? 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900' 
                                 : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
@@ -1053,69 +1090,82 @@ export default function CustomersDashboardPage() {
                           >
                             {grp.isActive ? 'Inativar Grupo' : 'Ativar Grupo'}
                           </button>
+                          <button
+                            onClick={() => handleDeleteGroup(grp.id, grp.name)}
+                            className="px-3 py-1.5 text-xxs font-bold rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                            title="Excluir Grupo"
+                          >
+                            Excluir
+                          </button>
                           <span className="px-3 py-1 bg-neutral-100 text-neutral-600 dark:bg-neutral-850 dark:text-neutral-300 text-xs font-bold rounded-full">
-                            {grp.customers.length} {grp.customers.length === 1 ? 'empresa' : 'empresas'}
+                            {(grp.customers || []).length} {(grp.customers || []).length === 1 ? 'empresa' : 'empresas'}
                           </span>
                         </div>
                       </div>
 
                       {/* Lista de Empresas sob o Grupo */}
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs font-semibold">
-                          <thead>
-                            <tr className="text-neutral-450 uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800 pb-2">
-                              <th className="py-2 px-2">Razão Social / Filial</th>
-                              <th className="py-2 px-2">CPF / CNPJ</th>
-                              <th className="py-2 px-2">Consumo</th>
-                              <th className="py-2 px-2">Cidade/UF</th>
-                              <th className="py-2 px-2 text-center">Ações</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-neutral-100 dark:divide-neutral-850">
-                            {grp.customers.map((c: any) => (
-                              <tr key={c.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/40 transition">
-                                <td className="py-3 px-2 text-sm font-bold text-neutral-800 dark:text-neutral-200">
-                                  <span className="flex items-center gap-2">
-                                    {c.name}
-                                    <span className={`w-2 h-2 rounded-full ${c.isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} title={c.isActive ? 'Ativo' : 'Inativo'}></span>
-                                  </span>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    {c.code && <span className="text-xxs font-normal font-mono text-neutral-400">{c.code}</span>}
-                                    <span className={`text-xxs font-extrabold px-1 rounded ${c.isActive ? 'bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-rose-100/70 text-rose-800 dark:bg-rose-950/30 dark:text-rose-455'}`}>
-                                      {c.isActive ? 'Ativo' : 'Inativo'}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="py-3 px-2 text-neutral-600 dark:text-neutral-400">{c.document.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}</td>
-                                <td className="py-3 px-2">
-                                  <span className={`inline-block px-2 py-0.5 text-xxs font-extrabold uppercase rounded ${
-                                    c.type === 'POS_PAGO'
-                                      ? 'bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/50'
-                                      : 'bg-orange-100/70 text-orange-850 dark:bg-orange-950/30 dark:text-orange-400 border border-orange-200/50 dark:border-orange-900/50'
-                                  }`}>
-                                    {c.type === 'POS_PAGO' ? 'Pós-Pago' : 'Pré-Pago'}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-2 text-neutral-600 dark:text-neutral-400">{c.city}/{c.state}</td>
-                                <td className="py-3 px-2 text-center space-x-1">
-                                  <button
-                                    onClick={() => handleStartEdit(c)}
-                                    className="px-2 py-1 bg-sky-55 text-sky-800 text-xxs font-bold rounded hover:bg-sky-100 dark:bg-sky-950/20 dark:text-sky-400 transition"
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    onClick={() => handleDelete(c.id, c.name)}
-                                    className="px-2 py-1 bg-rose-55 text-rose-800 text-xxs font-bold rounded hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-400 transition"
-                                  >
-                                    Remover
-                                  </button>
-                                </td>
+                      {(!grp.customers || grp.customers.length === 0) ? (
+                        <div className="py-4 text-xs text-neutral-400 text-center font-medium">
+                          Nenhuma empresa vinculada a este grupo ainda.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs font-semibold">
+                            <thead>
+                              <tr className="text-neutral-450 uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800 pb-2">
+                                <th className="py-2 px-2">Razão Social / Filial</th>
+                                <th className="py-2 px-2">CPF / CNPJ</th>
+                                <th className="py-2 px-2">Consumo</th>
+                                <th className="py-2 px-2">Cidade/UF</th>
+                                <th className="py-2 px-2 text-center">Ações</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-850">
+                              {grp.customers.map((c: any) => (
+                                <tr key={c.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/40 transition">
+                                  <td className="py-3 px-2 text-sm font-bold text-neutral-800 dark:text-neutral-200">
+                                    <span className="flex items-center gap-2">
+                                      {c.name}
+                                      <span className={`w-2 h-2 rounded-full ${c.isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} title={c.isActive ? 'Ativo' : 'Inativo'}></span>
+                                    </span>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      {c.code && <span className="text-xxs font-normal font-mono text-neutral-400">{c.code}</span>}
+                                      <span className={`text-xxs font-extrabold px-1 rounded ${c.isActive ? 'bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-rose-100/70 text-rose-800 dark:bg-rose-950/30 dark:text-rose-455'}`}>
+                                        {c.isActive ? 'Ativo' : 'Inativo'}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-2 text-neutral-600 dark:text-neutral-400">{c.document.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}</td>
+                                  <td className="py-3 px-2">
+                                    <span className={`inline-block px-2 py-0.5 text-xxs font-extrabold uppercase rounded ${
+                                      c.type === 'POS_PAGO'
+                                        ? 'bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/50'
+                                        : 'bg-orange-100/70 text-orange-850 dark:bg-orange-950/30 dark:text-orange-400 border border-orange-200/50 dark:border-orange-900/50'
+                                    }`}>
+                                      {c.type === 'POS_PAGO' ? 'Pós-Pago' : 'Pré-Pago'}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-2 text-neutral-600 dark:text-neutral-400">{c.city}/{c.state}</td>
+                                  <td className="py-3 px-2 text-center space-x-1">
+                                    <button
+                                      onClick={() => handleStartEdit(c)}
+                                      className="px-2 py-1 bg-sky-55 text-sky-800 text-xxs font-bold rounded hover:bg-sky-100 dark:bg-sky-950/20 dark:text-sky-400 transition"
+                                    >
+                                      Editar
+                                    </button>
+                                    <button
+                                      onClick={() => handleDelete(c.id, c.name)}
+                                      className="px-2 py-1 bg-rose-55 text-rose-800 text-xxs font-bold rounded hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-400 transition"
+                                    >
+                                      Remover
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

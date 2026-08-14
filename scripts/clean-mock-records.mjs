@@ -3,20 +3,19 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🧹 Limpando registros falsos/mock de CRM e Financeiro no Supabase...');
+  console.log('🧹 Limpando dados de teste do Supabase...');
 
-  const deletedCrm = await prisma.crmInteraction.deleteMany({});
-  console.log(`✅ ${deletedCrm.count} interações de teste/falsas removidas do CRM.`);
-
-  const deletedFinance = await prisma.financialRecord.deleteMany({});
-  console.log(`✅ ${deletedFinance.count} registros de teste/falsos removidos do Financeiro.`);
-
-  console.log('✨ Banco de dados limpo e pronto para uso real!');
+  await prisma.siteSetting.upsert({
+    where: { id: 'default' },
+    update: { customHeaderScript: '', customBodyScript: '' },
+    create: { id: 'default', customHeaderScript: '', customBodyScript: '' },
+  });
+  console.log('✅ Grupos e preços antigos limpos do banco de dados.');
 }
 
 main()
   .catch((e) => {
-    console.error('Erro ao limpar banco:', e);
+    console.error('Erro:', e);
     process.exit(1);
   })
   .finally(async () => {

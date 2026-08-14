@@ -11,18 +11,13 @@ export async function GET() {
       });
     }
 
-    // Grupos padrão se ainda não existirem
-    let groups = [
-      { id: 'grp-padrao', name: 'Tabela Padrão (Varejo)', isActive: true },
-      { id: 'grp-enterprise', name: 'Enterprise & Grandes Contas', isActive: true },
-      { id: 'grp-parceiros', name: 'Parceiros & Integradores', isActive: true },
-    ];
+    let groups: Array<{ id: string; name: string; isActive: boolean }> = [];
 
     try {
       if (setting.customHeaderScript && setting.customHeaderScript.startsWith('GROUPS_JSON:')) {
         const jsonStr = setting.customHeaderScript.replace('GROUPS_JSON:', '');
         const parsed = JSON.parse(jsonStr);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           groups = parsed;
         }
       }
@@ -46,11 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     let setting = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
-    let groups = [
-      { id: 'grp-padrao', name: 'Tabela Padrão (Varejo)', isActive: true },
-      { id: 'grp-enterprise', name: 'Enterprise & Grandes Contas', isActive: true },
-      { id: 'grp-parceiros', name: 'Parceiros & Integradores', isActive: true },
-    ];
+    let groups: Array<{ id: string; name: string; isActive: boolean }> = [];
 
     if (setting?.customHeaderScript && setting.customHeaderScript.startsWith('GROUPS_JSON:')) {
       try {
@@ -76,5 +67,39 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API Groups POST Error]:', error);
     return NextResponse.json({ message: error.message || 'Erro ao criar grupo' }, { status: 500 });
+  }
+}
+
+// DELETE /api/products/groups - Excluir grupo
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ message: 'ID do grupo é obrigatório' }, { status: 400 });
+    }
+
+    let setting = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
+    let groups: Array<{ id: string; name: string; isActive: boolean }> = [];
+
+    if (setting?.customHeaderScript && setting.customHeaderScript.startsWith('GROUPS_JSON:')) {
+      try {
+        groups = JSON.parse(setting.customHeaderScript.replace('GROUPS_JSON:', ''));
+      } catch {}
+    }
+
+    groups = groups.filter((g) => g.id !== id);
+
+    await prisma.siteSetting.upsert({
+      where: { id: 'default' },
+      update: { customHeaderScript: `GROUPS_JSON:${JSON.stringify(groups)}` },
+      create: { id: 'default', customHeaderScript: `GROUPS_JSON:${JSON.stringify(groups)}` },
+    });
+
+    return NextResponse.json({ success: true, message: 'Grupo excluído com sucesso' });
+  } catch (error: any) {
+    console.error('[API Groups DELETE Error]:', error);
+    return NextResponse.json({ message: error.message || 'Erro ao excluir grupo' }, { status: 500 });
   }
 }
