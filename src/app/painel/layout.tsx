@@ -81,18 +81,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const allMenuItems = [
-    { name: 'Dashboard', path: '/painel', icon: LayoutDashboard },
-    { name: 'Cadastro de Clientes', path: '/painel/customers', icon: Users },
-    { name: 'Cadastro de Produtos', path: '/painel/products', icon: Package },
-    { name: 'Criador de Blog', path: '/painel/blog', icon: PenTool },
-    { name: 'Usuários do Sistema', path: '/painel/users', icon: Shield },
-    { name: 'Financeiro', path: '/painel/finance', icon: CreditCard },
-    { name: 'CRM (Histórico)', path: '/painel/crm', icon: History },
+    { name: 'Dashboard', shortName: 'Dashboard', path: '/painel', icon: LayoutDashboard },
+    { name: 'Cadastro de Clientes', shortName: 'Clientes', path: '/painel/customers', icon: Users },
+    { name: 'Cadastro de Produtos', shortName: 'Produtos', path: '/painel/products', icon: Package },
+    { name: 'Criador de Blog', shortName: 'Blog', path: '/painel/blog', icon: PenTool },
+    { name: 'Usuários do Sistema', shortName: 'Usuários', path: '/painel/users', icon: Shield },
+    { name: 'Financeiro', shortName: 'Financeiro', path: '/painel/finance', icon: CreditCard },
+    { name: 'CRM & Linha do Tempo', shortName: 'CRM', path: '/painel/crm', icon: History },
   ];
 
   // Se o usuário logado for da classe Criador de Blog, exibe apenas a opção do Blog
   const menuItems = currentUser?.role === 'Criador de Blog'
-    ? [{ name: 'Criador de Blog', path: '/painel/blog', icon: PenTool }]
+    ? [{ name: 'Criador de Blog', shortName: 'Blog', path: '/painel/blog', icon: PenTool }]
     : allMenuItems;
 
   const handleLogout = () => {
@@ -113,11 +113,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className={`min-h-screen w-full flex flex-col font-sans ${isDark ? 'dark bg-neutral-950 text-white' : 'bg-neutral-100 text-neutral-900'} transition-colors duration-300`}>
         
         {/* HEADER / NAVBAR SUPERIOR FIXA */}
-        <header className={`w-full h-20 sticky top-0 border-b flex items-center justify-between px-6 transition-colors duration-300 z-50 shrink-0 ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+        <header className={`w-full h-16 sticky top-0 border-b flex items-center justify-between px-4 sm:px-6 transition-colors duration-300 z-50 shrink-0 gap-3 ${isDark ? 'bg-neutral-900/95 border-neutral-800 backdrop-blur-md' : 'bg-white/95 border-neutral-200 backdrop-blur-md'}`}>
           
           {/* Logo (Esquerda) */}
-          <div className="flex items-center shrink-0 w-44">
-            <Link href="/painel" className="relative w-36 h-10 block">
+          <div className="flex items-center shrink-0">
+            <Link href="/painel" className="relative w-28 sm:w-32 h-8 block">
               <Image 
                 src="/images/logo_jm.png" 
                 alt="JM Master Group"
@@ -130,8 +130,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* Menu Centralizado (Centro) */}
-          <nav className="flex-1 flex items-center justify-center overflow-x-auto py-1 scrollbar-none mx-4">
-            <div className="flex items-center space-x-1.5 shrink-0">
+          <nav className="flex-1 flex items-center justify-center overflow-x-auto py-1 scrollbar-none">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               {menuItems.map((item) => {
                 const isActive = pathname === item.path;
                 const Icon = item.icon;
@@ -139,7 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     key={item.path}
                     href={item.path}
-                    className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0 transition-all ${
+                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
                       isActive 
                         ? 'bg-[#E85D26] text-white shadow-md shadow-orange-950/20' 
                         : isDark 
@@ -147,8 +147,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.name}</span>
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.shortName}</span>
                   </Link>
                 );
               })}
@@ -156,22 +156,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
 
           {/* Ações do Header (Perfil, Config, Tema, Sair) (Direita) */}
-          <div className="flex items-center gap-2.5 shrink-0 justify-end w-auto">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end">
             
             {/* Link para o Blog Oficial */}
             <Link
               href="/blog"
               target="_blank"
-              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#E85D26] bg-orange-500/10 hover:bg-orange-500/20 rounded-xl border border-orange-500/30 transition"
+              title="Ver Blog Oficial"
+              className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-[#E85D26] bg-orange-500/10 hover:bg-orange-500/20 rounded-xl border border-orange-500/30 transition"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span>Ver Blog Oficial</span>
+              <span>Ver Site</span>
             </Link>
 
             {/* Perfil */}
-            <div className={`hidden lg:flex items-center gap-2 py-1.5 px-3 rounded-xl border transition-colors ${isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-800'}`}>
-              <span className="text-xs font-bold">{currentUser?.name?.split(' ')[0] || 'Administrador'}</span>
-              <span className="px-1.5 py-0.5 text-[8px] font-extrabold uppercase bg-orange-600/10 text-[#E85D26] rounded border border-orange-500/25">
+            <div className={`hidden 2xl:flex items-center gap-1.5 py-1 px-2.5 rounded-xl border transition-colors ${isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-800'}`}>
+              <span className="text-xs font-bold">{currentUser?.name?.split(' ')[0] || 'Admin'}</span>
+              <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-orange-600/10 text-[#E85D26] rounded border border-orange-500/25">
                 {currentUser?.role || 'ADMIN'}
               </span>
             </div>
@@ -180,29 +181,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={toggleLayout}
               title="Mudar para Menu Lateral"
-              className={`px-3 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${isDark ? 'text-neutral-400 hover:bg-neutral-800 hover:text-white border-neutral-800' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 border-neutral-200'}`}
+              className={`p-2 sm:px-2.5 sm:py-1.5 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${isDark ? 'text-neutral-400 hover:bg-neutral-800 hover:text-white border-neutral-800' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 border-neutral-200'}`}
             >
               <Sidebar className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Menu Lateral</span>
+              <span className="hidden xl:inline text-[11px]">Menu Lateral</span>
             </button>
 
             {/* Alternador de Tema */}
             <button
               onClick={toggleTheme}
               title={`Tema Atual: ${isDark ? 'Escuro' : 'Claro'}. Clique para alternar.`}
-              className={`px-3 py-2 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${isDark ? 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 border-neutral-700' : 'text-neutral-700 bg-neutral-100 hover:bg-neutral-200 border-neutral-300'}`}
+              className={`p-2 sm:px-2.5 sm:py-1.5 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${isDark ? 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 border-neutral-700' : 'text-neutral-700 bg-neutral-100 hover:bg-neutral-200 border-neutral-300'}`}
             >
               {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-neutral-600" />}
-              <span>{isDark ? 'Escuro' : 'Claro'}</span>
+              <span className="hidden xl:inline text-[11px]">{isDark ? 'Escuro' : 'Claro'}</span>
             </button>
 
             {/* Sair */}
             <button
               onClick={handleLogout}
               title="Sair do Sistema"
-              className="p-2 text-sm font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900 transition cursor-pointer"
+              className="p-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900 transition cursor-pointer"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
         </header>
