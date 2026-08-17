@@ -199,6 +199,11 @@ html.lenis body {
   color: #082b61;
 }
 
+.dark .blog-wysiwyg-editor h2,
+.dark .blog-wysiwyg-rendered-content h2 {
+  color: #ffffff;
+}
+
 .blog-wysiwyg-editor h3,
 .blog-wysiwyg-rendered-content h3 {
   font-size: 1.3rem;
@@ -207,6 +212,11 @@ html.lenis body {
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
   color: #0c1e38;
+}
+
+.dark .blog-wysiwyg-editor h3,
+.dark .blog-wysiwyg-rendered-content h3 {
+  color: #f8fafc;
 }
 
 .blog-wysiwyg-editor h4,
@@ -218,12 +228,22 @@ html.lenis body {
   color: #1e293b;
 }
 
+.dark .blog-wysiwyg-editor h4,
+.dark .blog-wysiwyg-rendered-content h4 {
+  color: #f1f5f9;
+}
+
 .blog-wysiwyg-editor p,
 .blog-wysiwyg-rendered-content p {
   margin-bottom: 1.15rem;
   line-height: 1.8;
   font-size: 1rem;
   color: #334155;
+}
+
+.dark .blog-wysiwyg-editor p,
+.dark .blog-wysiwyg-rendered-content p {
+  color: #e2e8f0;
 }
 
 .blog-wysiwyg-editor ul,
@@ -249,6 +269,11 @@ html.lenis body {
   color: #334155;
 }
 
+.dark .blog-wysiwyg-editor li,
+.dark .blog-wysiwyg-rendered-content li {
+  color: #e2e8f0;
+}
+
 /* CITAÇÃO / BLOCKQUOTE SEMÂNTICA REAL */
 .blog-wysiwyg-editor blockquote,
 .blog-wysiwyg-rendered-content blockquote {
@@ -261,6 +286,12 @@ html.lenis body {
   font-size: 1.05rem;
   line-height: 1.7;
   color: #1e293b;
+}
+
+.dark .blog-wysiwyg-editor blockquote,
+.dark .blog-wysiwyg-rendered-content blockquote {
+  background-color: rgba(232, 93, 38, 0.12);
+  color: #f1f5f9;
 }
 
 /* CAIXAS DE DESTAQUE / CALLOUTS */

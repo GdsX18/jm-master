@@ -156,6 +156,43 @@ export default function BlogEditor({
     }
   };
 
+  // Limpeza de cores e estilos inadequados ao colar texto de fontes externas (Google Docs, Word, ChatGPT)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const clipboardHtml = e.clipboardData.getData('text/html');
+    const clipboardText = e.clipboardData.getData('text/plain');
+
+    if (clipboardHtml) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(clipboardHtml, 'text/html');
+
+      // Remover cores fixas (como azul escuro, preto forçado ou fundos colados)
+      doc.body.querySelectorAll('*').forEach((el) => {
+        if (el instanceof HTMLElement) {
+          el.style.color = '';
+          el.style.backgroundColor = '';
+          el.style.fontFamily = '';
+          if (!el.getAttribute('style') || el.getAttribute('style')?.trim() === '') {
+            el.removeAttribute('style');
+          }
+        }
+        if (el.tagName.toLowerCase() === 'font') {
+          el.removeAttribute('color');
+        }
+      });
+
+      const cleanHtml = doc.body.innerHTML;
+      document.execCommand('insertHTML', false, cleanHtml);
+    } else if (clipboardText) {
+      const paragraphs = clipboardText
+        .split(/\r?\n\r?\n/)
+        .map((p) => `<p>${p.replace(/\r?\n/g, '<br>')}</p>`)
+        .join('');
+      document.execCommand('insertHTML', false, paragraphs);
+    }
+    handleInput();
+  };
+
   // Comandos de Formatação com preservação de foco
   const executeCommand = (command: string, value: string | undefined = undefined) => {
     if (editorRef.current) {
@@ -774,6 +811,7 @@ const client = new JMClient({
             ref={editorRef}
             contentEditable
             onInput={handleInput}
+            onPaste={handlePaste}
             onBlur={() => {
               saveSelection();
               handleInput();
