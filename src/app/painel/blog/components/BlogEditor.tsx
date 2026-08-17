@@ -24,6 +24,10 @@ import {
   Eraser,
   Type,
   ChevronDown,
+  Image as ImageIcon,
+  UploadCloud,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface BlogEditorProps {
@@ -50,6 +54,7 @@ export default function BlogEditor({
   const savedSelectionRef = useRef<Range | null>(null);
   const lastInternalHtmlRef = useRef<string | null>(null);
   const fontSizeMenuRef = useRef<HTMLDivElement>(null);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
 
   const [stats, setStats] = useState({ words: 0, chars: 0, readingTime: 1 });
   const [isContentEmpty, setIsContentEmpty] = useState(true);
@@ -67,6 +72,17 @@ export default function BlogEditor({
   const [calloutType, setCalloutType] = useState<'info' | 'tip' | 'warning'>('tip');
   const [calloutTitle, setCalloutTitle] = useState('Dica Prática JM Master');
   const [calloutContent, setCalloutContent] = useState('Personalize esta mensagem de destaque com orientações corporativas...');
+
+  // Modal de Inserção de Imagem / Upload Supabase
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageTab, setImageTab] = useState<'upload' | 'url'>('upload');
+  const [modalImageUrl, setModalImageUrl] = useState('');
+  const [modalImageAlt, setModalImageAlt] = useState('');
+  const [modalImageCaption, setModalImageCaption] = useState('');
+  const [modalImageAlign, setModalImageAlign] = useState<'center' | 'full' | 'left' | 'right'>('center');
+  const [isUploadingModalImage, setIsUploadingModalImage] = useState(false);
+  const [uploadStatusMessage, setUploadStatusMessage] = useState('');
+  const [isEditorDraggingImage, setIsEditorDraggingImage] = useState(false);
 
   // Fechar dropdown de fontes ao clicar fora
   useEffect(() => {
@@ -156,17 +172,135 @@ export default function BlogEditor({
     }
   };
 
-  // Limpeza de cores e estilos inadequados ao colar texto de fontes externas (Google Docs, Word, ChatGPT)
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
+  // Função para fazer upload direto no Supabase Storage via API
+  const uploadImageFileToSupabase = async (file: File): Promise<string | null> => {
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP, GIF).');
+      return null;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 10MB.');
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', 'blog-images');
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.success && data.url) {
+      return data.url;
+    } else {
+      throw new Error(data.error || 'Falha no envio para o Supabase');
+    }
+  };
+
+  // Inserir elemento de imagem formatado no editor
+  const insertImageIntoEditor = (
+    url: string,
+    alt: string = '',
+    caption: string = '',
+    align: 'center' | 'full' | 'left' | 'right' = 'center'
+  ) => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    restoreSelection();
+
+    let alignClass = 'text-center my-6';
+    let imgClass = 'rounded-2xl max-w-full h-auto mx-auto shadow-md border border-neutral-200 dark:border-neutral-800';
+
+    if (align === 'full') {
+      alignClass = 'w-full my-6 text-center';
+      imgClass = 'w-full rounded-2xl h-auto shadow-md border border-neutral-200 dark:border-neutral-800';
+    } else if (align === 'left') {
+      alignClass = 'float-left mr-6 mb-4 my-2 max-w-sm';
+    } else if (align === 'right') {
+      alignClass = 'float-right ml-6 mb-4 my-2 max-w-sm';
+    }
+
+    const imageHtml = `
+      <figure class="article-figure ${alignClass}">
+        <img src="${url}" alt="${alt || 'Ilustração do artigo'}" class="${imgClass}" />
+        ${caption ? `<figcaption class="text-xs text-neutral-500 dark:text-neutral-400 mt-2.5 italic text-center">${caption}</figcaption>` : ''}
+      </figure>
+      <p><br></p>
+    `;
+
+    document.execCommand('insertHTML', false, imageHtml);
+    setShowImageModal(false);
+    setModalImageUrl('');
+    setModalImageAlt('');
+    setModalImageCaption('');
+    setUploadStatusMessage('');
+    handleInput();
+    saveSelection();
+  };
+
+  // Limpeza de cores e upload automático de imagens ao colar (Paste)
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    // 1. Se colou uma imagem direta (print screen ou arquivo de imagem do clipboard)
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            saveSelection();
+            try {
+              const uploadedUrl = await uploadImageFileToSupabase(file);
+              if (uploadedUrl) {
+                const autoAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Imagem anexada ao artigo';
+                insertImageIntoEditor(uploadedUrl, autoAlt, '', 'center');
+              }
+            } catch (err: any) {
+              console.error('Erro ao enviar imagem colada para o Supabase:', err);
+              alert('Erro ao enviar a imagem colada para o Supabase Storage.');
+            }
+            return;
+          }
+        }
+      }
+    }
+
+    // 2. Se colou HTML ou texto com estilos
     const clipboardHtml = e.clipboardData.getData('text/html');
     const clipboardText = e.clipboardData.getData('text/plain');
 
     if (clipboardHtml) {
+      e.preventDefault();
       const parser = new DOMParser();
       const doc = parser.parseFromString(clipboardHtml, 'text/html');
 
-      // Remover cores fixas (como azul escuro, preto forçado ou fundos colados)
+      // Se houver imagens em base64 no HTML colado, faz upload automático
+      const base64Imgs = doc.body.querySelectorAll<HTMLImageElement>('img[src^="data:image/"]');
+      if (base64Imgs.length > 0) {
+        for (let i = 0; i < base64Imgs.length; i++) {
+          const img = base64Imgs[i];
+          try {
+            const res = await fetch(img.src);
+            const blob = await res.blob();
+            const ext = blob.type.split('/')[1] || 'png';
+            const file = new File([blob], `pasted-${Date.now()}-${i}.${ext}`, { type: blob.type });
+            const uploadedUrl = await uploadImageFileToSupabase(file);
+            if (uploadedUrl) {
+              img.src = uploadedUrl;
+            }
+          } catch (err) {
+            console.error('Erro ao enviar base64 para o Supabase:', err);
+          }
+        }
+      }
+
+      // Remover cores fixas indesejadas (azul escuro, cinzas fixos ou fundos)
       doc.body.querySelectorAll('*').forEach((el) => {
         if (el instanceof HTMLElement) {
           el.style.color = '';
@@ -183,14 +317,58 @@ export default function BlogEditor({
 
       const cleanHtml = doc.body.innerHTML;
       document.execCommand('insertHTML', false, cleanHtml);
+      handleInput();
     } else if (clipboardText) {
+      e.preventDefault();
       const paragraphs = clipboardText
         .split(/\r?\n\r?\n/)
         .map((p) => `<p>${p.replace(/\r?\n/g, '<br>')}</p>`)
         .join('');
       document.execCommand('insertHTML', false, paragraphs);
+      handleInput();
     }
-    handleInput();
+  };
+
+  // Arrastar e soltar imagens diretamente no editor (Drag and Drop)
+  const handleEditorDrop = async (e: React.DragEvent) => {
+    setIsEditorDraggingImage(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        e.preventDefault();
+        saveSelection();
+        try {
+          const uploadedUrl = await uploadImageFileToSupabase(file);
+          if (uploadedUrl) {
+            const autoAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Imagem anexada ao artigo';
+            insertImageIntoEditor(uploadedUrl, autoAlt, '', 'center');
+          }
+        } catch (err) {
+          console.error('Erro no upload de imagem arrastada:', err);
+          alert('Erro ao enviar a imagem para o Supabase Storage.');
+        }
+      }
+    }
+  };
+
+  // Upload a partir do modal de imagem
+  const handleModalFileUpload = async (file: File) => {
+    setIsUploadingModalImage(true);
+    setUploadStatusMessage('Enviando para o Supabase Storage...');
+    try {
+      const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      setModalImageAlt((prev) => prev || defaultAlt);
+      const url = await uploadImageFileToSupabase(file);
+      if (url) {
+        setModalImageUrl(url);
+        setUploadStatusMessage('Imagem enviada com sucesso ao Supabase!');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Erro ao enviar imagem.');
+      setUploadStatusMessage('');
+    } finally {
+      setIsUploadingModalImage(false);
+    }
   };
 
   // Comandos de Formatação com preservação de foco
@@ -282,7 +460,7 @@ export default function BlogEditor({
           span.appendChild(font.firstChild);
         }
 
-        // Limpar tamanhos conflitantes aninhados para que o novo tamanho se aplique com clareza
+        // Limpar tamanhos conflitantes aninhados
         span.querySelectorAll<HTMLElement>('[style*="font-size"]').forEach((child) => {
           child.style.fontSize = '';
           if (!child.getAttribute('style')) {
@@ -726,6 +904,24 @@ const client = new JMClient({
 
         {/* GRUPO: ELEMENTOS RICOS */}
         <div className="flex items-center gap-1.5 pl-2">
+          {/* BOTÃO DE INSERIR IMAGEM (UPLOAD / SUPABASE STORAGE) */}
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              saveSelection();
+            }}
+            onClick={() => {
+              saveSelection();
+              setShowImageModal(true);
+            }}
+            title="Inserir Imagem / Ilustração no Texto"
+            className="h-9 px-3 rounded-xl bg-[#E85D26]/10 text-[#E85D26] hover:bg-[#E85D26] hover:text-white border border-[#E85D26]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span>Imagem</span>
+          </button>
+
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -736,6 +932,7 @@ const client = new JMClient({
             <LinkIcon className="w-4 h-4" />
             <span>Link</span>
           </button>
+
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -746,6 +943,7 @@ const client = new JMClient({
             <Quote className="w-4 h-4" />
             <span>Citação</span>
           </button>
+
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -756,6 +954,7 @@ const client = new JMClient({
             <Lightbulb className="w-4 h-4" />
             <span>Dica / Aviso</span>
           </button>
+
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -766,6 +965,7 @@ const client = new JMClient({
             <Code className="w-4 h-4" />
             <span>Código</span>
           </button>
+
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -780,8 +980,27 @@ const client = new JMClient({
       </div>
 
       {/* ÁREA DO CANVAS DE ESCRITA */}
-      <div className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-6 max-w-4xl w-full mx-auto">
-        
+      <div 
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsEditorDraggingImage(true);
+        }}
+        onDragLeave={() => setIsEditorDraggingImage(false)}
+        onDrop={handleEditorDrop}
+        className={`flex-1 overflow-y-auto p-6 sm:p-10 space-y-6 max-w-4xl w-full mx-auto relative transition-colors ${
+          isEditorDraggingImage ? 'bg-orange-500/5 ring-2 ring-dashed ring-[#E85D26]' : ''
+        }`}
+      >
+        {isEditorDraggingImage && (
+          <div className="absolute inset-0 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xs flex items-center justify-center z-30 pointer-events-none">
+            <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border-2 border-dashed border-[#E85D26] shadow-xl text-center space-y-2">
+              <UploadCloud className="w-10 h-10 text-[#E85D26] mx-auto animate-bounce" />
+              <p className="text-sm font-bold text-neutral-900 dark:text-white">Solte a imagem aqui</p>
+              <p className="text-xs text-neutral-500">Ela será enviada automaticamente para o Supabase Storage</p>
+            </div>
+          </div>
+        )}
+
         {/* TÍTULO PRINCIPAL (H1) */}
         <div>
           <input
@@ -856,6 +1075,212 @@ const client = new JMClient({
           <span>Editor Ativo (Sincronizado)</span>
         </div>
       </div>
+
+      {/* MODAL PARA INSERIR IMAGEM / UPLOAD SUPABASE STORAGE */}
+      {showImageModal && typeof window !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-[#E85D26]" />
+                <span>Inserir Imagem / Ilustração no Artigo</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowImageModal(false)}
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white cursor-pointer p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* ABAS: UPLOAD SUPABASE OU URL DIRETA */}
+            <div className="flex gap-2 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setImageTab('upload')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  imageTab === 'upload'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
+                    : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
+                }`}
+              >
+                Upload do Computador (Supabase)
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageTab('url')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                  imageTab === 'url'
+                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
+                    : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
+                }`}
+              >
+                URL da Imagem
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {imageTab === 'upload' ? (
+                <div>
+                  <input
+                    ref={imageFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleModalFileUpload(e.target.files[0]);
+                      }
+                    }}
+                  />
+
+                  {modalImageUrl ? (
+                    <div className="relative rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-2 space-y-2">
+                      <div className="relative h-44 w-full rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={modalImageUrl}
+                          alt="Pré-visualização"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between px-1">
+                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Pronta no Supabase Storage
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalImageUrl('');
+                            setUploadStatusMessage('');
+                            imageFileInputRef.current?.click();
+                          }}
+                          className="text-[11px] font-bold text-[#E85D26] hover:underline cursor-pointer"
+                        >
+                          Trocar Imagem
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => !isUploadingModalImage && imageFileInputRef.current?.click()}
+                      className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 hover:border-[#E85D26] dark:hover:border-[#E85D26] rounded-xl p-6 text-center cursor-pointer transition bg-neutral-50 dark:bg-neutral-950/60"
+                    >
+                      {isUploadingModalImage ? (
+                        <div className="space-y-2 py-4">
+                          <Loader2 className="w-8 h-8 text-[#E85D26] animate-spin mx-auto" />
+                          <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">{uploadStatusMessage}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <UploadCloud className="w-8 h-8 text-[#E85D26] mx-auto" />
+                          <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                            Clique para escolher uma imagem do seu dispositivo
+                          </p>
+                          <p className="text-[11px] text-neutral-400">
+                            PNG, JPG, WebP ou GIF até 10MB (Salvo permanentemente no Supabase)
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    URL Pública da Imagem
+                  </label>
+                  <input
+                    type="url"
+                    value={modalImageUrl}
+                    onChange={(e) => setModalImageUrl(e.target.value)}
+                    placeholder="https://exemplo.com/grafico-vendas.png"
+                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  />
+                </div>
+              )}
+
+              {/* CAMPOS ADICIONAIS: ALT TEXT, LEGENDA E ALINHAMENTO */}
+              <div className="space-y-3 pt-2">
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Texto Alternativo / Descrição da Imagem (Alt Text para SEO)
+                  </label>
+                  <input
+                    type="text"
+                    value={modalImageAlt}
+                    onChange={(e) => setModalImageAlt(e.target.value)}
+                    placeholder="Ex: Gráfico demonstrando o crescimento de retenção..."
+                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Legenda Opcional (Exibida abaixo da imagem)
+                  </label>
+                  <input
+                    type="text"
+                    value={modalImageCaption}
+                    onChange={(e) => setModalImageCaption(e.target.value)}
+                    placeholder="Ex: Fonte: Pesquisa Harvard Business Review"
+                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                    Alinhamento no Texto
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { id: 'center', label: 'Centralizado' },
+                      { id: 'full', label: 'Largura Total' },
+                      { id: 'left', label: 'À Esquerda' },
+                      { id: 'right', label: 'À Direita' },
+                    ].map((align) => (
+                      <button
+                        key={align.id}
+                        type="button"
+                        onClick={() => setModalImageAlign(align.id as any)}
+                        className={`px-2 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                          modalImageAlign === align.id
+                            ? 'bg-[#E85D26] text-white border-[#E85D26]'
+                            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
+                        }`}
+                      >
+                        {align.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+              <button
+                type="button"
+                onClick={() => setShowImageModal(false)}
+                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => insertImageIntoEditor(modalImageUrl, modalImageAlt, modalImageCaption, modalImageAlign)}
+                disabled={!modalImageUrl || isUploadingModalImage}
+                className="px-4 py-2 text-xs font-bold bg-[#E85D26] text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Inserir no Artigo</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* MODAL PARA INSERIR LINK */}
       {showLinkModal && typeof window !== 'undefined' && createPortal(

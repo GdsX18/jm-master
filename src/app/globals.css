@@ -341,3 +341,7 @@ html.lenis body {
   text-align: center;
   font-style: italic;
 }
+
+.dark .article-figure figcaption {
+  color: #94a3b8;
+}
