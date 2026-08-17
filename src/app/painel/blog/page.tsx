@@ -446,6 +446,7 @@ export default function BlogDashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               <div className="lg:col-span-8 space-y-6">
                 <BlogEditor
+                  key={currentArticle.id}
                   title={currentArticle.title}
                   contentHtml={currentArticle.contentHtml}
                   onTitleChange={(title: string) => {
@@ -480,6 +481,7 @@ export default function BlogDashboardPage() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
               <div className="space-y-6">
                 <BlogEditor
+                  key={currentArticle.id}
                   title={currentArticle.title}
                   contentHtml={currentArticle.contentHtml}
                   onTitleChange={(title: string) => {

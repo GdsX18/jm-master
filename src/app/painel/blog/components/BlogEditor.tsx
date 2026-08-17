@@ -48,7 +48,7 @@ export default function BlogEditor({
   const effectiveInitial = contentHtml !== undefined ? contentHtml : initialContent;
   const editorRef = useRef<HTMLDivElement>(null);
   const savedSelectionRef = useRef<Range | null>(null);
-  const lastHtmlRef = useRef<string>(effectiveInitial || '');
+  const lastInternalHtmlRef = useRef<string | null>(null);
   const fontSizeMenuRef = useRef<HTMLDivElement>(null);
 
   const [stats, setStats] = useState({ words: 0, chars: 0, readingTime: 1 });
@@ -81,12 +81,12 @@ export default function BlogEditor({
     };
   }, []);
 
-  // Inicializar conteúdo inicial sem quebrar a seleção ativa
+  // Inicializar e sincronizar conteúdo inicial sem quebrar a digitação ativa
   useEffect(() => {
     if (editorRef.current) {
-      if (effectiveInitial !== editorRef.current.innerHTML && effectiveInitial !== lastHtmlRef.current) {
+      if (lastInternalHtmlRef.current === null || effectiveInitial !== lastInternalHtmlRef.current) {
         editorRef.current.innerHTML = effectiveInitial || '';
-        lastHtmlRef.current = effectiveInitial || '';
+        lastInternalHtmlRef.current = effectiveInitial || '';
         updateStats();
       }
     }
@@ -149,7 +149,7 @@ export default function BlogEditor({
   const handleInput = () => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
-      lastHtmlRef.current = html;
+      lastInternalHtmlRef.current = html;
       if (onChange) onChange(html);
       if (onContentChange) onContentChange(html);
       updateStats();
