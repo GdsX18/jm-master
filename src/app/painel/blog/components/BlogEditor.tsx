@@ -22,6 +22,8 @@ import {
   X,
   Clock,
   Eraser,
+  Type,
+  ChevronDown,
 } from 'lucide-react';
 
 interface BlogEditorProps {
@@ -33,6 +35,8 @@ interface BlogEditorProps {
   onTitleChange: (newTitle: string) => void;
 }
 
+const FONT_SIZES = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
+
 export default function BlogEditor({
   initialContent = '',
   contentHtml,
@@ -43,9 +47,14 @@ export default function BlogEditor({
 }: BlogEditorProps) {
   const effectiveInitial = contentHtml !== undefined ? contentHtml : initialContent;
   const editorRef = useRef<HTMLDivElement>(null);
+  const savedSelectionRef = useRef<Range | null>(null);
+  const lastHtmlRef = useRef<string>(effectiveInitial || '');
+  const fontSizeMenuRef = useRef<HTMLDivElement>(null);
+
   const [stats, setStats] = useState({ words: 0, chars: 0, readingTime: 1 });
   const [isContentEmpty, setIsContentEmpty] = useState(true);
   const [currentFontSize, setCurrentFontSize] = useState('16px');
+  const [isFontSizeOpen, setIsFontSizeOpen] = useState(false);
 
   // Modais de Inserção Rica
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -59,15 +68,69 @@ export default function BlogEditor({
   const [calloutTitle, setCalloutTitle] = useState('Dica Prática JM Master');
   const [calloutContent, setCalloutContent] = useState('Personalize esta mensagem de destaque com orientações corporativas...');
 
-  // Inicializar conteúdo inicial
+  // Fechar dropdown de fontes ao clicar fora
   useEffect(() => {
-    if (editorRef.current && effectiveInitial !== editorRef.current.innerHTML) {
-      if (editorRef.current.innerHTML === '' || effectiveInitial) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (fontSizeMenuRef.current && !fontSizeMenuRef.current.contains(e.target as Node)) {
+        setIsFontSizeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Inicializar conteúdo inicial sem quebrar a seleção ativa
+  useEffect(() => {
+    if (editorRef.current) {
+      if (effectiveInitial !== editorRef.current.innerHTML && effectiveInitial !== lastHtmlRef.current) {
         editorRef.current.innerHTML = effectiveInitial || '';
+        lastHtmlRef.current = effectiveInitial || '';
         updateStats();
       }
     }
   }, [effectiveInitial]);
+
+  // Salvar e Restaurar Seleção do Cursor / Range
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if (editorRef.current && editorRef.current.contains(range.commonAncestorContainer)) {
+        savedSelectionRef.current = range.cloneRange();
+      }
+    }
+  };
+
+  const restoreSelection = () => {
+    if (savedSelectionRef.current) {
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelectionRef.current);
+      }
+    }
+  };
+
+  // Detectar tamanho de fonte na posição do cursor
+  const updateCurrentFontSizeFromSelection = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    let node: Node | null = range.commonAncestorContainer;
+    if (node.nodeType === Node.TEXT_NODE) {
+      node = node.parentElement;
+    }
+    if (node && editorRef.current && editorRef.current.contains(node)) {
+      const el = node as HTMLElement;
+      const fontSpan = el.closest('span[style*="font-size"]') as HTMLElement | null;
+      if (fontSpan && fontSpan.style.fontSize) {
+        setCurrentFontSize(fontSpan.style.fontSize);
+        return;
+      }
+    }
+  };
 
   // Atualizar estatísticas e estado de vazio
   const updateStats = () => {
@@ -86,67 +149,173 @@ export default function BlogEditor({
   const handleInput = () => {
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
+      lastHtmlRef.current = html;
       if (onChange) onChange(html);
       if (onContentChange) onContentChange(html);
       updateStats();
     }
   };
 
-  // Comandos de Formatação
+  // Comandos de Formatação com preservação de foco
   const executeCommand = (command: string, value: string | undefined = undefined) => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const sel = window.getSelection();
+    if ((!sel || sel.rangeCount === 0) && savedSelectionRef.current) {
+      restoreSelection();
+    }
     document.execCommand(command, false, value);
     handleInput();
-    editorRef.current?.focus();
+    saveSelection();
   };
 
-  // Alterar tamanho da fonte
+  // Alterar tamanho da fonte de forma robusta e persistente
   const applyFontSize = (size: string) => {
     setCurrentFontSize(size);
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
 
-    const range = selection.getRangeAt(0);
-    const span = document.createElement('span');
-    span.style.fontSize = size;
-    
-    try {
-      span.appendChild(range.extractContents());
-      range.insertNode(span);
-      handleInput();
-    } catch (e) {
-      executeCommand('fontSize', '3');
+    if (editorRef.current) {
+      editorRef.current.focus();
     }
+
+    let sel = window.getSelection();
+    let range: Range | null = null;
+
+    if (sel && sel.rangeCount > 0) {
+      const r = sel.getRangeAt(0);
+      if (editorRef.current && editorRef.current.contains(r.commonAncestorContainer)) {
+        range = r;
+      }
+    }
+
+    if (!range && savedSelectionRef.current) {
+      restoreSelection();
+      sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        range = sel.getRangeAt(0);
+      }
+    }
+
+    if (!range || !editorRef.current) return;
+
+    // Caso 1: Cursor posicionado sem seleção de texto (colapsado)
+    if (range.collapsed) {
+      let node: Node | null = range.commonAncestorContainer;
+      if (node.nodeType === Node.TEXT_NODE) {
+        node = node.parentElement;
+      }
+      const existingSpan = (node as HTMLElement)?.closest('span[style*="font-size"]') as HTMLElement | null;
+      if (existingSpan && editorRef.current.contains(existingSpan)) {
+        existingSpan.style.fontSize = size;
+        handleInput();
+        return;
+      }
+
+      const span = document.createElement('span');
+      span.style.fontSize = size;
+      const textNode = document.createTextNode('\u200B'); // zero-width space
+      span.appendChild(textNode);
+      range.insertNode(span);
+
+      const newRange = document.createRange();
+      newRange.setStart(textNode, 1);
+      newRange.collapse(true);
+      sel?.removeAllRanges();
+      sel?.addRange(newRange);
+      savedSelectionRef.current = newRange.cloneRange();
+      handleInput();
+      return;
+    }
+
+    // Caso 2: Há texto selecionado
+    try {
+      (document as any).execCommand('styleWithCSS', false, false);
+    } catch (e) {}
+
+    // Usar '7' como marcador transitório para capturar todos os nós particionados pelo browser
+    document.execCommand('fontSize', false, '7');
+
+    const fontTags = editorRef.current.querySelectorAll('font[size="7"], font[size="xxx-large"]');
+    if (fontTags.length > 0) {
+      fontTags.forEach((font) => {
+        const span = document.createElement('span');
+        span.style.fontSize = size;
+
+        while (font.firstChild) {
+          span.appendChild(font.firstChild);
+        }
+
+        // Limpar tamanhos conflitantes aninhados para que o novo tamanho se aplique com clareza
+        span.querySelectorAll<HTMLElement>('[style*="font-size"]').forEach((child) => {
+          child.style.fontSize = '';
+          if (!child.getAttribute('style')) {
+            child.removeAttribute('style');
+          }
+        });
+
+        font.parentNode?.replaceChild(span, font);
+      });
+    } else {
+      // Fallback para variações de motores WebKit/Gecko com CSS inline
+      const spans = editorRef.current.querySelectorAll<HTMLElement>(
+        'span[style*="-webkit-xxx-large"], span[style*="xxx-large"], span[style*="font-size: 48px"]'
+      );
+      spans.forEach((s) => {
+        s.style.fontSize = size;
+        s.querySelectorAll<HTMLElement>('[style*="font-size"]').forEach((child) => {
+          if (child !== s) {
+            child.style.fontSize = '';
+            if (!child.getAttribute('style')) {
+              child.removeAttribute('style');
+            }
+          }
+        });
+      });
+    }
+
+    handleInput();
+    saveSelection();
   };
 
   const increaseFontSize = () => {
-    const sizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
-    const currentIndex = sizes.indexOf(currentFontSize);
-    if (currentIndex < sizes.length - 1) {
-      applyFontSize(sizes[currentIndex + 1]);
+    const currentIndex = FONT_SIZES.indexOf(currentFontSize);
+    if (currentIndex < FONT_SIZES.length - 1 && currentIndex >= 0) {
+      applyFontSize(FONT_SIZES[currentIndex + 1]);
+    } else if (currentIndex === -1) {
+      applyFontSize('18px');
     }
   };
 
   const decreaseFontSize = () => {
-    const sizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
-    const currentIndex = sizes.indexOf(currentFontSize);
+    const currentIndex = FONT_SIZES.indexOf(currentFontSize);
     if (currentIndex > 0) {
-      applyFontSize(sizes[currentIndex - 1]);
+      applyFontSize(FONT_SIZES[currentIndex - 1]);
+    } else if (currentIndex === -1) {
+      applyFontSize('14px');
     }
   };
 
   // Formatação de Títulos
   const formatHeading = (tag: 'H2' | 'H3' | 'H4' | 'P') => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    const sel = window.getSelection();
+    if ((!sel || sel.rangeCount === 0) && savedSelectionRef.current) {
+      restoreSelection();
+    }
     if (tag === 'P') {
       document.execCommand('formatBlock', false, '<p>');
     } else {
       document.execCommand('formatBlock', false, `<${tag.toLowerCase()}>`);
     }
     handleInput();
-    editorRef.current?.focus();
+    saveSelection();
   };
 
   // Abrir Modal de Link
   const openLinkModal = () => {
+    saveSelection();
     const selection = window.getSelection();
     const selectedText = selection?.toString() || '';
     setLinkText(selectedText);
@@ -159,6 +328,10 @@ export default function BlogEditor({
   // Inserir Link Personalizado
   const insertCustomLink = () => {
     if (!linkUrl) return;
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    restoreSelection();
     const textToDisplay = linkText.trim() || linkUrl;
     const targetAttr = linkNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
     const relAttr = linkNofollow ? ' rel="nofollow"' : '';
@@ -167,10 +340,15 @@ export default function BlogEditor({
     document.execCommand('insertHTML', false, linkHtml);
     setShowLinkModal(false);
     handleInput();
+    saveSelection();
   };
 
   // Inserir Callout / Caixa de Aviso
   const insertCalloutBox = () => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    restoreSelection();
     let styleClasses = '';
     let borderClass = '';
     let badgeText = '';
@@ -209,10 +387,15 @@ export default function BlogEditor({
     document.execCommand('insertHTML', false, calloutHtml);
     setShowCalloutModal(false);
     handleInput();
+    saveSelection();
   };
 
   // Inserir Citação
   const insertQuote = () => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    restoreSelection();
     const quoteHtml = `
       <blockquote class="my-6 pl-4 border-l-4 border-[#E85D26] italic text-neutral-700 dark:text-neutral-300 text-base leading-relaxed bg-orange-500/5 p-3 rounded-r-xl">
         "Insira aqui uma declaração marcante ou depoimento relevante para o artigo..."
@@ -221,10 +404,15 @@ export default function BlogEditor({
     `;
     document.execCommand('insertHTML', false, quoteHtml);
     handleInput();
+    saveSelection();
   };
 
   // Inserir Bloco de Código
   const insertCodeBlock = () => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    restoreSelection();
     const codeHtml = `
       <pre class="my-6 p-4 rounded-xl bg-neutral-950 text-neutral-200 font-mono text-xs overflow-x-auto border border-neutral-800">
 <code>// Exemplo de código ou configuração corporativa
@@ -236,13 +424,19 @@ const client = new JMClient({
     `;
     document.execCommand('insertHTML', false, codeHtml);
     handleInput();
+    saveSelection();
   };
 
   // Inserir Divisor
   const insertDivider = () => {
+    if (editorRef.current) {
+      editorRef.current.focus();
+    }
+    restoreSelection();
     const hrHtml = `<hr class="my-8 border-t border-neutral-200 dark:border-neutral-800" /><p><br></p>`;
     document.execCommand('insertHTML', false, hrHtml);
     handleInput();
+    saveSelection();
   };
 
   return (
@@ -255,6 +449,7 @@ const client = new JMClient({
         <div className="flex items-center gap-1 pr-2.5 border-r border-neutral-200 dark:border-neutral-800">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('undo')}
             title="Desfazer (Ctrl+Z)"
             className="h-9 px-2.5 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -263,6 +458,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('redo')}
             title="Refazer (Ctrl+Y)"
             className="h-9 px-2.5 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -275,6 +471,7 @@ const client = new JMClient({
         <div className="flex items-center gap-1.5 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('P')}
             title="Texto Normal de Parágrafo"
             className="h-9 px-3 rounded-xl text-xs font-semibold bg-neutral-100 dark:bg-neutral-800/70 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -283,6 +480,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('H2')}
             title="Título de Seção (H2 - Grande)"
             className="h-9 px-3 rounded-xl text-xs font-black bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-orange-500/10 hover:text-[#E85D26] hover:border-[#E85D26]/40 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -291,6 +489,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('H3')}
             title="Subtítulo (H3 - Médio)"
             className="h-9 px-3 rounded-xl text-xs font-bold bg-neutral-100 dark:bg-neutral-800/70 text-neutral-800 dark:text-neutral-200 hover:bg-orange-500/10 hover:text-[#E85D26] hover:border-[#E85D26]/40 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -299,6 +498,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('H4')}
             title="Tópico Menor (H4)"
             className="h-9 px-3 rounded-xl text-xs font-medium bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -307,10 +507,14 @@ const client = new JMClient({
           </button>
         </div>
 
-        {/* GRUPO: CONTROLE DE TAMANHO DA LETRA (A- / A+) */}
-        <div className="flex items-center gap-1.5 px-2.5 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-1 rounded-xl border border-neutral-200/80 dark:border-neutral-800">
+        {/* GRUPO: CONTROLE DE TAMANHO DA LETRA (A- / A▾ / A+) */}
+        <div 
+          ref={fontSizeMenuRef}
+          className="relative flex items-center gap-1.5 px-2 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-1 rounded-xl border border-neutral-200/80 dark:border-neutral-800"
+        >
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={decreaseFontSize}
             title="Diminuir Tamanho da Letra (A-)"
             className="h-7 px-2 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-extrabold shadow-xs transition cursor-pointer"
@@ -318,24 +522,59 @@ const client = new JMClient({
             A-
           </button>
 
-          <select
-            value={currentFontSize}
-            onChange={(e) => applyFontSize(e.target.value)}
-            title="Seletor de Tamanho da Letra"
-            className="h-7 px-2 text-xs font-bold bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:outline-none focus:border-[#E85D26] cursor-pointer"
-          >
-            <option value="12px">12px</option>
-            <option value="14px">14px</option>
-            <option value="16px">16px</option>
-            <option value="18px">18px</option>
-            <option value="20px">20px</option>
-            <option value="24px">24px</option>
-            <option value="28px">28px</option>
-            <option value="32px">32px</option>
-          </select>
+          {/* DROPDOWN CUSTOMIZADO COM BOTÃO A▾ E TAMANHO ATUAL */}
+          <div className="relative">
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                saveSelection();
+              }}
+              onClick={() => setIsFontSizeOpen((prev) => !prev)}
+              title="Menu de Tamanho da Fonte (A▾)"
+              className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-bold border border-neutral-200 dark:border-neutral-700 shadow-xs transition cursor-pointer"
+            >
+              <Type className="w-3.5 h-3.5 text-[#E85D26]" />
+              <span className="font-mono text-[11px] font-bold">{currentFontSize}</span>
+              <ChevronDown className={`w-3 h-3 text-neutral-400 transition-transform duration-200 ${isFontSizeOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isFontSizeOpen && (
+              <div className="absolute top-full left-0 mt-1.5 w-32 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl py-1.5 z-50 animate-fadeIn">
+                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-neutral-800/80 mb-1">
+                  Tamanho da Fonte
+                </div>
+                {FONT_SIZES.map((size) => {
+                  const isSelected = currentFontSize === size;
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        applyFontSize(size);
+                        setIsFontSizeOpen(false);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left flex items-center justify-between text-xs transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#E85D26]/10 text-[#E85D26] font-extrabold'
+                          : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium'
+                      }`}
+                    >
+                      <span style={{ fontSize: size }} className="leading-tight">{size}</span>
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E85D26]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={increaseFontSize}
             title="Aumentar Tamanho da Letra (A+)"
             className="h-7 px-2 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-extrabold shadow-xs transition cursor-pointer"
@@ -348,6 +587,7 @@ const client = new JMClient({
         <div className="flex items-center gap-1 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('bold')}
             title="Negrito (Ctrl+B)"
             className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -356,6 +596,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('italic')}
             title="Itálico (Ctrl+I)"
             className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -364,6 +605,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('underline')}
             title="Sublinhado (Ctrl+U)"
             className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -372,6 +614,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('strikeThrough')}
             title="Tachado"
             className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -380,6 +623,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('removeFormat')}
             title="Limpar Formatação"
             className="h-9 px-2.5 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -392,6 +636,7 @@ const client = new JMClient({
         <div className="flex items-center gap-1 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyLeft')}
             title="Alinhar à Esquerda"
             className="h-9 w-8 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -400,6 +645,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyCenter')}
             title="Centralizar"
             className="h-9 w-8 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -408,6 +654,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyRight')}
             title="Alinhar à Direita"
             className="h-9 w-8 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
@@ -420,6 +667,7 @@ const client = new JMClient({
         <div className="flex items-center gap-1 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertUnorderedList')}
             title="Lista com Marcadores"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -429,6 +677,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertOrderedList')}
             title="Lista Numerada"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -442,6 +691,7 @@ const client = new JMClient({
         <div className="flex items-center gap-1.5 pl-2">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={openLinkModal}
             title="Inserir Link"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -451,6 +701,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={insertQuote}
             title="Inserir Citação em Destaque (Blockquote)"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -460,6 +711,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => setShowCalloutModal(true)}
             title="Inserir Caixa de Aviso ou Destaque"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -469,6 +721,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={insertCodeBlock}
             title="Inserir Bloco de Código"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -478,6 +731,7 @@ const client = new JMClient({
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={insertDivider}
             title="Inserir Linha Divisória"
             className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
@@ -520,7 +774,22 @@ const client = new JMClient({
             ref={editorRef}
             contentEditable
             onInput={handleInput}
-            onBlur={handleInput}
+            onBlur={() => {
+              saveSelection();
+              handleInput();
+            }}
+            onMouseUp={() => {
+              saveSelection();
+              updateCurrentFontSizeFromSelection();
+            }}
+            onKeyUp={() => {
+              saveSelection();
+              updateCurrentFontSizeFromSelection();
+            }}
+            onSelect={() => {
+              saveSelection();
+              updateCurrentFontSizeFromSelection();
+            }}
             className="blog-wysiwyg-editor min-h-[450px] text-base leading-relaxed text-neutral-800 dark:text-neutral-200 focus:outline-none selection:bg-orange-500/20 relative z-10"
           />
         </div>
