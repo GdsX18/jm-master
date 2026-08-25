@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { BlogPageContent } from "@/components/blog/blog-page-content";
 import { getStoredPosts } from "@/lib/blog-storage";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Blog & Notícias | JM MASTER GROUP — Estratégias & Automação",
   description:

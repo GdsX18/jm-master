@@ -17,6 +17,7 @@ import {
   User as UserIcon,
   CheckCircle2,
   Radio,
+  RefreshCw,
 } from 'lucide-react';
 import { Article, ArticleCategory, ArticleStatus } from '../types';
 import { getStoredCategories } from '../mockData';
@@ -30,6 +31,8 @@ interface ArticleListProps {
   onToggleFeatured: (id: string) => void;
   onDuplicateArticle: (article: Article) => void;
   onOpenTracking?: () => void;
+  onRefresh?: () => void;
+  isLoading?: boolean;
 }
 
 export default function ArticleList({
@@ -41,6 +44,8 @@ export default function ArticleList({
   onToggleFeatured,
   onDuplicateArticle,
   onOpenTracking,
+  onRefresh,
+  isLoading = false,
 }: ArticleListProps) {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -112,6 +117,19 @@ export default function ArticleList({
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={isLoading}
+              className="bg-white dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-800 font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:opacity-50"
+              title="Sincronizar artigos em tempo real com o banco de dados"
+            >
+              <RefreshCw className={`w-4 h-4 text-[#E85D26] ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Sincronizar</span>
+            </button>
+          )}
+
           {onOpenTracking && (
             <button
               type="button"

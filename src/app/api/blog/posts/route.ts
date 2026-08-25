@@ -3,10 +3,22 @@ import { revalidatePath } from 'next/cache';
 import { getStoredPosts, saveStoredPost, deleteStoredPost } from '@/lib/blog-storage';
 import { BlogPost } from '@/data/posts';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const posts = await getStoredPosts();
-    return NextResponse.json({ success: true, posts });
+    return NextResponse.json(
+      { success: true, posts },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Erro ao carregar posts' },
@@ -28,6 +40,38 @@ export async function POST(request: Request) {
       );
     }
 
+    // Normalizar e extrair SEO com segurança e fallbacks
+    const rawSeo = postData.seo && typeof postData.seo === 'object' ? postData.seo : {};
+    const seoTitle = rawSeo.metaTitle || rawSeo.seoTitle || postData.title;
+    const seoDesc = rawSeo.metaDescription || rawSeo.seoDescription || postData.excerpt || '';
+    
+    let seoKeywords: string[] = [];
+    if (Array.isArray(rawSeo.keywords)) {
+      seoKeywords = rawSeo.keywords;
+    } else if (typeof rawSeo.keywords === 'string' && rawSeo.keywords.trim()) {
+      seoKeywords = rawSeo.keywords.split(',').map((k: string) => k.trim()).filter(Boolean);
+    } else if (Array.isArray(postData.tags) && postData.tags.length > 0) {
+      seoKeywords = postData.tags;
+    }
+
+    const seoObject = {
+      focusKeyphrase: rawSeo.focusKeyphrase || '',
+      metaTitle: seoTitle,
+      seoTitle: seoTitle,
+      metaDescription: seoDesc,
+      seoDescription: seoDesc,
+      canonicalUrl: rawSeo.canonicalUrl || `https://jmmaster.com.br/blog/${postData.slug}`,
+      noIndex: !!rawSeo.noIndex,
+      noFollow: !!rawSeo.noFollow,
+      keywords: seoKeywords,
+      ogTitle: rawSeo.ogTitle || seoTitle,
+      ogDescription: rawSeo.ogDescription || seoDesc,
+      ogImage: rawSeo.ogImage || postData.coverImage || '/images/blog/whatsapp-thumb.jpg',
+      twitterTitle: rawSeo.twitterTitle || rawSeo.ogTitle || seoTitle,
+      twitterDescription: rawSeo.twitterDescription || rawSeo.ogDescription || seoDesc,
+      twitterImage: rawSeo.twitterImage || rawSeo.ogImage || postData.coverImage || '/images/blog/whatsapp-thumb.jpg',
+    };
+
     const post: BlogPost = {
       id: postData.id || `post-${Date.now()}`,
       title: postData.title,
@@ -46,9 +90,9 @@ export async function POST(request: Request) {
         avatar: postData.author?.avatarUrl || postData.author?.avatar || '/logos/Icone.png',
       },
       featured: postData.featured ?? postData.isFeatured ?? false,
-      status: postData.status === 'draft' ? 'draft' : 'published',
-      tags: Array.isArray(postData.tags) ? postData.tags : [postData.category || 'Mensageria', 'JM Master'],
-      seo: postData.seo || undefined,
+      status: postData.status === 'draft' ? 'draft' : postData.status === 'scheduled' ? 'draft' : 'published',
+      tags: Array.isArray(postData.tags) && postData.tags.length > 0 ? postData.tags : (seoKeywords.length > 0 ? seoKeywords : [postData.category || 'Mensageria', 'JM Master']),
+      seo: seoObject,
       faqs: Array.isArray(postData.faqs) ? postData.faqs : [],
     };
 
@@ -62,16 +106,25 @@ export async function POST(request: Request) {
 
     const updatedPosts = await getStoredPosts();
 
-    // Invalida o cache do blog para publicação imediata
+    // Invalida o cache do blog para publicação e sincronização imediata
     try {
       revalidatePath('/blog');
-      revalidatePath(`/blog/${post.slug}`);
+      revalidatePath('/blog/[slug]', 'page');
+      revalidatePath(`/blog/${savedPost.slug}`);
+      if (postData.previousSlug && postData.previousSlug !== savedPost.slug) {
+        revalidatePath(`/blog/${postData.previousSlug}`);
+      }
+      if (postData.slug && postData.slug !== savedPost.slug) {
+        revalidatePath(`/blog/${postData.slug}`);
+      }
       revalidatePath('/');
-    } catch {}
+    } catch (revalidateErr) {
+      console.warn('[BlogAPI] Aviso ao revalidar cache:', revalidateErr);
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Artigo salvo e publicado no site oficial com sucesso!',
+      message: 'Artigo salvo e sincronizado com sucesso!',
       post: savedPost,
       posts: updatedPosts,
     });
@@ -105,7 +158,9 @@ export async function DELETE(request: Request) {
 
     try {
       revalidatePath('/blog');
+      revalidatePath('/blog/[slug]', 'page');
       revalidatePath(`/blog/${id}`);
+      revalidatePath('/');
     } catch {}
 
     const updatedPosts = await getStoredPosts();

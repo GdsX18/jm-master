@@ -13,7 +13,7 @@ import {
   Columns,
   FileEdit,
 } from 'lucide-react';
-import { Article, ArticleCategory, ArticleStatus, ViewMode } from './types';
+import { Article, ArticleCategory, ArticleStatus, ArticleSEO, ViewMode } from './types';
 import {
   getStoredArticles,
   saveStoredArticles,
@@ -28,6 +28,63 @@ import LivePreview from './components/LivePreview';
 import FAQModule from './components/FAQModule';
 import TrackingSettingsModal from './components/TrackingSettingsModal';
 
+function mapServerPosts(postsArray: any[]): Article[] {
+  return postsArray.map((p: any) => {
+    const rawSeo = p.seo && typeof p.seo === 'object' ? p.seo : {};
+    
+    // Normalizar keywords
+    let keywords = '';
+    if (Array.isArray(rawSeo.keywords)) {
+      keywords = rawSeo.keywords.join(', ');
+    } else if (typeof rawSeo.keywords === 'string') {
+      keywords = rawSeo.keywords;
+    } else if (Array.isArray(p.tags) && p.tags.length > 0) {
+      keywords = p.tags.join(', ');
+    }
+
+    const seo: ArticleSEO = {
+      focusKeyphrase: rawSeo.focusKeyphrase || '',
+      metaTitle: rawSeo.metaTitle || rawSeo.seoTitle || p.title || '',
+      seoTitle: rawSeo.seoTitle || rawSeo.metaTitle || p.title || '',
+      metaDescription: rawSeo.metaDescription || rawSeo.seoDescription || p.excerpt || '',
+      seoDescription: rawSeo.seoDescription || rawSeo.metaDescription || p.excerpt || '',
+      canonicalUrl: rawSeo.canonicalUrl || (p.slug ? `https://jmmaster.com.br/blog/${p.slug}` : ''),
+      noIndex: !!rawSeo.noIndex,
+      noFollow: !!rawSeo.noFollow,
+      keywords: keywords,
+      ogTitle: rawSeo.ogTitle || rawSeo.metaTitle || rawSeo.seoTitle || p.title || '',
+      ogDescription: rawSeo.ogDescription || rawSeo.metaDescription || rawSeo.seoDescription || p.excerpt || '',
+      ogImage: rawSeo.ogImage || p.coverImage || p.image || '',
+    };
+
+    return {
+      id: p.id,
+      title: p.title || '',
+      slug: p.slug || '',
+      excerpt: p.excerpt || '',
+      contentHtml: p.contentHtml || (Array.isArray(p.content) ? p.content.map((c: string) => `<p>${c}</p>`).join('') : ''),
+      category: (p.category || 'WhatsApp API') as ArticleCategory,
+      coverImage: p.coverImage || p.image || '',
+      coverImageAlt: p.coverImageAlt || p.title || '',
+      author: {
+        name: p.author?.name || OFFICIAL_AUTHOR.name,
+        role: p.author?.role || OFFICIAL_AUTHOR.role,
+        avatarUrl: p.author?.avatarUrl || p.author?.avatar || OFFICIAL_AUTHOR.avatarUrl,
+        isOfficialBrand: true,
+      },
+      publishedAt: p.publishedAt || (p.date ? new Date().toISOString() : undefined),
+      readingTimeMinutes: p.readingTimeMinutes || parseInt(p.readTime) || 3,
+      isFeatured: !!p.featured || !!p.isFeatured,
+      status: (p.status || 'published') as ArticleStatus,
+      views: p.views || 0,
+      createdAt: p.createdAt || new Date().toISOString(),
+      updatedAt: p.updatedAt || new Date().toISOString(),
+      seo,
+      faqs: Array.isArray(p.faqs) ? p.faqs : [],
+    };
+  });
+}
+
 export default function BlogDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
@@ -37,51 +94,64 @@ export default function BlogDashboardPage() {
   const [lastSavedTime, setLastSavedTime] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Carregar artigos reais da API do site oficial
-  const loadPostsFromApi = async () => {
+  const loadPostsFromApi = async (showRefreshToast = false) => {
     try {
-      const res = await fetch('/api/blog/posts', { cache: 'no-store' });
+      setIsLoading(true);
+      const res = await fetch(`/api/blog/posts?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       const data = await res.json();
       const postsArray = data.posts || (Array.isArray(data) ? data : []);
 
       if (Array.isArray(postsArray)) {
-        const mapped: Article[] = postsArray.map((p: any) => ({
-          id: p.id,
-          title: p.title || '',
-          slug: p.slug || '',
-          excerpt: p.excerpt || '',
-          contentHtml: p.contentHtml || (Array.isArray(p.content) ? p.content.map((c: string) => `<p>${c}</p>`).join('') : ''),
-          category: (p.category || 'WhatsApp API') as ArticleCategory,
-          coverImage: p.coverImage || p.image || '',
-          coverImageAlt: p.coverImageAlt || p.title || '',
-          author: OFFICIAL_AUTHOR,
-          publishedAt: p.publishedAt || (p.date ? new Date().toISOString() : undefined),
-          readingTimeMinutes: p.readingTimeMinutes || parseInt(p.readTime) || 3,
-          isFeatured: !!p.isFeatured,
-          status: (p.status || 'published') as ArticleStatus,
-          views: p.views || 0,
-          createdAt: p.createdAt || new Date().toISOString(),
-          updatedAt: p.updatedAt || new Date().toISOString(),
-          seo: p.seo || undefined,
-          faqs: Array.isArray(p.faqs) ? p.faqs : [],
-        }));
-
+        const mapped = mapServerPosts(postsArray);
         setArticles(mapped);
         saveStoredArticles(mapped);
+        if (showRefreshToast) {
+          showToast('Artigos sincronizados em tempo real com o servidor!', 'success');
+        }
         return;
       }
     } catch (err) {
       console.error('Erro ao conectar com API de posts:', err);
+      const local = getStoredArticles();
+      if (local.length > 0) {
+        setArticles(local);
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    const local = getStoredArticles();
-    setArticles(local);
   };
 
   useEffect(() => {
     setIsMounted(true);
     loadPostsFromApi();
+
+    // Sincronização em tempo real quando o usuário volta à aba do navegador
+    const handleFocus = () => {
+      loadPostsFromApi();
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadPostsFromApi();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const showToast = (text: string, type: 'success' | 'info' = 'success') => {
@@ -92,16 +162,57 @@ export default function BlogDashboardPage() {
   };
 
   // Sincronizar com a API real
-  const syncWithApi = async (articleToSync: Article) => {
+  const syncWithApi = async (
+    articleToSync: Article
+  ): Promise<{ success: boolean; message?: string; posts?: Article[] }> => {
     try {
-      await fetch('/api/blog/posts', {
+      const res = await fetch('/api/blog/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(articleToSync),
       });
-    } catch (e) {
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Falha ao sincronizar com o banco de dados.');
+      }
+      if (Array.isArray(data.posts)) {
+        const mapped = mapServerPosts(data.posts);
+        setArticles(mapped);
+        saveStoredArticles(mapped);
+      }
+      return { success: true, message: data.message, posts: data.posts };
+    } catch (e: any) {
       console.error('Erro de sincronização:', e);
+      return { success: false, message: e.message || 'Erro de conexão com o servidor' };
     }
+  };
+
+  const prepareArticleForSync = (baseArticle: Article, status: ArticleStatus): Article => {
+    const finalSlug = baseArticle.slug || slugify(baseArticle.title);
+    const existingSeo = baseArticle.seo || ({} as any);
+
+    const finalSeo: ArticleSEO = {
+      focusKeyphrase: existingSeo.focusKeyphrase || '',
+      metaTitle: (existingSeo.metaTitle || existingSeo.seoTitle || baseArticle.title || '').trim() || baseArticle.title,
+      seoTitle: (existingSeo.seoTitle || existingSeo.metaTitle || baseArticle.title || '').trim() || baseArticle.title,
+      metaDescription: (existingSeo.metaDescription || existingSeo.seoDescription || baseArticle.excerpt || '').trim() || baseArticle.excerpt,
+      seoDescription: (existingSeo.seoDescription || existingSeo.metaDescription || baseArticle.excerpt || '').trim() || baseArticle.excerpt,
+      canonicalUrl: (existingSeo.canonicalUrl || '').trim() || `https://jmmaster.com.br/blog/${finalSlug}`,
+      noIndex: !!existingSeo.noIndex,
+      noFollow: !!existingSeo.noFollow,
+      keywords: existingSeo.keywords || '',
+      ogTitle: (existingSeo.ogTitle || existingSeo.metaTitle || baseArticle.title || '').trim() || baseArticle.title,
+      ogDescription: (existingSeo.ogDescription || existingSeo.metaDescription || baseArticle.excerpt || '').trim() || baseArticle.excerpt,
+      ogImage: (existingSeo.ogImage || baseArticle.coverImage || '').trim() || baseArticle.coverImage,
+    };
+
+    return {
+      ...baseArticle,
+      slug: finalSlug,
+      status,
+      updatedAt: new Date().toISOString(),
+      seo: finalSeo,
+    };
   };
 
   const handleNewArticle = () => {
@@ -125,9 +236,16 @@ export default function BlogDashboardPage() {
       seo: {
         focusKeyphrase: '',
         metaTitle: '',
+        seoTitle: '',
         metaDescription: '',
+        seoDescription: '',
         canonicalUrl: '',
         noIndex: false,
+        noFollow: false,
+        keywords: '',
+        ogTitle: '',
+        ogDescription: '',
+        ogImage: '',
       },
       faqs: [],
     };
@@ -137,7 +255,34 @@ export default function BlogDashboardPage() {
   };
 
   const handleEditArticle = (art: Article) => {
-    setCurrentArticle({ ...art });
+    const currentSeo = art.seo || ({} as any);
+    
+    let keywordsStr = '';
+    if (Array.isArray(currentSeo.keywords)) {
+      keywordsStr = currentSeo.keywords.join(', ');
+    } else if (typeof currentSeo.keywords === 'string') {
+      keywordsStr = currentSeo.keywords;
+    }
+
+    const structuredSeo: ArticleSEO = {
+      focusKeyphrase: currentSeo.focusKeyphrase || '',
+      metaTitle: currentSeo.metaTitle || currentSeo.seoTitle || art.title || '',
+      seoTitle: currentSeo.seoTitle || currentSeo.metaTitle || art.title || '',
+      metaDescription: currentSeo.metaDescription || currentSeo.seoDescription || art.excerpt || '',
+      seoDescription: currentSeo.seoDescription || currentSeo.metaDescription || art.excerpt || '',
+      canonicalUrl: currentSeo.canonicalUrl || (art.slug ? `https://jmmaster.com.br/blog/${art.slug}` : ''),
+      noIndex: !!currentSeo.noIndex,
+      noFollow: !!currentSeo.noFollow,
+      keywords: keywordsStr,
+      ogTitle: currentSeo.ogTitle || currentSeo.metaTitle || art.title || '',
+      ogDescription: currentSeo.ogDescription || currentSeo.metaDescription || art.excerpt || '',
+      ogImage: currentSeo.ogImage || art.coverImage || '',
+    };
+
+    setCurrentArticle({
+      ...art,
+      seo: structuredSeo,
+    });
     setViewMode('editor');
     setEditorSubMode('editor_meta');
   };
@@ -156,7 +301,7 @@ export default function BlogDashboardPage() {
     };
     setCurrentArticle(updated);
 
-    // Atualização otimista
+    // Atualização otimista local
     const updatedList = articles.map((a) => (a.id === updated.id ? updated : a));
     if (!articles.some((a) => a.id === updated.id)) {
       updatedList.unshift(updated);
@@ -170,14 +315,16 @@ export default function BlogDashboardPage() {
 
   const handleSaveDraft = async () => {
     if (!currentArticle) return;
-    const finalArticle: Article = {
-      ...currentArticle,
-      status: 'draft',
-      updatedAt: new Date().toISOString(),
-    };
+    setIsSaving(true);
+    const finalArticle = prepareArticleForSync(currentArticle, 'draft');
     handleUpdateCurrentArticle(finalArticle);
-    await syncWithApi(finalArticle);
-    showToast('Rascunho salvo com sucesso!');
+    const res = await syncWithApi(finalArticle);
+    setIsSaving(false);
+    if (res.success) {
+      showToast('Rascunho salvo e sincronizado com sucesso!', 'success');
+    } else {
+      showToast(`Falha ao salvar rascunho: ${res.message}`, 'info');
+    }
   };
 
   const handleSchedule = async () => {
@@ -186,15 +333,19 @@ export default function BlogDashboardPage() {
       showToast('Por favor, defina um título para o artigo antes de agendar.', 'info');
       return;
     }
-    const finalArticle: Article = {
+    setIsSaving(true);
+    const scheduledArticle = prepareArticleForSync({
       ...currentArticle,
-      status: 'scheduled',
-      publishedAt: new Date(Date.now() + 86400000).toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    handleUpdateCurrentArticle(finalArticle);
-    await syncWithApi(finalArticle);
-    showToast('Artigo agendado para publicação automática!');
+      publishedAt: currentArticle.publishedAt || new Date(Date.now() + 86400000).toISOString(),
+    }, 'scheduled');
+    handleUpdateCurrentArticle(scheduledArticle);
+    const res = await syncWithApi(scheduledArticle);
+    setIsSaving(false);
+    if (res.success) {
+      showToast('Artigo agendado e sincronizado no servidor!', 'success');
+    } else {
+      showToast(`Falha ao agendar: ${res.message}`, 'info');
+    }
   };
 
   const handlePublish = async () => {
@@ -208,71 +359,95 @@ export default function BlogDashboardPage() {
       return;
     }
 
-    const finalSlug = currentArticle.slug || slugify(currentArticle.title);
-    const finalArticle: Article = {
+    setIsSaving(true);
+    const finalArticle = prepareArticleForSync({
       ...currentArticle,
-      slug: finalSlug,
-      status: 'published',
       publishedAt: currentArticle.publishedAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    }, 'published');
 
-    handleUpdateCurrentArticle(finalArticle);
-    await syncWithApi(finalArticle);
-    showToast('🚀 Artigo publicado com sucesso no Blog oficial da JM Master Group!');
-    
-    // Retornar para a lista após breve confirmação
-    setTimeout(() => {
-      setViewMode('list');
-    }, 1200);
+    const res = await syncWithApi(finalArticle);
+    setIsSaving(false);
+
+    if (res.success) {
+      handleUpdateCurrentArticle(finalArticle);
+      showToast('🚀 Artigo publicado com sucesso e sincronizado globalmente!', 'success');
+      setTimeout(() => {
+        setViewMode('list');
+      }, 1000);
+    } else {
+      showToast(`Falha ao publicar no servidor: ${res.message}`, 'info');
+    }
   };
 
   const handleDeleteArticle = async (id: string) => {
-    const updated = articles.filter((a) => a.id !== id);
-    setArticles(updated);
-    saveStoredArticles(updated);
-
     try {
-      await fetch(`/api/blog/posts?id=${id}`, { method: 'DELETE' });
-    } catch (e) {}
+      const res = await fetch(`/api/blog/posts?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.posts)) {
+        const mapped = mapServerPosts(data.posts);
+        setArticles(mapped);
+        saveStoredArticles(mapped);
+        showToast('Artigo removido com sucesso.', 'info');
+      } else {
+        const updated = articles.filter((a) => a.id !== id);
+        setArticles(updated);
+        saveStoredArticles(updated);
+        showToast('Artigo removido.', 'info');
+      }
+    } catch (e) {
+      const updated = articles.filter((a) => a.id !== id);
+      setArticles(updated);
+      saveStoredArticles(updated);
+      showToast('Artigo removido.', 'info');
+    }
 
     if (currentArticle?.id === id) {
       setCurrentArticle(null);
       setViewMode('list');
     }
-    showToast('Artigo removido com sucesso.', 'info');
   };
 
   const handleDuplicateArticle = async (art: Article) => {
+    const duplicatedSlug = `${art.slug}-copia-${Date.now().toString().slice(-4)}`;
     const duplicated: Article = {
       ...art,
       id: `post-${Date.now()}`,
       title: `${art.title} (Cópia)`,
-      slug: `${art.slug}-copia`,
+      slug: duplicatedSlug,
       status: 'draft',
       views: 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      seo: art.seo ? {
+        ...art.seo,
+        metaTitle: `${art.seo.metaTitle || art.title} (Cópia)`,
+        canonicalUrl: `https://jmmaster.com.br/blog/${duplicatedSlug}`,
+      } : undefined,
     };
-    const updated = [duplicated, ...articles];
-    setArticles(updated);
-    saveStoredArticles(updated);
-    await syncWithApi(duplicated);
-    showToast('Artigo duplicado com sucesso!');
+    const res = await syncWithApi(duplicated);
+    if (res.success) {
+      showToast('Artigo duplicado e sincronizado com sucesso!', 'success');
+    } else {
+      const updated = [duplicated, ...articles];
+      setArticles(updated);
+      saveStoredArticles(updated);
+      showToast(`Artigo duplicado localmente: ${res.message}`, 'info');
+    }
   };
 
   const handleToggleFeatured = async (id: string) => {
     const target = articles.find((a) => a.id === id);
     if (!target) return;
     const updatedTarget = { ...target, isFeatured: !target.isFeatured };
-    const updated = articles.map((a) => (a.id === id ? updatedTarget : a));
-    setArticles(updated);
-    saveStoredArticles(updated);
-    if (currentArticle && currentArticle.id === id) {
-      setCurrentArticle(updatedTarget);
+    const res = await syncWithApi(updatedTarget);
+    if (res.success) {
+      if (currentArticle && currentArticle.id === id) {
+        setCurrentArticle(updatedTarget);
+      }
+      showToast(updatedTarget.isFeatured ? 'Artigo fixado como destaque no topo do blog!' : 'Destaque removido.');
+    } else {
+      showToast(`Falha ao alterar destaque: ${res.message}`, 'info');
     }
-    await syncWithApi(updatedTarget);
-    showToast(updatedTarget.isFeatured ? 'Artigo fixado como destaque no topo do blog!' : 'Destaque removido.');
   };
 
   if (!isMounted) {
@@ -306,6 +481,8 @@ export default function BlogDashboardPage() {
           onToggleFeatured={handleToggleFeatured}
           onPreviewArticle={handlePreviewFromList}
           onOpenTracking={() => setIsTrackingOpen(true)}
+          onRefresh={() => loadPostsFromApi(true)}
+          isLoading={isLoading}
         />
       )}
 
@@ -414,29 +591,32 @@ export default function BlogDashboardPage() {
               {/* Botões de Ação */}
               <button
                 type="button"
+                disabled={isSaving}
                 onClick={handleSaveDraft}
-                className="px-3 sm:px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>Salvar Rascunho</span>
+                <span>{isSaving ? 'Salvando...' : 'Salvar Rascunho'}</span>
               </button>
 
               <button
                 type="button"
+                disabled={isSaving}
                 onClick={handleSchedule}
-                className="px-3 sm:px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                className="px-3 sm:px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Calendar className="w-3.5 h-3.5" />
-                <span>Agendar</span>
+                <span>{isSaving ? 'Agendando...' : 'Agendar'}</span>
               </button>
 
               <button
                 type="button"
+                disabled={isSaving}
                 onClick={handlePublish}
-                className="px-4 sm:px-5 py-2 bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg shadow-orange-950/20 cursor-pointer flex items-center gap-1.5"
+                className="px-4 sm:px-5 py-2 bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg shadow-orange-950/20 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Publicar no Site</span>
+                <span>{isSaving ? 'Publicando...' : 'Publicar no Site'}</span>
               </button>
             </div>
           </div>

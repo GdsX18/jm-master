@@ -16,7 +16,9 @@ import {
   Link2,
   EyeOff,
   Copy,
-  Info,
+  Share2,
+  Tag,
+  ShieldAlert,
 } from 'lucide-react';
 import { Article, ArticleSEO } from '../types';
 import { slugify } from '../mockData';
@@ -28,23 +30,40 @@ interface SEOModuleProps {
 
 export default function SEOModule({ article, onChange }: SEOModuleProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [previewTab, setPreviewTab] = useState<'google' | 'social'>('google');
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Normalizar keywords de string ou array
+  const currentKeywordsStr = useMemo(() => {
+    if (Array.isArray(article.seo?.keywords)) {
+      return article.seo.keywords.join(', ');
+    }
+    if (typeof article.seo?.keywords === 'string') {
+      return article.seo.keywords;
+    }
+    return '';
+  }, [article.seo?.keywords]);
+
   const seo: ArticleSEO = useMemo(() => {
-    return (
-      article.seo || {
-        focusKeyphrase: '',
-        metaTitle: article.title || '',
-        metaDescription: article.excerpt || '',
-        canonicalUrl: '',
-        noIndex: false,
-      }
-    );
-  }, [article.seo, article.title, article.excerpt]);
+    return {
+      focusKeyphrase: article.seo?.focusKeyphrase || '',
+      metaTitle: article.seo?.metaTitle || article.seo?.seoTitle || article.title || '',
+      seoTitle: article.seo?.seoTitle || article.seo?.metaTitle || article.title || '',
+      metaDescription: article.seo?.metaDescription || article.seo?.seoDescription || article.excerpt || '',
+      seoDescription: article.seo?.seoDescription || article.seo?.metaDescription || article.excerpt || '',
+      canonicalUrl: article.seo?.canonicalUrl || (article.slug ? `https://jmmaster.com.br/blog/${article.slug}` : ''),
+      noIndex: !!article.seo?.noIndex,
+      noFollow: !!article.seo?.noFollow,
+      keywords: currentKeywordsStr,
+      ogTitle: article.seo?.ogTitle || article.seo?.metaTitle || article.title || '',
+      ogDescription: article.seo?.ogDescription || article.seo?.metaDescription || article.excerpt || '',
+      ogImage: article.seo?.ogImage || article.coverImage || '',
+    };
+  }, [article.seo, article.title, article.excerpt, article.slug, article.coverImage, currentKeywordsStr]);
 
   const updateSEO = (fields: Partial<ArticleSEO>) => {
-    const updatedSEO = {
+    const updatedSEO: ArticleSEO = {
       ...seo,
       ...fields,
     };
@@ -408,7 +427,25 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             </div>
           </div>
 
-          {/* 2. META TÍTULO (SEO TITLE) */}
+          {/* 2. PALAVRAS-CHAVE ADICIONAIS / TAGS DE BUSCA (KEYWORDS) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5 text-neutral-400" />
+                <span>Palavras-chave Adicionais (Keywords)</span>
+              </label>
+              <span className="text-[10px] text-neutral-400 font-medium">Separadas por vírgula</span>
+            </div>
+            <input
+              type="text"
+              value={typeof seo.keywords === 'string' ? seo.keywords : Array.isArray(seo.keywords) ? (seo.keywords as string[]).join(', ') : ''}
+              onChange={(e) => updateSEO({ keywords: e.target.value })}
+              placeholder="Ex: whatsapp api, atendimento automatico, meta business, vendas"
+              className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] transition font-medium"
+            />
+          </div>
+
+          {/* 3. META TÍTULO (SEO TITLE) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
@@ -417,7 +454,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => updateSEO({ metaTitle: article.title })}
+                  onClick={() => updateSEO({ metaTitle: article.title, seoTitle: article.title })}
                   className="text-[10px] font-bold text-[#E85D26] hover:underline flex items-center gap-0.5 cursor-pointer"
                   title="Copiar do Título Principal"
                 >
@@ -432,7 +469,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             <input
               type="text"
               value={seo.metaTitle}
-              onChange={(e) => updateSEO({ metaTitle: e.target.value })}
+              onChange={(e) => updateSEO({ metaTitle: e.target.value, seoTitle: e.target.value })}
               placeholder={article.title || 'Título exibido na página de resultados do Google'}
               className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] transition font-medium"
             />
@@ -449,7 +486,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             </div>
           </div>
 
-          {/* 3. META DESCRIÇÃO (META DESCRIPTION) */}
+          {/* 4. META DESCRIÇÃO (META DESCRIPTION) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
@@ -458,7 +495,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => updateSEO({ metaDescription: article.excerpt })}
+                  onClick={() => updateSEO({ metaDescription: article.excerpt, seoDescription: article.excerpt })}
                   className="text-[10px] font-bold text-[#E85D26] hover:underline flex items-center gap-0.5 cursor-pointer"
                   title="Copiar do Resumo do Artigo"
                 >
@@ -473,8 +510,11 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             <textarea
               rows={3}
               value={seo.metaDescription}
-              onChange={(e) => updateSEO({ metaDescription: e.target.value })}
-              placeholder={article.excerpt || 'Descrição atrativa que resume o artigo e convence o usuário a clicar no Google...'}
+              onChange={(e) => updateSEO({ metaDescription: e.target.value, seoDescription: e.target.value })}
+              placeholder={
+                article.excerpt ||
+                'Descrição atrativa que resume o artigo e convence o usuário a clicar no Google...'
+              }
               className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] resize-none transition font-medium"
             />
             {/* Barra de Progresso Visual */}
@@ -490,85 +530,195 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             </div>
           </div>
 
-          {/* 4. GOOGLE SNIPPET PREVIEW REALISTA */}
+          {/* 5. PRÉVIA EM TEMPO REAL (GOOGLE SNIPPET & OPEN GRAPH SOCIAL) */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-neutral-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-                  Google Snippet Preview
-                </span>
-              </div>
-              <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setPreviewDevice('desktop')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
-                    previewDevice === 'desktop'
-                      ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-2xs'
-                      : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-white'
+                  onClick={() => setPreviewTab('google')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    previewTab === 'google'
+                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                   }`}
                 >
-                  <Monitor className="w-3 h-3" />
-                  <span>Desktop</span>
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Google Snippet</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewDevice('mobile')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
-                    previewDevice === 'mobile'
-                      ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-2xs'
-                      : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-white'
+                  onClick={() => setPreviewTab('social')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                    previewTab === 'social'
+                      ? 'bg-[#E85D26] text-white'
+                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
                   }`}
                 >
-                  <Smartphone className="w-3 h-3" />
-                  <span>Mobile</span>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Open Graph (WhatsApp / Redes)</span>
                 </button>
               </div>
+
+              {previewTab === 'google' && (
+                <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice('desktop')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
+                      previewDevice === 'desktop'
+                        ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-2xs'
+                        : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-white'
+                    }`}
+                  >
+                    <Monitor className="w-3 h-3" />
+                    <span>Desktop</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice('mobile')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
+                      previewDevice === 'mobile'
+                        ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-2xs'
+                        : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-white'
+                    }`}
+                  >
+                    <Smartphone className="w-3 h-3" />
+                    <span>Mobile</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* CARD DE SIMULAÇÃO DA BUSCA DO GOOGLE */}
-            <div
-              className={`p-4 rounded-xl border transition-all ${
-                previewDevice === 'mobile'
-                  ? 'bg-white dark:bg-[#1f1f1f] border-neutral-300 dark:border-neutral-700 shadow-md max-w-sm mx-auto'
-                  : 'bg-white dark:bg-[#202124] border-neutral-200 dark:border-neutral-800 shadow-xs'
-              }`}
-            >
-              {/* Header do Google (Favicon + Site Name + URL) */}
-              <div className="flex items-center gap-2.5 mb-1.5">
-                <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-neutral-200 dark:border-neutral-700 shrink-0">
-                  <Image
-                    src="/logos/Icone.png"
-                    alt="JM Master"
-                    width={16}
-                    height={16}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1 text-[12px] leading-tight text-[#202124] dark:text-[#dadce0] font-medium truncate">
-                    <span>JM Master Group</span>
+            {/* TAB GOOGLE */}
+            {previewTab === 'google' && (
+              <div
+                className={`p-4 rounded-xl border transition-all ${
+                  previewDevice === 'mobile'
+                    ? 'bg-white dark:bg-[#1f1f1f] border-neutral-300 dark:border-neutral-700 shadow-md max-w-sm mx-auto'
+                    : 'bg-white dark:bg-[#202124] border-neutral-200 dark:border-neutral-800 shadow-xs'
+                }`}
+              >
+                {/* Header do Google (Favicon + Site Name + URL) */}
+                <div className="flex items-center gap-2.5 mb-1.5">
+                  <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-neutral-200 dark:border-neutral-700 shrink-0">
+                    <Image
+                      src="/logos/Icone.png"
+                      alt="JM Master"
+                      width={16}
+                      height={16}
+                      className="object-contain"
+                    />
                   </div>
-                  <div className="text-[11px] leading-tight text-[#4d5156] dark:text-[#bdc1c6] truncate">
-                    https://jmmaster.com.br › blog › {article.slug || 'slug-do-artigo'}
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1 text-[12px] leading-tight text-[#202124] dark:text-[#dadce0] font-medium truncate">
+                      <span>JM Master Group</span>
+                    </div>
+                    <div className="text-[11px] leading-tight text-[#4d5156] dark:text-[#bdc1c6] truncate">
+                      https://jmmaster.com.br › blog › {article.slug || 'slug-do-artigo'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Título Clicável Azul do Google */}
+                <h4 className="text-[17px] sm:text-[18px] leading-snug font-normal text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer line-clamp-2 mb-1">
+                  {displayTitle || 'Título do Artigo Aparecerá Aqui no Google'}
+                </h4>
+
+                {/* Descrição Cinza do Google */}
+                <p className="text-[13px] leading-relaxed text-[#4d5156] dark:text-[#bdc1c6] line-clamp-2">
+                  {displayDesc ||
+                    'A meta descrição do artigo aparecerá aqui, atraindo cliques dos usuários na página de busca.'}
+                </p>
+              </div>
+            )}
+
+            {/* TAB OPEN GRAPH SOCIAL PREVIEW */}
+            {previewTab === 'social' && (
+              <div className="space-y-4">
+                <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 max-w-md mx-auto shadow-sm overflow-hidden">
+                  {/* Card de Imagem OG */}
+                  <div className="relative w-full aspect-[1.91/1] bg-neutral-900 rounded-lg overflow-hidden border border-neutral-700/50 mb-3 flex items-center justify-center">
+                    {seo.ogImage || article.coverImage ? (
+                      <img
+                        src={seo.ogImage || article.coverImage}
+                        alt="Open Graph Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-neutral-500 text-xs font-bold flex items-center gap-1.5">
+                        <Share2 className="w-4 h-4" />
+                        <span>Nenhuma imagem de capa selecionada</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block font-mono">
+                      JMMASTER.COM.BR
+                    </span>
+                    <h5 className="text-sm font-bold text-neutral-900 dark:text-white line-clamp-2 leading-snug">
+                      {seo.ogTitle || seo.metaTitle || article.title || 'Título do Artigo'}
+                    </h5>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">
+                      {seo.ogDescription || seo.metaDescription || article.excerpt || 'Resumo do artigo para compartilhamento em redes sociais e mensageiros.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Customizações Opcionais de OG */}
+                <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      Personalizar Open Graph (Opcional)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateSEO({
+                          ogTitle: article.title,
+                          ogDescription: article.excerpt,
+                          ogImage: article.coverImage,
+                        });
+                      }}
+                      className="text-[10px] font-bold text-[#E85D26] hover:underline cursor-pointer"
+                    >
+                      Sincronizar com Artigo
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div>
+                      <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
+                        Título Open Graph
+                      </label>
+                      <input
+                        type="text"
+                        value={seo.ogTitle || ''}
+                        onChange={(e) => updateSEO({ ogTitle: e.target.value })}
+                        placeholder={article.title || 'Título nas redes'}
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
+                        Descrição Open Graph
+                      </label>
+                      <input
+                        type="text"
+                        value={seo.ogDescription || ''}
+                        onChange={(e) => updateSEO({ ogDescription: e.target.value })}
+                        placeholder={article.excerpt || 'Descrição nas redes'}
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Título Clicável Azul do Google */}
-              <h4 className="text-[17px] sm:text-[18px] leading-snug font-normal text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer line-clamp-2 mb-1">
-                {displayTitle || 'Título do Artigo Aparecerá Aqui no Google'}
-              </h4>
-
-              {/* Descrição Cinza do Google */}
-              <p className="text-[13px] leading-relaxed text-[#4d5156] dark:text-[#bdc1c6] line-clamp-2">
-                {displayDesc || 'A meta descrição do artigo aparecerá aqui, atraindo cliques dos usuários na página de busca.'}
-              </p>
-            </div>
+            )}
           </div>
 
-          {/* 5. ANÁLISE & CHECKLIST DE SEO EM TEMPO REAL (YOAST ENGINE) */}
+          {/* 6. ANÁLISE & CHECKLIST DE SEO EM TEMPO REAL (YOAST ENGINE) */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4">
               <div className="flex items-center gap-2">
@@ -613,7 +763,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             </div>
           </div>
 
-          {/* 6. CONFIGURAÇÕES AVANÇADAS DE SEO (CANONICAL & INDEXAÇÃO) */}
+          {/* 7. CONFIGURAÇÕES AVANÇADAS DE SEO (CANONICAL, NOINDEX & NOFOLLOW) */}
           <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
             <button
               type="button"
@@ -628,7 +778,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
             </button>
 
             {showAdvanced && (
-              <div className="mt-3 p-3.5 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3 animate-fadeIn">
+              <div className="mt-3 p-3.5 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-4 animate-fadeIn">
                 {/* CANONICAL URL */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">
@@ -654,7 +804,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                       <span>Ocultar dos Buscadores (noindex)</span>
                     </span>
                     <p className="text-[10px] text-neutral-400">
-                      Impede que o Google indexe este artigo específico.
+                      Impede que o Google e outros motores indexem este artigo.
                     </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -665,6 +815,28 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                       className="sr-only peer"
                     />
                     <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:bg-rose-600" />
+                  </label>
+                </div>
+
+                {/* NOFOLLOW TOGGLE */}
+                <div className="flex items-center justify-between pt-1 border-t border-neutral-200/60 dark:border-neutral-800/60">
+                  <div>
+                    <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
+                      <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
+                      <span>Não Seguir Links (nofollow)</span>
+                    </span>
+                    <p className="text-[10px] text-neutral-400">
+                      Instrui os robôs a não seguirem links presentes no artigo.
+                    </p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!seo.noFollow}
+                      onChange={(e) => updateSEO({ noFollow: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:bg-amber-600" />
                   </label>
                 </div>
               </div>
