@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { requirePermission } from '@/lib/session';
+import { createInvoiceWithNumber, logPayment, runBillingAutomation } from '@/lib/billing';
+
+// A automação (faturas recorrentes + registro de vencidas) roda também ao abrir o Financeiro,
+// no máximo a cada 10 minutos por instância — o cron diário cobre o restante
+let lastAutomationRun = 0;
 
 // Status gravados no banco. "ATRASADO" é calculado: em aberto + vencimento anterior a hoje.
 const STORED_STATUSES = ['ABERTO', 'PAGO', 'CANCELADO'] as const;
@@ -35,18 +40,6 @@ function effectiveStatus(status: string, dueDate: Date | null): string {
   return 'ABERTO';
 }
 
-async function nextInvoiceNumber(): Promise<string> {
-  const year = new Date().getFullYear();
-  const prefix = `INV-${year}-`;
-  const last = await prisma.financialRecord.findFirst({
-    where: { invoiceNumber: { startsWith: prefix } },
-    orderBy: { invoiceNumber: 'desc' },
-    select: { invoiceNumber: true },
-  });
-  const lastSeq = last?.invoiceNumber ? parseInt(last.invoiceNumber.slice(prefix.length), 10) || 0 : 0;
-  return `${prefix}${String(lastSeq + 1).padStart(4, '0')}`;
-}
-
 async function resolveCustomer(customerId: unknown, customerName: unknown) {
   if (typeof customerId === 'string' && customerId) {
     const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { id: true, name: true } });
@@ -68,9 +61,14 @@ export async function GET() {
   if (auth instanceof NextResponse) return auth;
 
   try {
+    if (Date.now() - lastAutomationRun > 10 * 60 * 1000) {
+      lastAutomationRun = Date.now();
+      await runBillingAutomation().catch((e) => console.error('[Finance Automation Error]:', e));
+    }
+
     const rows = await prisma.financialRecord.findMany({
       orderBy: [{ dueDate: 'desc' }, { createdAt: 'desc' }],
-      include: { customer: { select: { id: true, name: true } } },
+      include: { customer: { select: { id: true, name: true, phone: true } } },
     });
 
     let receitaRecebida = 0;
@@ -107,6 +105,8 @@ export async function GET() {
         invoiceNumber: r.invoiceNumber || (metadata.invoiceId as string) || r.id.slice(0, 10),
         customerName: r.customer?.name || (metadata.customer as string) || r.description,
         method: (metadata.method as string) || 'Boleto / Pix',
+        customerPhone: r.customer?.phone || null,
+        recurring: metadata.recurring === true,
       };
     });
 
@@ -151,35 +151,22 @@ export async function POST(req: NextRequest) {
 
     const finalStatus: StoredStatus = isStoredStatus(status) ? status : 'ABERTO';
 
-    // Tenta de novo se dois cadastros simultâneos gerarem o mesmo número
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const record = await prisma.financialRecord.create({
-          data: {
-            invoiceNumber: await nextInvoiceNumber(),
-            description: (typeof description === 'string' && description.trim()) || 'Fatura de Serviço',
-            amount: numAmount,
-            type: 'RECEITA',
-            category: (typeof category === 'string' && category.trim()) || 'Mensalidade',
-            status: finalStatus,
-            dueDate: due,
-            paymentDate: finalStatus === 'PAGO' ? new Date() : null,
-            customerId: customerRef.id,
-            metadata: {
-              customer: customerRef.name,
-              method: (typeof method === 'string' && method) || 'Boleto / Pix',
-              createdBy: auth.email,
-            },
-          },
-        });
-        return NextResponse.json({ success: true, record });
-      } catch (error) {
-        const isUniqueConflict =
-          error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
-        if (!isUniqueConflict || attempt === 2) throw error;
-      }
-    }
-    return NextResponse.json({ error: 'Não foi possível gerar o número da fatura' }, { status: 500 });
+    const record = await createInvoiceWithNumber({
+      description: (typeof description === 'string' && description.trim()) || 'Fatura de Serviço',
+      amount: numAmount,
+      type: 'RECEITA',
+      category: (typeof category === 'string' && category.trim()) || 'Mensalidade',
+      status: finalStatus,
+      dueDate: due,
+      paymentDate: finalStatus === 'PAGO' ? new Date() : null,
+      customerId: customerRef.id,
+      metadata: {
+        customer: customerRef.name,
+        method: (typeof method === 'string' && method) || 'Boleto / Pix',
+        createdBy: auth.email,
+      },
+    });
+    return NextResponse.json({ success: true, record });
   } catch (error) {
     console.error('[API Finance POST Error]:', error);
     return NextResponse.json({ error: 'Erro ao criar registro financeiro' }, { status: 500 });
@@ -250,6 +237,9 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'ID e um status válido (ABERTO, PAGO, CANCELADO) são obrigatórios' }, { status: 400 });
     }
 
+    const previous = await prisma.financialRecord.findUnique({ where: { id }, select: { status: true } });
+    if (!previous) return NextResponse.json({ error: 'Fatura não encontrada' }, { status: 404 });
+
     const record = await prisma.financialRecord.update({
       where: { id },
       data: {
@@ -257,6 +247,10 @@ export async function PATCH(req: NextRequest) {
         paymentDate: status === 'PAGO' ? new Date() : null,
       },
     });
+
+    if (status === 'PAGO' && previous.status !== 'PAGO') {
+      await logPayment(id, `${auth.name} (${auth.role})`).catch((e) => console.error('[Finance CRM log Error]:', e));
+    }
 
     return NextResponse.json({ success: true, record });
   } catch (error) {

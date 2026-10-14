@@ -17,6 +17,9 @@ import {
   Pencil,
   Ban,
   Download,
+  Repeat,
+  Zap,
+  MessageCircle,
 } from 'lucide-react';
 
 interface FinancialItem {
@@ -29,9 +32,31 @@ interface FinancialItem {
   invoiceNumber: string;
   customerId?: string | null;
   customerName: string;
+  customerPhone?: string | null;
+  recurring?: boolean;
   method: string;
   createdAt?: string;
 }
+
+interface BillingConfig {
+  enabled: boolean;
+  amount: number;
+  dueDay: number;
+  description: string;
+  method: string;
+}
+
+interface RecurringCustomer {
+  id: string;
+  name: string;
+  isActive: boolean;
+  phone: string | null;
+  groupName: string | null;
+  suggestedAmount: number;
+  billing: BillingConfig;
+}
+
+const PAYMENT_METHODS = ['Boleto / Pix', 'Pix Oficial', 'Boleto 30D', 'Cartão de Crédito', 'Transferência Bancária'];
 
 interface Metrics {
   receitaRecebida: number;
@@ -95,6 +120,87 @@ export default function FinancePage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState(emptyForm());
+  const [tab, setTab] = useState<'faturas' | 'recorrentes'>('faturas');
+  const [recurring, setRecurring] = useState<RecurringCustomer[]>([]);
+  const [recurringLoading, setRecurringLoading] = useState(false);
+  const [billingEdit, setBillingEdit] = useState<RecurringCustomer | null>(null);
+  const [billingSaving, setBillingSaving] = useState(false);
+  const [billingError, setBillingError] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  const loadRecurring = async () => {
+    setRecurringLoading(true);
+    try {
+      const res = await fetch('/api/finance/recurring', { cache: 'no-store' });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao carregar cobranças recorrentes');
+      setRecurring(data.customers);
+    } catch (e: any) {
+      setLoadError(e.message);
+    } finally {
+      setRecurringLoading(false);
+    }
+  };
+
+  const saveBilling = async (useGroupPrice = false) => {
+    if (!billingEdit) return;
+    setBillingSaving(true);
+    setBillingError('');
+    try {
+      const res = await fetch('/api/finance/recurring', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: billingEdit.id, billing: billingEdit.billing, useGroupPrice }),
+      });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao salvar');
+      if (useGroupPrice) {
+        setBillingEdit({ ...billingEdit, billing: data.billing });
+      } else {
+        setBillingEdit(null);
+      }
+      loadRecurring();
+    } catch (e: any) {
+      setBillingError(e.message);
+    } finally {
+      setBillingSaving(false);
+    }
+  };
+
+  const generateNow = async () => {
+    setGenerating(true);
+    setNotice('');
+    try {
+      const res = await fetch('/api/finance/generate', { method: 'POST' });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao gerar faturas');
+      setNotice(
+        data.created > 0
+          ? `${data.created} fatura(s) recorrente(s) gerada(s) para ${data.period.split('-').reverse().join('/')}.`
+          : `Nenhuma fatura nova: as cobranças recorrentes de ${data.period.split('-').reverse().join('/')} já estão emitidas.`
+      );
+      loadFinanceData();
+    } catch (e: any) {
+      setNotice(e.message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  // Mensagem de cobrança pronta para o WhatsApp do contato principal do cliente
+  const whatsappChargeUrl = (inv: FinancialItem) => {
+    const digits = (inv.customerPhone || '').replace(/\D/g, '');
+    if (digits.length < 10) return null;
+    const phone = digits.startsWith('55') ? digits : `55${digits}`;
+    const value = formatCurrency(inv.amount);
+    const due = formatDate(inv.dueDate);
+    const text =
+      inv.status === 'ATRASADO'
+        ? `Olá, ${inv.customerName}! Identificamos que a fatura ${inv.invoiceNumber} no valor de ${value}, com vencimento em ${due}, ainda está em aberto. Pode nos confirmar a previsão de pagamento? Se já pagou, por favor desconsidere esta mensagem. — JM MASTER GROUP`
+        : `Olá, ${inv.customerName}! Passando para lembrar da fatura ${inv.invoiceNumber} no valor de ${value}, com vencimento em ${due} (${inv.method}). Qualquer dúvida, estamos à disposição. — JM MASTER GROUP`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  };
 
   const loadFinanceData = async () => {
     setLoading(true);
@@ -125,6 +231,7 @@ export default function FinancePage() {
   useEffect(() => {
     loadFinanceData();
     loadCustomers();
+    loadRecurring();
   }, []);
 
   const handleOpenModal = () => {
@@ -283,6 +390,16 @@ export default function FinancePage() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
+            onClick={generateNow}
+            disabled={generating}
+            title="Gera agora as faturas recorrentes do mês (também roda automaticamente todo dia)"
+            className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+          >
+            <Zap className={`w-4 h-4 text-[#E85D26] ${generating ? 'animate-pulse' : ''}`} />
+            <span>{generating ? 'GERANDO...' : 'GERAR FATURAS DO MÊS'}</span>
+          </button>
+          <button
+            type="button"
             onClick={exportCsv}
             disabled={filteredRecords.length === 0}
             className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
@@ -305,6 +422,13 @@ export default function FinancePage() {
         <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{loadError}</span>
+        </div>
+      )}
+
+      {notice && (
+        <div className="flex items-center justify-between gap-2 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice('')} className="cursor-pointer"><X className="w-4 h-4" /></button>
         </div>
       )}
 
@@ -349,7 +473,92 @@ export default function FinancePage() {
 
       </div>
 
+      {/* ABAS */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setTab('faturas')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${tab === 'faturas' ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-500'}`}
+        >
+          <Receipt className="w-3.5 h-3.5" />
+          Faturas
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('recorrentes')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${tab === 'recorrentes' ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-500'}`}
+        >
+          <Repeat className="w-3.5 h-3.5" />
+          Cobrança Recorrente ({recurring.filter((c) => c.billing.enabled).length})
+        </button>
+      </div>
+
+      {tab === 'recorrentes' && (
+        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+            Configure a mensalidade de cada cliente. Todo dia o sistema gera automaticamente a fatura do mês de quem tem a cobrança ativa
+            (uma por cliente por mês, sem duplicar), marca como atrasada após o vencimento e registra no CRM.
+          </div>
+          {recurringLoading ? (
+            <div className="py-12 text-center text-xs text-neutral-400 font-semibold animate-pulse">Carregando clientes...</div>
+          ) : recurring.length === 0 ? (
+            <div className="py-12 text-center text-xs text-neutral-500">Nenhum cliente cadastrado. Cadastre clientes em “Cadastro de Clientes”.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/60 text-[11px] font-extrabold uppercase text-neutral-500 dark:text-neutral-400">
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Mensalidade</th>
+                    <th className="p-4">Vencimento</th>
+                    <th className="p-4">Método</th>
+                    <th className="p-4">Cobrança Automática</th>
+                    <th className="p-4 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs">
+                  {recurring.map((c) => (
+                    <tr key={c.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/50 transition">
+                      <td className="p-4 font-bold text-neutral-900 dark:text-white">
+                        {c.name}
+                        {!c.isActive && <span className="ml-2 text-[10px] font-bold text-neutral-400">(inativo)</span>}
+                        {c.groupName && <span className="block text-[10px] font-normal text-neutral-500">Grupo: {c.groupName}</span>}
+                      </td>
+                      <td className="p-4 font-extrabold">{c.billing.amount > 0 ? formatCurrency(c.billing.amount) : '-'}</td>
+                      <td className="p-4 text-neutral-500">Todo dia {c.billing.dueDay}</td>
+                      <td className="p-4 text-neutral-600 dark:text-neutral-300">{c.billing.method}</td>
+                      <td className="p-4">
+                        {c.billing.enabled && c.isActive ? (
+                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">ATIVA</span>
+                        ) : c.billing.enabled ? (
+                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">PAUSADA (cliente inativo)</span>
+                        ) : (
+                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-neutral-500/10 text-neutral-500 border border-neutral-500/20">DESLIGADA</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBillingError('');
+                            setBillingEdit(c);
+                          }}
+                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] hover:text-[#E85D26] transition cursor-pointer"
+                        >
+                          Configurar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TABELA DE FATURAS RECENTES */}
+      {tab === 'faturas' && (
       <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden">
         
         {/* FILTROS DA TABELA */}
@@ -476,6 +685,11 @@ export default function FinancePage() {
                   <tr key={inv.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/50 transition group">
                     <td className="p-4 font-mono font-bold text-[#E85D26]">
                       {inv.invoiceNumber}
+                      {inv.recurring && (
+                        <span className="ml-1.5 inline-flex align-middle" title="Gerada automaticamente (cobrança recorrente)">
+                          <Repeat className="w-3 h-3 text-neutral-400" />
+                        </span>
+                      )}
                     </td>
                     <td className="p-4 font-bold text-neutral-900 dark:text-white">
                       <span className="block">{inv.customerName}</span>
@@ -536,6 +750,20 @@ export default function FinancePage() {
                       )}
                     </td>
                     <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                      {(inv.status === 'ABERTO' || inv.status === 'ATRASADO') && (() => {
+                        const url = whatsappChargeUrl(inv);
+                        return url ? (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex text-neutral-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
+                            title="Enviar cobrança pelo WhatsApp"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+                        ) : null;
+                      })()}
                       <button
                         type="button"
                         onClick={() => handleEdit(inv)}
@@ -571,6 +799,121 @@ export default function FinancePage() {
         )}
 
       </div>
+
+      )}
+
+      {/* MODAL COBRANÇA RECORRENTE */}
+      {billingEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/50">
+              <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-[#E85D26]" />
+                <span>Cobrança Recorrente — {billingEdit.name}</span>
+              </h3>
+              <button type="button" onClick={() => setBillingEdit(null)} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white p-1 rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              {billingError && (
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{billingError}</span>
+                </div>
+              )}
+
+              <label className="flex items-center justify-between gap-3 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 cursor-pointer">
+                <span>
+                  <span className="block font-bold text-neutral-800 dark:text-neutral-200">Gerar fatura automaticamente todo mês</span>
+                  <span className="block text-[10px] text-neutral-500">Só gera para clientes ativos.</span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={billingEdit.billing.enabled}
+                  onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, enabled: e.target.checked } })}
+                  className="w-4 h-4 accent-[#E85D26]"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Valor mensal (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={billingEdit.billing.amount || ''}
+                    onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, amount: parseFloat(e.target.value) || 0 } })}
+                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-mono focus:outline-none focus:border-[#E85D26]"
+                  />
+                  {billingEdit.suggestedAmount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, amount: billingEdit.suggestedAmount } })}
+                      className="mt-1 text-[10px] font-bold text-[#E85D26] hover:underline cursor-pointer"
+                    >
+                      Usar tabela do grupo {billingEdit.groupName}: {formatCurrency(billingEdit.suggestedAmount)}
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Dia do vencimento</label>
+                  <select
+                    value={billingEdit.billing.dueDay}
+                    onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, dueDay: parseInt(e.target.value, 10) } })}
+                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                  >
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>Dia {d}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Descrição na fatura</label>
+                <input
+                  type="text"
+                  value={billingEdit.billing.description}
+                  onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, description: e.target.value } })}
+                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                />
+                <p className="mt-1 text-[10px] text-neutral-400">O mês de referência é adicionado automaticamente (ex.: “— 11/2026”).</p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Método de pagamento</label>
+                <select
+                  value={billingEdit.billing.method}
+                  onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, method: e.target.value } })}
+                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                >
+                  {PAYMENT_METHODS.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button type="button" onClick={() => setBillingEdit(null)} className="px-4 py-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition font-bold">
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => saveBilling(false)}
+                  disabled={billingSaving}
+                  className="px-5 py-2.5 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl font-bold transition shadow-md shadow-orange-900/20 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{billingSaving ? 'Salvando...' : 'Salvar'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL NOVA FATURA */}
       {isModalOpen && (

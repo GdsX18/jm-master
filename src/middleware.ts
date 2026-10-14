@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { BLOG_ONLY_ROLE, SESSION_COOKIE, verifySessionToken } from '@/lib/auth';
 
 // Rotas de API acessíveis sem login
-const PUBLIC_API_ROUTES = ['/api/auth/login', '/api/auth/logout', '/api/leads'];
+// /api/cron/billing se autentica com o CRON_SECRET da Vercel
+const PUBLIC_API_ROUTES = ['/api/auth/login', '/api/auth/logout', '/api/leads', '/api/cron/billing'];
 
 // O perfil "Criador de Blog" só acessa estas rotas
 const BLOG_ROLE_API_PREFIXES = ['/api/blog', '/api/upload', '/api/auth'];
