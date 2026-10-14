@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requirePermission } from '@/lib/session';
 
 // GET /api/products - Listar produtos do catálogo
 export async function GET() {
+  const auth = await requirePermission(['manageProducts', 'manageCrm']);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'asc' },
@@ -27,6 +31,9 @@ export async function GET() {
 
 // POST /api/products - Cadastrar novo produto
 export async function POST(req: NextRequest) {
+  const auth = await requirePermission('manageProducts');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = await req.json();
     const { name, isRequired, price, description } = body;

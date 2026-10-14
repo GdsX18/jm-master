@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImageToStorage } from '@/lib/supabase';
+import { requirePermission } from '@/lib/session';
 
 const ALLOWED_BUCKETS = ['blog-images'];
 
 export async function POST(req: NextRequest) {
+  const auth = await requirePermission('manageBlog');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

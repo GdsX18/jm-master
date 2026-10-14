@@ -18,13 +18,16 @@ import {
   AlertCircle,
   X,
   Save,
+  Pencil,
+  Globe,
 } from 'lucide-react';
 
 interface CrmItem {
   id: string;
   operator: string;
+  customerId?: string | null;
   customerName?: string;
-  customer?: { name: string };
+  customer?: { id: string; name: string } | null;
   title: string;
   description: string;
   date: string;
@@ -59,6 +62,11 @@ const TYPE_CONFIG: Record<string, { label: string; badge: string; icon: any }> =
     badge: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
     icon: Clock,
   },
+  LEAD: {
+    label: 'Lead do Site',
+    badge: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20',
+    icon: Globe,
+  },
   OUTROS: {
     label: 'Outros',
     badge: 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20',
@@ -73,42 +81,41 @@ export default function CrmHistoryPage() {
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
+  const [operatorName, setOperatorName] = useState('');
 
-  // Form State
-  const [formData, setFormData] = useState({
-    customerName: '',
-    title: '',
-    description: '',
-    type: 'COMERCIAL',
-    operator: '',
-  });
+  const emptyForm = { customerId: '', customerName: '', title: '', description: '', type: 'COMERCIAL' };
+  const [formData, setFormData] = useState(emptyForm);
 
-  // Carrega operador logado
+  // Responsável é definido no servidor pelo usuário logado; aqui só exibimos
   useEffect(() => {
     try {
       const stored = localStorage.getItem('@JMMaster:user');
       if (stored) {
         const u = JSON.parse(stored);
-        if (u?.name) {
-          setFormData((prev) => ({ ...prev, operator: `${u.name} (${u.role || 'Operador'})` }));
-        }
+        if (u?.name) setOperatorName(`${u.name} (${u.role})`);
       }
     } catch {}
+
+    fetch('/api/customers', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => Array.isArray(data) && setCustomers(data.map((c: any) => ({ id: c.id, name: c.name }))))
+      .catch(() => {});
   }, []);
 
   const loadInteractions = async () => {
     setLoading(true);
+    setLoadError('');
     try {
-      const res = await fetch('/api/crm');
+      const res = await fetch('/api/crm', { cache: 'no-store' });
       const data = await res.json();
-      if (data.interactions && Array.isArray(data.interactions)) {
-        setInteractions(data.interactions);
-      } else {
-        setInteractions([]);
-      }
-    } catch (e) {
-      console.error('Erro ao carregar CRM:', e);
-      setInteractions([]);
+      if (!res.ok || !Array.isArray(data.interactions)) throw new Error(data.error || 'Erro ao carregar o CRM');
+      setInteractions(data.interactions);
+    } catch (e: any) {
+      setLoadError(e.message || 'Erro ao carregar o CRM');
     } finally {
       setLoading(false);
     }
@@ -118,47 +125,48 @@ export default function CrmHistoryPage() {
     loadInteractions();
   }, []);
 
+  const openNew = () => {
+    setEditingId(null);
+    setFormError('');
+    setFormData(emptyForm);
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (item: CrmItem) => {
+    setEditingId(item.id);
+    setFormError('');
+    setFormData({
+      customerId: item.customerId || '',
+      customerName: item.customerId ? '' : item.customerName || '',
+      title: item.title,
+      description: item.description,
+      type: item.type,
+    });
+    setIsModalOpen(true);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     if (!formData.title.trim() || !formData.description.trim()) {
-      alert('Por favor, preencha o título e a descrição.');
+      setFormError('Preencha o título e a descrição.');
       return;
     }
 
     setSaving(true);
     try {
-      const config = TYPE_CONFIG[formData.type] || TYPE_CONFIG.COMERCIAL;
       const res = await fetch('/api/crm', {
-        method: 'POST',
+        method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          badge: config.badge,
-          date: new Date().toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        }),
+        body: JSON.stringify({ ...formData, id: editingId || undefined }),
       });
-
       const data = await res.json();
-      if (data.success) {
-        setIsModalOpen(false);
-        setFormData({
-          customerName: '',
-          title: '',
-          description: '',
-          type: 'COMERCIAL',
-          operator: formData.operator,
-        });
-        loadInteractions();
-      } else {
-        alert(data.error || 'Erro ao registrar');
-      }
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao salvar registro');
+      setIsModalOpen(false);
+      setFormData(emptyForm);
+      loadInteractions();
     } catch (e: any) {
-      alert('Erro de conexão: ' + e.message);
+      setFormError(e.message || 'Erro ao salvar registro');
     } finally {
       setSaving(false);
     }
@@ -169,13 +177,10 @@ export default function CrmHistoryPage() {
     try {
       const res = await fetch(`/api/crm?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
-      if (data.success) {
-        setInteractions((prev) => prev.filter((i) => i.id !== id));
-      } else {
-        alert(data.error || 'Erro ao excluir');
-      }
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao excluir');
+      setInteractions((prev) => prev.filter((i) => i.id !== id));
     } catch (e: any) {
-      alert('Erro ao excluir: ' + e.message);
+      alert(e.message || 'Erro ao excluir');
     }
   };
 
@@ -209,13 +214,20 @@ export default function CrmHistoryPage() {
 
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openNew}
           className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>REGISTRAR INTERAÇÃO</span>
         </button>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{loadError}</span>
+        </div>
+      )}
 
       {/* BARRA DE FILTROS & PESQUISA */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-3.5 rounded-2xl shadow-xs">
@@ -280,14 +292,14 @@ export default function CrmHistoryPage() {
               <MessageSquare className="w-7 h-7" />
             </div>
             <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-200">
-              Nenhuma interação registrada ainda
+              {interactions.length > 0 ? 'Nenhum registro encontrado para o filtro' : 'Nenhuma interação registrada ainda'}
             </h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
               Utilize o botão acima para registrar o primeiro atendimento, reunião ou contato comercial no CRM.
             </p>
             <button
               type="button"
-              onClick={() => setIsModalOpen(true)}
+              onClick={openNew}
               className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -311,7 +323,7 @@ export default function CrmHistoryPage() {
                         <span>{config.label}</span>
                       </span>
                       <span className="text-xs font-extrabold text-neutral-900 dark:text-white">
-                        {item.customerName || item.customer?.name || 'Cliente Geral'}
+                        {item.customer?.name || item.customerName || 'Cliente Geral'}
                       </span>
                     </div>
 
@@ -322,8 +334,16 @@ export default function CrmHistoryPage() {
                       </span>
                       <button
                         type="button"
+                        onClick={() => openEdit(item)}
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-neutral-400 hover:text-[#E85D26] p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        title="Editar Registro"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleDelete(item.id)}
-                        className="opacity-0 group-hover:opacity-100 text-rose-500 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-rose-500 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
                         title="Excluir Registro"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -357,7 +377,7 @@ export default function CrmHistoryPage() {
             <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/50">
               <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white flex items-center gap-2">
                 <Plus className="w-4 h-4 text-[#E85D26]" />
-                <span>Registrar Nova Interação CRM</span>
+                <span>{editingId ? 'Editar Interação' : 'Registrar Nova Interação CRM'}</span>
               </h3>
               <button
                 type="button"
@@ -369,6 +389,12 @@ export default function CrmHistoryPage() {
             </div>
 
             <form onSubmit={handleCreate} className="p-5 space-y-4 text-xs">
+              {formError && (
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <div>
                 <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
                   Tipo de Interação
@@ -383,6 +409,7 @@ export default function CrmHistoryPage() {
                   <option value="REUNIAO">Reunião / Apresentação</option>
                   <option value="NPS">NPS / Feedback</option>
                   <option value="COBRANCA">Cobrança / Financeiro</option>
+                  <option value="LEAD">Lead do Site</option>
                   <option value="OUTROS">Outros</option>
                 </select>
               </div>
@@ -391,14 +418,27 @@ export default function CrmHistoryPage() {
                 <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
                   Cliente / Empresa
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.customerName}
-                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                  placeholder="Ex: Empresa ABC Ltda"
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
-                />
+                <select
+                  value={formData.customerId}
+                  onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                >
+                  <option value="">— Não cadastrado (digitar nome) —</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {!formData.customerId && (
+                  <input
+                    type="text"
+                    value={formData.customerName}
+                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                    placeholder="Ex: Empresa ABC Ltda"
+                    className="mt-2 w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                  />
+                )}
               </div>
 
               <div>
@@ -433,13 +473,9 @@ export default function CrmHistoryPage() {
                 <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
                   Responsável / Operador
                 </label>
-                <input
-                  type="text"
-                  value={formData.operator}
-                  onChange={(e) => setFormData({ ...formData, operator: e.target.value })}
-                  placeholder="Seu nome"
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
-                />
+                <p className="w-full p-2.5 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-500">
+                  {editingId ? 'Mantido o responsável original' : operatorName || 'Usuário logado'}
+                </p>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">

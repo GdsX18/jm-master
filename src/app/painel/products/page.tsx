@@ -99,23 +99,28 @@ export default function ProductsPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const initialPrices: Record<string, number> = {};
-      
-      if (res.ok) {
-        const pricesData: GroupProductPrice[] = await res.json();
-        // Inicializar com 0 todos os produtos
-        products.forEach(p => {
-          initialPrices[p.id] = 0;
-        });
-        // Sobrescrever com os preços já configurados no banco
-        pricesData.forEach(gp => {
-          initialPrices[gp.productId] = gp.price;
-        });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Erro ao carregar os preços definidos para o grupo.');
       }
+
+      const pricesData: GroupProductPrice[] = await res.json();
+      const initialPrices: Record<string, number> = {};
+      // Inicializar com 0 todos os produtos
+      products.forEach(p => {
+        initialPrices[p.id] = 0;
+      });
+      // Sobrescrever com os preços já configurados no banco
+      pricesData.forEach(gp => {
+        initialPrices[gp.productId] = gp.price;
+      });
       setProductPrices(initialPrices);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao carregar preços do grupo:', err);
-      setMessage({ type: 'error', text: 'Erro ao carregar os preços definidos para o grupo.' });
+      // Sem os preços carregados não deixamos salvar, para não apagar a tabela existente
+      setSelectedGroup(null);
+      setProductPrices({});
+      setMessage({ type: 'error', text: err.message || 'Erro ao carregar os preços definidos para o grupo.' });
     } finally {
       setLoadingPrices(false);
     }

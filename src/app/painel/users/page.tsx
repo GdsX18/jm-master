@@ -20,174 +20,29 @@ import {
   Info,
 } from 'lucide-react';
 
-export interface Permissions {
-  manageBlog: boolean;
-  manageUsers: boolean;
-  manageCrm: boolean;
-  manageFinance: boolean;
-  manageProducts: boolean;
-  createCampaign: boolean;
-  executeDispatches: boolean;
-  manageTriggers: boolean;
-  surveyManagement: boolean;
-  structuralManagement: boolean;
-}
-
-export type UserRole = 
-  | 'Super administrador'
-  | 'Administrador'
-  | 'Supervisor'
-  | 'Operador'
-  | 'Criador de Blog';
+import {
+  EMPTY_PERMISSIONS as DEFAULT_PERMISSIONS,
+  ROLE_DEFAULTS,
+  type Permissions,
+  type UserRole,
+} from '@/lib/permissions';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  password?: string;
   role: UserRole;
   isBlocked: boolean;
   permissions: Permissions;
   prohibitions: Permissions;
 }
 
-const DEFAULT_PERMISSIONS: Permissions = {
-  manageBlog: false,
-  manageUsers: false,
-  manageCrm: false,
-  manageFinance: false,
-  manageProducts: false,
-  createCampaign: false,
-  executeDispatches: false,
-  manageTriggers: false,
-  surveyManagement: false,
-  structuralManagement: false,
-};
-
-// Configurações padrão por classe de acesso
-const ROLE_DEFAULTS: Record<UserRole, { permissions: Permissions; prohibitions: Permissions }> = {
-  'Super administrador': {
-    permissions: {
-      manageBlog: true,
-      manageUsers: true,
-      manageCrm: true,
-      manageFinance: true,
-      manageProducts: true,
-      createCampaign: true,
-      executeDispatches: true,
-      manageTriggers: true,
-      surveyManagement: true,
-      structuralManagement: true,
-    },
-    prohibitions: DEFAULT_PERMISSIONS,
-  },
-  Administrador: {
-    permissions: {
-      manageBlog: true,
-      manageUsers: false,
-      manageCrm: true,
-      manageFinance: true,
-      manageProducts: true,
-      createCampaign: true,
-      executeDispatches: true,
-      manageTriggers: true,
-      surveyManagement: true,
-      structuralManagement: true,
-    },
-    prohibitions: {
-      ...DEFAULT_PERMISSIONS,
-      manageUsers: true,
-    },
-  },
-  Supervisor: {
-    permissions: {
-      manageBlog: true,
-      manageUsers: false,
-      manageCrm: true,
-      manageFinance: false,
-      manageProducts: true,
-      createCampaign: true,
-      executeDispatches: true,
-      manageTriggers: true,
-      surveyManagement: true,
-      structuralManagement: false,
-    },
-    prohibitions: {
-      ...DEFAULT_PERMISSIONS,
-      manageUsers: true,
-      manageFinance: true,
-    },
-  },
-  Operador: {
-    permissions: {
-      manageBlog: false,
-      manageUsers: false,
-      manageCrm: true,
-      manageFinance: false,
-      manageProducts: false,
-      createCampaign: false,
-      executeDispatches: true,
-      manageTriggers: false,
-      surveyManagement: true,
-      structuralManagement: false,
-    },
-    prohibitions: {
-      ...DEFAULT_PERMISSIONS,
-      manageBlog: true,
-      manageUsers: true,
-      manageFinance: true,
-      manageProducts: true,
-      manageTriggers: true,
-    },
-  },
-  'Criador de Blog': {
-    permissions: {
-      manageBlog: true,
-      manageUsers: false,
-      manageCrm: false,
-      manageFinance: false,
-      manageProducts: false,
-      createCampaign: false,
-      executeDispatches: false,
-      manageTriggers: false,
-      surveyManagement: false,
-      structuralManagement: false,
-    },
-    prohibitions: {
-      manageBlog: false,
-      manageUsers: true,
-      manageCrm: true,
-      manageFinance: true,
-      manageProducts: true,
-      createCampaign: true,
-      executeDispatches: true,
-      manageTriggers: true,
-      surveyManagement: true,
-      structuralManagement: true,
-    },
-  },
-};
-
-const INITIAL_USERS: User[] = [
-  {
-    id: 'usr_admin_master',
-    name: 'Administrador JM Master',
-    email: 'admin@jmmaster.com.br',
-    role: 'Super administrador',
-    isBlocked: false,
-    permissions: ROLE_DEFAULTS['Super administrador'].permissions,
-    prohibitions: ROLE_DEFAULTS['Super administrador'].prohibitions,
-  },
-  {
-    id: 'usr_redator_blog',
-    name: 'Redator de Conteúdo',
-    email: 'redacao@jmmaster.com.br',
-    role: 'Criador de Blog',
-    isBlocked: false,
-    permissions: ROLE_DEFAULTS['Criador de Blog'].permissions,
-    prohibitions: ROLE_DEFAULTS['Criador de Blog'].prohibitions,
-  },
-];
+// Usuários antigos podem ter permissões salvas como {}: nesse caso valem os padrões do perfil
+function withRoleDefaults(role: UserRole, stored: Partial<Permissions> | undefined, kind: 'permissions' | 'prohibitions'): Permissions {
+  const defaults = ROLE_DEFAULTS[role]?.[kind] || DEFAULT_PERMISSIONS;
+  if (!stored || Object.keys(stored).length === 0) return defaults;
+  return { ...DEFAULT_PERMISSIONS, ...stored };
+}
 
 export default function UsersManagementPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -223,31 +78,26 @@ export default function UsersManagementPage() {
   // Carregar dados de usuários da API
   const fetchUsersFromApi = async () => {
     try {
-      const res = await fetch('/api/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setUsers(data);
-          if (data.length > 0) {
-            if (!selectedUser && !isNewUser) {
-              selectUser(data[0]);
-            } else if (selectedUser) {
-              const updated = data.find((u: User) => u.id === selectedUser.id);
-              if (updated) selectUser(updated);
-            }
-          } else {
-            setSelectedUser(null);
-          }
-          return;
-        }
+      const res = await fetch('/api/users', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data)) {
+        throw new Error(data?.error || 'Não foi possível carregar os usuários.');
       }
-    } catch (e) {
+      setUsers(data);
+      if (data.length > 0) {
+        if (!selectedUser && !isNewUser) {
+          selectUser(data[0]);
+        } else if (selectedUser) {
+          const updated = data.find((u: User) => u.id === selectedUser.id);
+          if (updated) selectUser(updated);
+        }
+      } else {
+        setSelectedUser(null);
+      }
+    } catch (e: any) {
       console.error('Erro ao carregar usuários da API:', e);
+      showNotification('error', e.message || 'Não foi possível carregar os usuários.');
     }
-
-    // Fallback local se a requisição falhar
-    setUsers(INITIAL_USERS);
-    selectUser(INITIAL_USERS[0]);
   };
 
   useEffect(() => {
@@ -267,8 +117,8 @@ export default function UsersManagementPage() {
     setShowPassword(false);
     setFormRole(user.role);
     setFormIsBlocked(user.isBlocked);
-    setFormPermissions(user.permissions || ROLE_DEFAULTS[user.role]?.permissions || DEFAULT_PERMISSIONS);
-    setFormProhibitions(user.prohibitions || ROLE_DEFAULTS[user.role]?.prohibitions || DEFAULT_PERMISSIONS);
+    setFormPermissions(withRoleDefaults(user.role, user.permissions, 'permissions'));
+    setFormProhibitions(withRoleDefaults(user.role, user.prohibitions, 'prohibitions'));
   };
 
   const handleStartNewUser = () => {
@@ -311,11 +161,10 @@ export default function UsersManagementPage() {
   };
 
   const handleGeneratePassword = () => {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*';
-    let newPassword = '';
-    for (let i = 0; i < 10; i++) {
-      newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+    const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*';
+    const random = new Uint32Array(14);
+    crypto.getRandomValues(random);
+    const newPassword = Array.from(random, (n) => chars[n % chars.length]).join('');
     setFormPassword(newPassword);
     setShowPassword(true);
     showNotification('success', 'Nova senha forte gerada com sucesso!');
@@ -366,7 +215,7 @@ export default function UsersManagementPage() {
 
     try {
       const payload = {
-        id: isNewUser ? `usr_${Date.now()}` : selectedUser?.id,
+        id: isNewUser ? undefined : selectedUser?.id,
         name: formName.trim(),
         email: formEmail.trim(),
         password: formPassword.trim(),
@@ -395,7 +244,12 @@ export default function UsersManagementPage() {
         showNotification('success', `Usuário "${data.user.name}" cadastrado com sucesso!`);
       } else {
         selectUser(data.user);
-        showNotification('success', `Dados e senha do usuário "${data.user.name}" atualizados com sucesso!`);
+        showNotification(
+          'success',
+          data.passwordChanged
+            ? `Dados e senha de "${data.user.name}" atualizados com sucesso!`
+            : `Dados de "${data.user.name}" atualizados com sucesso!`
+        );
       }
     } catch (err: any) {
       showNotification('error', err.message || 'Erro ao salvar alterações.');
@@ -415,16 +269,17 @@ export default function UsersManagementPage() {
       const res = await fetch(`/api/users?id=${userToDelete}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
-        showNotification('success', 'Usuário excluído com sucesso.');
-        setShowDeleteConfirm(false);
-        setUserToDelete(null);
-        await fetchUsersFromApi();
-      } else {
-        throw new Error('Erro ao excluir');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Falha ao excluir o usuário.');
       }
+      showNotification('success', 'Usuário excluído com sucesso.');
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+      if (selectedUser?.id === userToDelete) setSelectedUser(null);
+      await fetchUsersFromApi();
     } catch (e: any) {
-      showNotification('error', 'Falha ao excluir o usuário.');
+      showNotification('error', e.message || 'Falha ao excluir o usuário.');
     }
   };
 
@@ -455,10 +310,10 @@ export default function UsersManagementPage() {
     { key: 'manageCrm', label: 'CRM & Central de Clientes', desc: 'Permite visualizar e gerenciar histórico de contatos, clientes e grupos corporativos.' },
     { key: 'manageFinance', label: 'Módulo Financeiro & Faturamento', desc: 'Permite visualizar faturamentos, cobranças e relatórios de fluxo financeiro.' },
     { key: 'manageProducts', label: 'Catálogo de Produtos & Preços', desc: 'Permite gerenciar produtos, serviços e precificação do portfólio.' },
-    { key: 'createCampaign', label: 'Criar Campanhas de Mensageria', desc: 'Permite estruturar campanhas ativas e funis no sistema.' },
-    { key: 'executeDispatches', label: 'Efetuar Disparos WhatsApp API', desc: 'Permite realizar disparos em lote via WhatsApp Cloud API Oficial.' },
-    { key: 'manageTriggers', label: 'Gerenciar Gatilhos & Automações', desc: 'Permite configurar webhooks, transbordo inteligente e gatilhos.' },
-    { key: 'surveyManagement', label: 'Gestão de Pesquisa & NPS', desc: 'Permite manutenção e gerenciamento de pesquisas de satisfação.' },
+    { key: 'createCampaign', label: 'Criar Campanhas de Mensageria', desc: 'Permite estruturar campanhas ativas e funis no sistema. (Módulo ainda não disponível no sistema.)' },
+    { key: 'executeDispatches', label: 'Efetuar Disparos WhatsApp API', desc: 'Permite realizar disparos em lote via WhatsApp Cloud API Oficial. (Módulo ainda não disponível no sistema.)' },
+    { key: 'manageTriggers', label: 'Gerenciar Gatilhos & Automações', desc: 'Permite configurar webhooks, transbordo inteligente e gatilhos. (Módulo ainda não disponível no sistema.)' },
+    { key: 'surveyManagement', label: 'Gestão de Pesquisa & NPS', desc: 'Permite manutenção e gerenciamento de pesquisas de satisfação. (Módulo ainda não disponível no sistema.)' },
     { key: 'structuralManagement', label: 'Gerenciamento Estrutural', desc: 'Permite gerenciar departamentos e configurações corporativas.' },
   ] as const;
 

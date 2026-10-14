@@ -14,22 +14,22 @@ import {
   Receipt,
   ArrowUpRight,
   TrendingUp,
+  Pencil,
+  Ban,
+  Download,
 } from 'lucide-react';
 
 interface FinancialItem {
   id: string;
   description: string;
   amount: number;
-  type: string;
-  category: string;
   status: string;
   dueDate?: string;
-  paymentDate?: string;
-  metadata?: {
-    invoiceId?: string;
-    customer?: string;
-    method?: string;
-  };
+  paymentDate?: string | null;
+  invoiceNumber: string;
+  customerId?: string | null;
+  customerName: string;
+  method: string;
   createdAt?: string;
 }
 
@@ -37,148 +37,206 @@ interface Metrics {
   receitaRecebida: number;
   aReceber: number;
   inadimplencia: number;
-  mrr: number;
+  totalFaturado: number;
   openCount: number;
   overdueCount: number;
+  paidCount: number;
+  canceledCount: number;
   totalCount: number;
+}
+
+interface CustomerOption {
+  id: string;
+  name: string;
+}
+
+const EMPTY_METRICS: Metrics = {
+  receitaRecebida: 0,
+  aReceber: 0,
+  inadimplencia: 0,
+  totalFaturado: 0,
+  openCount: 0,
+  overdueCount: 0,
+  paidCount: 0,
+  canceledCount: 0,
+  totalCount: 0,
+};
+
+const todayIso = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+const emptyForm = () => ({
+  customerId: '',
+  customer: '',
+  description: 'Mensalidade Plataforma & WhatsApp API',
+  amount: '',
+  dueDate: todayIso(),
+  method: 'Boleto / Pix',
+  status: 'ABERTO',
+});
+
+async function readJson(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    return {};
+  }
 }
 
 export default function FinancePage() {
   const [records, setRecords] = useState<FinancialItem[]>([]);
-  const [metrics, setMetrics] = useState<Metrics>({
-    receitaRecebida: 0,
-    aReceber: 0,
-    inadimplencia: 0,
-    mrr: 0,
-    openCount: 0,
-    overdueCount: 0,
-    totalCount: 0,
-  });
+  const [metrics, setMetrics] = useState<Metrics>(EMPTY_METRICS);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
-  // Form State
-  const [formData, setFormData] = useState({
-    invoiceId: '',
-    customer: '',
-    description: '',
-    amount: '',
-    dueDate: new Date().toISOString().split('T')[0],
-    method: 'Boleto / Pix',
-    status: 'ABERTO',
-  });
+  const [formError, setFormError] = useState('');
+  const [formData, setFormData] = useState(emptyForm());
 
   const loadFinanceData = async () => {
     setLoading(true);
+    setLoadError('');
     try {
-      const res = await fetch('/api/finance');
-      const data = await res.json();
-      if (data.records && Array.isArray(data.records)) {
-        setRecords(data.records);
-      } else {
-        setRecords([]);
-      }
-      if (data.metrics) {
-        setMetrics(data.metrics);
-      }
-    } catch (e) {
-      console.error('Erro ao carregar finanças:', e);
-      setRecords([]);
+      const res = await fetch('/api/finance', { cache: 'no-store' });
+      const data = await readJson(res);
+      if (!res.ok || !Array.isArray(data.records)) throw new Error(data.error || 'Erro ao carregar faturas');
+      setRecords(data.records);
+      setMetrics(data.metrics || EMPTY_METRICS);
+    } catch (e: any) {
+      setLoadError(e.message || 'Erro ao carregar faturas');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadCustomers = async () => {
+    try {
+      const res = await fetch('/api/customers', { cache: 'no-store' });
+      const data = await readJson(res);
+      if (res.ok && Array.isArray(data)) {
+        setCustomers(data.map((c: any) => ({ id: c.id, name: c.name })));
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     loadFinanceData();
+    loadCustomers();
   }, []);
 
   const handleOpenModal = () => {
-    const nextNum = String(records.length + 1).padStart(3, '0');
+    setEditingId(null);
+    setFormError('');
+    setFormData(emptyForm());
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (item: FinancialItem) => {
+    setEditingId(item.id);
+    setFormError('');
     setFormData({
-      invoiceId: `INV-2026-${nextNum}`,
-      customer: '',
-      description: 'Mensalidade Plataforma & WhatsApp API',
-      amount: '',
-      dueDate: new Date().toISOString().split('T')[0],
-      method: 'Boleto / Pix',
-      status: 'ABERTO',
+      customerId: item.customerId || '',
+      customer: item.customerId ? '' : item.customerName,
+      description: item.description,
+      amount: String(item.amount),
+      dueDate: item.dueDate ? item.dueDate.slice(0, 10) : todayIso(),
+      method: item.method,
+      status: item.status === 'ATRASADO' ? 'ABERTO' : item.status,
     });
     setIsModalOpen(true);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.customer.trim() || !formData.amount) {
-      alert('Por favor, preencha o cliente e o valor.');
+    setFormError('');
+    if (!formData.customerId && !formData.customer.trim()) {
+      setFormError('Selecione um cliente cadastrado ou digite o nome do cliente.');
+      return;
+    }
+    if (!(parseFloat(formData.amount) > 0)) {
+      setFormError('Informe um valor maior que zero.');
       return;
     }
 
     setSaving(true);
     try {
       const res = await fetch('/api/finance', {
-        method: 'POST',
+        method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: formData.invoiceId,
-          customer: formData.customer,
-          description: formData.description,
-          amount: formData.amount,
-          dueDate: formData.dueDate,
-          method: formData.method,
-          status: formData.status,
-        }),
+        body: JSON.stringify({ ...formData, id: editingId || undefined }),
       });
-
-      const data = await res.json();
-      if (data.success) {
-        setIsModalOpen(false);
-        loadFinanceData();
-      } else {
-        alert(data.error || 'Erro ao criar fatura');
-      }
+      const data = await readJson(res);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao salvar fatura');
+      setIsModalOpen(false);
+      loadFinanceData();
     } catch (e: any) {
-      alert('Erro de conexão: ' + e.message);
+      setFormError(e.message || 'Erro ao salvar fatura');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleToggleStatus = async (item: FinancialItem) => {
-    const nextStatus = item.status === 'PAGO' ? 'ABERTO' : 'PAGO';
+  const updateStatus = async (item: FinancialItem, nextStatus: 'ABERTO' | 'PAGO' | 'CANCELADO') => {
     try {
       const res = await fetch('/api/finance', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: item.id, status: nextStatus }),
       });
-      const data = await res.json();
-      if (data.success) {
-        loadFinanceData();
-      } else {
-        alert(data.error || 'Erro ao alterar status');
-      }
+      const data = await readJson(res);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao alterar status');
+      loadFinanceData();
     } catch (e: any) {
-      alert('Erro ao alterar status: ' + e.message);
+      alert(e.message || 'Erro ao alterar status');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir esta fatura?')) return;
+  const handleToggleStatus = (item: FinancialItem) =>
+    updateStatus(item, item.status === 'PAGO' || item.status === 'CANCELADO' ? 'ABERTO' : 'PAGO');
+
+  const handleCancelInvoice = (item: FinancialItem) => {
+    if (!confirm(`Cancelar a fatura ${item.invoiceNumber}? Ela deixa de contar no faturamento.`)) return;
+    updateStatus(item, 'CANCELADO');
+  };
+
+  const handleDelete = async (item: FinancialItem) => {
+    if (!confirm(`Excluir definitivamente a fatura ${item.invoiceNumber}?`)) return;
     try {
-      const res = await fetch(`/api/finance?id=${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        loadFinanceData();
-      } else {
-        alert(data.error || 'Erro ao excluir');
-      }
+      const res = await fetch(`/api/finance?id=${item.id}`, { method: 'DELETE' });
+      const data = await readJson(res);
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao excluir');
+      loadFinanceData();
     } catch (e: any) {
-      alert('Erro ao excluir: ' + e.message);
+      alert(e.message || 'Erro ao excluir');
     }
+  };
+
+  const exportCsv = () => {
+    const header = ['Fatura', 'Cliente', 'Descrição', 'Valor', 'Vencimento', 'Pagamento', 'Método', 'Status'];
+    const lines = filteredRecords.map((r) =>
+      [
+        r.invoiceNumber,
+        r.customerName,
+        r.description,
+        r.amount.toFixed(2).replace('.', ','),
+        formatDate(r.dueDate),
+        r.paymentDate ? formatDate(r.paymentDate, false) : '',
+        r.method,
+        r.status,
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(';')
+    );
+    const blob = new Blob(['\ufeff' + [header.join(';'), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `faturas-${todayIso()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Formatar Moeda Real
@@ -186,24 +244,21 @@ export default function FinancePage() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
   };
 
-  // Formatar Data
-  const formatDate = (dateStr?: string) => {
+  // Vencimentos são datas de calendário (gravadas em UTC): formatar em UTC evita mostrar o dia anterior
+  const formatDate = (dateStr?: string | null, calendarDate = true) => {
     if (!dateStr) return '-';
-    try {
-      return new Date(dateStr).toLocaleDateString('pt-BR');
-    } catch {
-      return dateStr;
-    }
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('pt-BR', calendarDate ? { timeZone: 'UTC' } : { timeZone: 'America/Sao_Paulo' });
   };
 
   // Filtros combinados
   const filteredRecords = records.filter((r) => {
-    const cust = r.metadata?.customer || r.description || '';
-    const invId = r.metadata?.invoiceId || '';
+    const term = search.toLowerCase();
     const matchSearch =
-      cust.toLowerCase().includes(search.toLowerCase()) ||
-      r.description.toLowerCase().includes(search.toLowerCase()) ||
-      invId.toLowerCase().includes(search.toLowerCase());
+      r.customerName.toLowerCase().includes(term) ||
+      r.description.toLowerCase().includes(term) ||
+      r.invoiceNumber.toLowerCase().includes(term);
 
     const matchStatus = statusFilter === 'all' || r.status === statusFilter;
 
@@ -221,19 +276,37 @@ export default function FinancePage() {
             <span>Gestão Financeira & Faturamento</span>
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            Controle de contratos, faturamento recorrente, faturas emitidas e conciliação bancária.
+            Emissão e acompanhamento de faturas, recebimentos e inadimplência por cliente.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenModal}
-          className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>NOVA FATURA</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={filteredRecords.length === 0}
+            className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+          >
+            <Download className="w-4 h-4" />
+            <span>EXPORTAR CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenModal}
+            className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>NOVA FATURA</span>
+          </button>
+        </div>
       </div>
+
+      {loadError && (
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{loadError}</span>
+        </div>
+      )}
 
       {/* CARDS DE RESUMO FINANCEIRO (MÉTRICAS REAIS) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -253,7 +326,7 @@ export default function FinancePage() {
           <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-sky-600 dark:text-sky-400">
             {formatCurrency(metrics.aReceber)}
           </h3>
-          <span className="text-[10px] text-neutral-400 font-semibold mt-1 block">{metrics.openCount} faturas em aberto</span>
+          <span className="text-[10px] text-neutral-400 font-semibold mt-1 block">{metrics.openCount} fatura(s) no prazo</span>
         </div>
 
         <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-5 relative overflow-hidden shadow-xs">
@@ -262,16 +335,16 @@ export default function FinancePage() {
           <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-rose-600 dark:text-rose-400">
             {formatCurrency(metrics.inadimplencia)}
           </h3>
-          <span className="text-[10px] text-rose-500 font-semibold mt-1 block">{metrics.overdueCount} faturas pendentes</span>
+          <span className="text-[10px] text-rose-500 font-semibold mt-1 block">{metrics.overdueCount} fatura(s) vencida(s)</span>
         </div>
 
         <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-5 relative overflow-hidden shadow-xs">
           <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E85D26]" />
           <p className="text-[11px] uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Total Faturado</p>
           <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-[#E85D26]">
-            {formatCurrency(metrics.mrr)}
+            {formatCurrency(metrics.totalFaturado)}
           </h3>
-          <span className="text-[10px] text-orange-500 font-semibold mt-1 block">{metrics.totalCount} cobranças emitidas</span>
+          <span className="text-[10px] text-orange-500 font-semibold mt-1 block">{metrics.totalCount - metrics.canceledCount} cobrança(s) válida(s)</span>
         </div>
 
       </div>
@@ -337,6 +410,17 @@ export default function FinancePage() {
             >
               Atrasadas
             </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter('CANCELADO')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                statusFilter === 'CANCELADO'
+                  ? 'bg-neutral-600 text-white'
+                  : 'text-neutral-500 hover:text-neutral-700'
+              }`}
+            >
+              Canceladas
+            </button>
           </div>
         </div>
 
@@ -349,20 +433,29 @@ export default function FinancePage() {
             <div className="w-14 h-14 mx-auto rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[#E85D26]">
               <Receipt className="w-7 h-7" />
             </div>
-            <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-200">
-              Nenhuma fatura cadastrada
-            </h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
-              Utilize o botão acima para emitir a primeira fatura ou cobrança do sistema.
-            </p>
-            <button
-              type="button"
-              onClick={handleOpenModal}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Emitir Primeira Fatura</span>
-            </button>
+            {records.length > 0 ? (
+              <>
+                <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-200">Nenhuma fatura encontrada</h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
+                  Nenhum resultado para a busca ou o filtro selecionado.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-200">Nenhuma fatura cadastrada</h3>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
+                  Utilize o botão acima para emitir a primeira fatura ou cobrança do sistema.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenModal}
+                  className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Emitir Primeira Fatura</span>
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -382,10 +475,11 @@ export default function FinancePage() {
                 {filteredRecords.map((inv) => (
                   <tr key={inv.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/50 transition group">
                     <td className="p-4 font-mono font-bold text-[#E85D26]">
-                      {inv.metadata?.invoiceId || inv.id.slice(0, 10)}
+                      {inv.invoiceNumber}
                     </td>
                     <td className="p-4 font-bold text-neutral-900 dark:text-white">
-                      {inv.metadata?.customer || inv.description}
+                      <span className="block">{inv.customerName}</span>
+                      <span className="block text-[10px] font-normal text-neutral-500">{inv.description}</span>
                     </td>
                     <td className="p-4 font-extrabold text-neutral-800 dark:text-neutral-100">
                       {formatCurrency(inv.amount)}
@@ -394,7 +488,7 @@ export default function FinancePage() {
                       {formatDate(inv.dueDate)}
                     </td>
                     <td className="p-4 text-neutral-600 dark:text-neutral-300">
-                      {inv.metadata?.method || 'Pix'}
+                      {inv.method}
                     </td>
                     <td className="p-4">
                       {inv.status === 'PAGO' && (
@@ -427,11 +521,42 @@ export default function FinancePage() {
                           ⚠ ATRASADO
                         </button>
                       )}
+                      {inv.status === 'CANCELADO' && (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(inv)}
+                          title="Clique para reabrir a fatura"
+                          className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-neutral-500/10 text-neutral-500 border border-neutral-500/20 hover:bg-neutral-500/20 transition cursor-pointer line-through"
+                        >
+                          CANCELADA
+                        </button>
+                      )}
+                      {inv.status === 'PAGO' && inv.paymentDate && (
+                        <span className="block mt-1 text-[10px] text-neutral-400">em {formatDate(inv.paymentDate, false)}</span>
+                      )}
                     </td>
-                    <td className="p-4 text-right space-x-2">
+                    <td className="p-4 text-right space-x-1 whitespace-nowrap">
                       <button
                         type="button"
-                        onClick={() => handleDelete(inv.id)}
+                        onClick={() => handleEdit(inv)}
+                        className="text-neutral-400 hover:text-[#E85D26] p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        title="Editar Fatura"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      {inv.status !== 'CANCELADO' && inv.status !== 'PAGO' && (
+                        <button
+                          type="button"
+                          onClick={() => handleCancelInvoice(inv)}
+                          className="text-neutral-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                          title="Cancelar Fatura"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(inv)}
                         className="text-neutral-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
                         title="Excluir Fatura"
                       >
@@ -454,7 +579,7 @@ export default function FinancePage() {
             <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/50">
               <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white flex items-center gap-2">
                 <Plus className="w-4 h-4 text-[#E85D26]" />
-                <span>Emitir Nova Fatura / Cobrança</span>
+                <span>{editingId ? 'Editar Fatura' : 'Emitir Nova Fatura / Cobrança'}</span>
               </h3>
               <button
                 type="button"
@@ -465,24 +590,26 @@ export default function FinancePage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-5 space-y-4 text-xs">
+            <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+              {formError && (
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-                    ID da Fatura
+                    Nº da Fatura
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.invoiceId}
-                    onChange={(e) => setFormData({ ...formData, invoiceId: e.target.value })}
-                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-mono focus:outline-none focus:border-[#E85D26]"
-                  />
+                  <p className="w-full p-2.5 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-500 font-mono">
+                    {editingId ? records.find((r) => r.id === editingId)?.invoiceNumber : 'Gerado automaticamente'}
+                  </p>
                 </div>
 
                 <div>
                   <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-                    Status Inicial
+                    Status
                   </label>
                   <select
                     value={formData.status}
@@ -491,23 +618,37 @@ export default function FinancePage() {
                   >
                     <option value="ABERTO">Em Aberto</option>
                     <option value="PAGO">Pago</option>
-                    <option value="ATRASADO">Atrasado</option>
+                    {editingId && <option value="CANCELADO">Cancelado</option>}
                   </select>
+                  <p className="mt-1 text-[10px] text-neutral-400">Faturas em aberto após o vencimento ficam “Atrasadas” automaticamente.</p>
                 </div>
               </div>
 
               <div>
                 <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Cliente / Razão Social
+                  Cliente
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.customer}
-                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                  placeholder="Ex: Razão Social do Cliente"
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
-                />
+                <select
+                  value={formData.customerId}
+                  onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                >
+                  <option value="">— Cliente não cadastrado (digitar nome) —</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {!formData.customerId && (
+                  <input
+                    type="text"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                    placeholder="Nome / Razão Social do cliente"
+                    className="mt-2 w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                  />
+                )}
               </div>
 
               <div>
@@ -532,7 +673,7 @@ export default function FinancePage() {
                   <input
                     type="number"
                     step="0.01"
-                    min="0"
+                    min="0.01"
                     required
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -586,7 +727,7 @@ export default function FinancePage() {
                   className="px-5 py-2.5 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl font-bold transition shadow-md shadow-orange-900/20 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" />
-                  <span>{saving ? 'Emitindo...' : 'Emitir Fatura'}</span>
+                  <span>{saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Emitir Fatura'}</span>
                 </button>
               </div>
             </form>

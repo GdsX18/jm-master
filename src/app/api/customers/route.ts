@@ -1,111 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requirePermission } from '@/lib/session';
+import { CUSTOMER_INCLUDE, findDocumentOwner, mapCustomer, parseCustomerBody } from '@/lib/customers';
 
-// GET /api/customers - Listar clientes
+// GET /api/customers - Listar clientes (também usado no Financeiro e no CRM para seleção)
 export async function GET() {
+  const auth = await requirePermission(['manageCrm', 'manageFinance']);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const customers = await prisma.customer.findMany({
       orderBy: { createdAt: 'desc' },
-      include: {
-        interactions: true,
-      },
+      include: CUSTOMER_INCLUDE,
     });
-
-    // Mapear para o formato do frontend
-    const mapped = customers.map((c) => {
-      const data = (c.data as any) || {};
-      return {
-        id: c.id,
-        name: c.name,
-        document: data.document || '',
-        street: data.street || '',
-        number: data.number || '',
-        city: data.city || '',
-        state: data.state || '',
-        zipCode: data.zipCode || '',
-        code: data.code || '',
-        type: data.type || 'POS_PAGO',
-        groupId: data.groupId || 'grp-padrao',
-        groupName: data.groupName || 'Tabela Padrão',
-        cutoffDay: data.cutoffDay || 1,
-        gracePeriod: data.gracePeriod || 5,
-        isActive: c.status === 'ATIVO',
-        contacts: data.contacts || [],
-        products: data.products || [],
-        documents: data.documents || [],
-        notes: data.notes || [],
-        createdAt: c.createdAt.toISOString(),
-      };
-    });
-
-    return NextResponse.json(mapped);
-  } catch (error: any) {
+    return NextResponse.json(customers.map(mapCustomer));
+  } catch (error) {
     console.error('[API Customers GET Error]:', error);
-    return NextResponse.json({ message: error.message || 'Erro ao carregar clientes' }, { status: 500 });
+    return NextResponse.json({ message: 'Erro ao carregar clientes' }, { status: 500 });
   }
 }
 
 // POST /api/customers - Cadastrar cliente
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const {
-      name,
-      document,
-      street,
-      number,
-      city,
-      state,
-      zipCode,
-      code,
-      type,
-      groupId,
-      groupName,
-      cutoffDay,
-      gracePeriod,
-      contacts,
-      products,
-    } = body;
+  const auth = await requirePermission('manageCrm');
+  if (auth instanceof NextResponse) return auth;
 
-    if (!name || !name.trim()) {
-      return NextResponse.json({ message: 'Razão social / Nome é obrigatório' }, { status: 400 });
+  try {
+    const parsed = parseCustomerBody(await req.json());
+    if ('error' in parsed) return NextResponse.json({ message: parsed.error }, { status: 400 });
+
+    const owner = await findDocumentOwner(parsed.documentDigits);
+    if (owner) {
+      return NextResponse.json({ message: `CPF/CNPJ já cadastrado para "${owner.name}"` }, { status: 409 });
     }
 
     const customer = await prisma.customer.create({
       data: {
-        name: name.trim(),
-        company: name.trim(),
-        email: contacts?.[0]?.email || '',
-        phone: contacts?.[0]?.phone || '',
-        status: 'ATIVO',
-        data: {
-          document,
-          street,
-          number,
-          city,
-          state,
-          zipCode,
-          code,
-          type: type || 'POS_PAGO',
-          groupId,
-          groupName,
-          cutoffDay,
-          gracePeriod,
-          contacts: contacts || [],
-          products: products || [],
-          documents: [],
-          notes: [],
-        },
+        name: parsed.name,
+        company: parsed.name,
+        email: parsed.contacts[0]?.email || null,
+        phone: parsed.contacts[0]?.phone || null,
+        status: parsed.isActive ? 'ATIVO' : 'INATIVO',
+        data: parsed.data,
+        groups: { connect: parsed.groupIds.map((id) => ({ id })) },
       },
+      include: CUSTOMER_INCLUDE,
     });
 
-    return NextResponse.json({
-      id: customer.id,
-      name: customer.name,
-      message: 'Cliente cadastrado com sucesso',
-    });
-  } catch (error: any) {
+    return NextResponse.json({ ...mapCustomer(customer), message: 'Cliente cadastrado com sucesso' });
+  } catch (error) {
     console.error('[API Customers POST Error]:', error);
-    return NextResponse.json({ message: error.message || 'Erro ao criar cliente' }, { status: 500 });
+    return NextResponse.json({ message: 'Erro ao criar cliente' }, { status: 500 });
   }
 }

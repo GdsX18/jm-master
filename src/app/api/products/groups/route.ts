@@ -1,105 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requirePermission } from '@/lib/session';
 
-// GET /api/products/groups - Listar grupos de clientes/preços
+// GET /api/products/groups - Listar grupos de clientes / tabelas de preço
 export async function GET() {
+  const auth = await requirePermission(['manageProducts', 'manageCrm']);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    let setting = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
-    if (!setting) {
-      setting = await prisma.siteSetting.create({
-        data: { id: 'default' },
-      });
-    }
-
-    let groups: Array<{ id: string; name: string; isActive: boolean }> = [];
-
-    try {
-      if (setting.customHeaderScript && setting.customHeaderScript.startsWith('GROUPS_JSON:')) {
-        const jsonStr = setting.customHeaderScript.replace('GROUPS_JSON:', '');
-        const parsed = JSON.parse(jsonStr);
-        if (Array.isArray(parsed)) {
-          groups = parsed;
-        }
-      }
-    } catch {}
-
-    return NextResponse.json(groups);
-  } catch (error: any) {
+    const groups = await prisma.customerGroup.findMany({
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true, isActive: true, _count: { select: { customers: true } } },
+    });
+    return NextResponse.json(
+      groups.map((g) => ({ id: g.id, name: g.name, isActive: g.isActive, customerCount: g._count.customers }))
+    );
+  } catch (error) {
     console.error('[API Groups GET Error]:', error);
-    return NextResponse.json({ message: error.message || 'Erro ao carregar grupos' }, { status: 500 });
+    return NextResponse.json({ message: 'Erro ao carregar grupos' }, { status: 500 });
   }
 }
 
 // POST /api/products/groups - Criar novo grupo
 export async function POST(req: NextRequest) {
+  const auth = await requirePermission(['manageProducts', 'manageCrm']);
+  if (auth instanceof NextResponse) return auth;
+
   try {
-    const body = await req.json();
-    const { name } = body;
-
-    if (!name || !name.trim()) {
-      return NextResponse.json({ message: 'Nome do grupo é obrigatório' }, { status: 400 });
+    const { name } = await req.json();
+    const cleanName = typeof name === 'string' ? name.trim() : '';
+    if (!cleanName) {
+      return NextResponse.json({ message: 'O nome do grupo é obrigatório' }, { status: 400 });
     }
 
-    let setting = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
-    let groups: Array<{ id: string; name: string; isActive: boolean }> = [];
-
-    if (setting?.customHeaderScript && setting.customHeaderScript.startsWith('GROUPS_JSON:')) {
-      try {
-        groups = JSON.parse(setting.customHeaderScript.replace('GROUPS_JSON:', ''));
-      } catch {}
-    }
-
-    const newGroup = {
-      id: `grp-${Date.now()}`,
-      name: name.trim(),
-      isActive: true,
-    };
-
-    groups.push(newGroup);
-
-    await prisma.siteSetting.upsert({
-      where: { id: 'default' },
-      update: { customHeaderScript: `GROUPS_JSON:${JSON.stringify(groups)}` },
-      create: { id: 'default', customHeaderScript: `GROUPS_JSON:${JSON.stringify(groups)}` },
+    const duplicate = await prisma.customerGroup.findFirst({
+      where: { name: { equals: cleanName, mode: 'insensitive' } },
     });
+    if (duplicate) {
+      return NextResponse.json({ message: 'Já existe um grupo com este nome' }, { status: 409 });
+    }
 
-    return NextResponse.json(newGroup);
-  } catch (error: any) {
+    const group = await prisma.customerGroup.create({ data: { name: cleanName } });
+    return NextResponse.json({ id: group.id, name: group.name, isActive: group.isActive, customerCount: 0 });
+  } catch (error) {
     console.error('[API Groups POST Error]:', error);
-    return NextResponse.json({ message: error.message || 'Erro ao criar grupo' }, { status: 500 });
+    return NextResponse.json({ message: 'Erro ao criar grupo' }, { status: 500 });
   }
 }
 
-// DELETE /api/products/groups - Excluir grupo
+// DELETE /api/products/groups?id= - Excluir grupo (vínculos e preços saem junto)
 export async function DELETE(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
+  const auth = await requirePermission(['manageProducts', 'manageCrm']);
+  if (auth instanceof NextResponse) return auth;
 
+  try {
+    const id = new URL(req.url).searchParams.get('id');
     if (!id) {
       return NextResponse.json({ message: 'ID do grupo é obrigatório' }, { status: 400 });
     }
 
-    let setting = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
-    let groups: Array<{ id: string; name: string; isActive: boolean }> = [];
-
-    if (setting?.customHeaderScript && setting.customHeaderScript.startsWith('GROUPS_JSON:')) {
-      try {
-        groups = JSON.parse(setting.customHeaderScript.replace('GROUPS_JSON:', ''));
-      } catch {}
+    const result = await prisma.customerGroup.deleteMany({ where: { id } });
+    if (result.count === 0) {
+      return NextResponse.json({ message: 'Grupo não encontrado' }, { status: 404 });
     }
-
-    groups = groups.filter((g) => g.id !== id);
-
-    await prisma.siteSetting.upsert({
-      where: { id: 'default' },
-      update: { customHeaderScript: `GROUPS_JSON:${JSON.stringify(groups)}` },
-      create: { id: 'default', customHeaderScript: `GROUPS_JSON:${JSON.stringify(groups)}` },
-    });
-
     return NextResponse.json({ success: true, message: 'Grupo excluído com sucesso' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API Groups DELETE Error]:', error);
-    return NextResponse.json({ message: error.message || 'Erro ao excluir grupo' }, { status: 500 });
+    return NextResponse.json({ message: 'Erro ao excluir grupo' }, { status: 500 });
   }
 }

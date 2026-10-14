@@ -18,28 +18,43 @@ import {
   LayoutGrid,
   LogOut,
   ExternalLink,
+  ShieldOff,
 } from 'lucide-react';
+import { permissionForPath, type Permissions } from '@/lib/permissions';
+
+interface PanelUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  permissions: Permissions;
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [menuLayout, setMenuLayout] = useState<'sidebar' | 'top'>('sidebar');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<PanelUser | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
-    // Carregar usuário logado
-    const savedUserStr = localStorage.getItem('@JMMaster:user');
-    if (savedUserStr) {
-      try {
-        const user = JSON.parse(savedUserStr);
-        setCurrentUser(user);
-        // Se for Criador de Blog e estiver tentando acessar outra página do painel, redireciona
-        if (user.role === 'Criador de Blog' && pathname !== '/painel/blog' && pathname !== '/painel/login') {
-          window.location.href = '/painel/blog';
-        }
-      } catch (e) {}
+    // Usuário logado vem do servidor (sessão + permissões atualizadas do banco)
+    if (pathname !== '/painel/login') {
+      fetch('/api/auth/me', { cache: 'no-store' })
+        .then(async (res) => {
+          if (res.status === 401) {
+            localStorage.removeItem('@JMMaster:user');
+            window.location.href = `/painel/login?next=${encodeURIComponent(pathname)}`;
+            return;
+          }
+          const data = await res.json();
+          if (data.user) {
+            setCurrentUser(data.user);
+            localStorage.setItem('@JMMaster:user', JSON.stringify(data.user));
+          }
+        })
+        .catch(() => {});
     }
 
     // Carregar tema do localStorage
@@ -90,16 +105,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { name: 'CRM & Linha do Tempo', shortName: 'CRM', path: '/painel/crm', icon: History },
   ];
 
-  // Se o usuário logado for da classe Criador de Blog, exibe apenas a opção do Blog
-  const menuItems = currentUser?.role === 'Criador de Blog'
-    ? [{ name: 'Criador de Blog', shortName: 'Blog', path: '/painel/blog', icon: PenTool }]
-    : allMenuItems;
+  // Menu conforme as permissões efetivas do usuário
+  const canAccess = (path: string) => {
+    const key = permissionForPath(path);
+    return !key || !!currentUser?.permissions?.[key];
+  };
+  const menuItems = currentUser
+    ? allMenuItems.filter((item) => canAccess(item.path) && !(item.path === '/painel' && currentUser.role === 'Criador de Blog'))
+    : [];
+
+  // Tela sem permissão: as APIs já bloqueiam no servidor, aqui só evitamos uma tela quebrada
+  const pageContent =
+    currentUser && !canAccess(pathname) ? (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center gap-3 p-8">
+        <ShieldOff className="w-10 h-10 text-rose-500" />
+        <h2 className="text-lg font-bold">Acesso não permitido</h2>
+        <p className="text-sm text-neutral-500 max-w-sm">
+          Seu perfil não tem permissão para este módulo. Fale com um administrador se precisar de acesso.
+        </p>
+      </div>
+    ) : currentUser ? (
+      children
+    ) : (
+      <div className="min-h-[60vh]" />
+    );
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch {}
-    localStorage.removeItem('@JMMaster:token');
     localStorage.removeItem('@JMMaster:user');
     window.location.href = '/painel/login';
   };
@@ -174,9 +208,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Perfil */}
             <div className={`hidden 2xl:flex items-center gap-1.5 py-1 px-2.5 rounded-xl border transition-colors ${isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-800'}`}>
-              <span className="text-xs font-bold">{currentUser?.name?.split(' ')[0] || 'Admin'}</span>
+              <span className="text-xs font-bold">{currentUser?.name?.split(' ')[0] || ''}</span>
               <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-orange-600/10 text-[#E85D26] rounded border border-orange-500/25">
-                {currentUser?.role || 'ADMIN'}
+                {currentUser?.role || ''}
               </span>
             </div>
 
@@ -213,7 +247,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* ÁREA DE CONTEÚDO PRINCIPAL (Scroll Livre) */}
         <main className="flex-1 w-full min-h-0">
-          {children}
+          {pageContent}
         </main>
         
       </div>
@@ -244,9 +278,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Perfil do Usuário Logado */}
           <div className={`p-5 text-center border-b ${isDark ? 'border-neutral-800' : 'border-neutral-200'}`}>
             <div className={`py-3 px-4 rounded-xl border transition-colors duration-300 ${isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-200' : 'bg-neutral-100 border-neutral-200 text-neutral-800'}`}>
-              <p className="text-sm font-semibold tracking-wide">{currentUser?.name || 'Administrador'}</p>
+              <p className="text-sm font-semibold tracking-wide">{currentUser?.name || ''}</p>
               <span className="inline-block mt-1.5 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest bg-orange-600/10 text-[#E85D26] rounded-full border border-orange-500/25">
-                {currentUser?.role || 'SUPER ADMIN'}
+                {currentUser?.role || ''}
               </span>
             </div>
           </div>
@@ -321,7 +355,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ÁREA DE CONTEÚDO PRINCIPAL (Scroll Livre em toda a tela) */}
       <main className="flex-1 min-w-0 min-h-screen">
-        {children}
+        {pageContent}
       </main>
 
     </div>

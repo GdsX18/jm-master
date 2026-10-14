@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requirePermission } from '@/lib/session';
 
 // PUT /api/products/[id] - Atualizar produto
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requirePermission('manageProducts');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { id } = await params;
     const body = await req.json();
@@ -36,6 +40,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 // DELETE /api/products/[id] - Excluir produto
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requirePermission('manageProducts');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { id } = await params;
     await prisma.product.delete({

@@ -52,67 +52,130 @@ model BlogPost {
 }
 
 model Customer {
-  id           String           @id @default(cuid())
+  id           String             @id @default(cuid())
   name         String
   company      String?
   email        String?
   phone        String?
-  status       String           @default("ATIVO")
-  segment      String?          @default("Enterprise")
-  notes        String?          @db.Text
-  data         Json?            @default("{}")
+  status       String             @default("ATIVO")
+  segment      String?            @default("Enterprise")
+  notes        String?            @db.Text
+  data         Json?              @default("{}")
   interactions CrmInteraction[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  groups       CustomerGroup[]
+  documents    CustomerDocument[]
+  noteEntries  CustomerNote[]
+  invoices     FinancialRecord[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@map("customers")
 }
 
+model CustomerGroup {
+  id        String              @id @default(cuid())
+  name      String
+  isActive  Boolean             @default(true)
+  customers Customer[]
+  prices    GroupProductPrice[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@map("customer_groups")
+}
+
+model GroupProductPrice {
+  id        String        @id @default(cuid())
+  groupId   String
+  group     CustomerGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  price     Float         @default(0)
+  updatedAt DateTime      @updatedAt
+
+  @@unique([groupId, productId])
+  @@index([productId])
+  @@map("group_product_prices")
+}
+
+model CustomerDocument {
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name         String
+  originalName String
+  mimeType     String
+  size         Int
+  storagePath  String
+  userEmail    String?
+  createdAt    DateTime @default(now())
+
+  @@index([customerId])
+  @@map("customer_documents")
+}
+
+model CustomerNote {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  content    String   @db.Text
+  userEmail  String?
+  createdAt  DateTime @default(now())
+
+  @@index([customerId])
+  @@map("customer_notes")
+}
+
 model CrmInteraction {
-  id          String    @id @default(cuid())
-  customerId  String?
-  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  operator    String
+  id           String    @id @default(cuid())
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  operator     String
   customerName String?
-  title       String
-  description String    @db.Text
-  date        String
-  type        String    @default("COMERCIAL")
-  badge       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  title        String
+  description  String    @db.Text
+  date         String
+  type         String    @default("COMERCIAL")
+  badge        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([customerId])
   @@map("crm_interactions")
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String              @id @default(cuid())
   name        String
-  description String?  @db.Text
-  price       Float    @default(0.0)
+  description String?             @db.Text
+  price       Float               @default(0.0)
   category    String?
-  active      Boolean  @default(true)
-  features    Json?    @default("[]")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  active      Boolean             @default(true)
+  features    Json?               @default("[]")
+  groupPrices GroupProductPrice[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
   @@map("products")
 }
 
 model FinancialRecord {
-  id          String    @id @default(cuid())
-  description String
-  amount      Float
-  type        String    @default("RECEITA") // RECEITA, DESPESA
-  category    String
-  status      String    @default("PAGO") // PENDENTE, PAGO, CANCELADO
-  dueDate     DateTime?
-  paymentDate DateTime?
-  metadata    Json?     @default("{}")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  description   String
+  amount        Float
+  type          String    @default("RECEITA") // RECEITA, DESPESA
+  category      String
+  status        String    @default("PAGO") // PENDENTE, PAGO, CANCELADO
+  dueDate       DateTime?
+  paymentDate   DateTime?
+  metadata      Json?     @default("{}")
+  invoiceNumber String?   @unique
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
+  @@index([customerId])
   @@map("financial_records")
 }
 
@@ -122,9 +185,17 @@ model SiteSetting {
   gaId               String?  @default("")
   metaPixelId        String?  @default("")
   tiktokPixelId      String?  @default("")
-  customHeaderScript String?  @db.Text @default("")
-  customBodyScript   String?  @db.Text @default("")
+  customHeaderScript String?  @default("") @db.Text
+  customBodyScript   String?  @default("") @db.Text
   updatedAt          DateTime @updatedAt
 
   @@map("site_settings")
+}
+
+model BlogCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("blog_categories")
 }

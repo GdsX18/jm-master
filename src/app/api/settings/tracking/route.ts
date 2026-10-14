@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
+import { requirePermission } from '@/lib/session';
 
 export async function GET() {
+  const auth = await requirePermission(['structuralManagement', 'manageBlog']);
+  if (auth instanceof NextResponse) return auth;
+
   try {
     let settings = await prisma.siteSetting.findUnique({
       where: { id: 'default' },
@@ -25,25 +29,15 @@ export async function GET() {
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {
     console.error('[Tracking Settings GET Error]:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        settings: {
-          id: 'default',
-          gtmId: '',
-          gaId: '',
-          metaPixelId: '',
-          tiktokPixelId: '',
-          customHeaderScript: '',
-          customBodyScript: '',
-        },
-      },
-      { status: 200 }
-    );
+    // Erro real (não devolver campos vazios: o painel poderia salvar por cima das tags existentes)
+    return NextResponse.json({ success: false, error: 'Erro ao carregar configurações de rastreamento' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requirePermission('structuralManagement');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = await req.json();
     const {

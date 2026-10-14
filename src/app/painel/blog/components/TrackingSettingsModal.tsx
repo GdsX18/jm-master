@@ -50,7 +50,11 @@ export default function TrackingSettingsModal({
     if (isOpen) {
       setLoading(true);
       fetch('/api/settings/tracking')
-        .then((res) => res.json())
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao carregar configurações');
+          return data;
+        })
         .then((data) => {
           if (data.settings) {
             setFormData({
@@ -63,7 +67,11 @@ export default function TrackingSettingsModal({
             });
           }
         })
-        .catch((err) => console.error('Erro ao buscar configurações:', err))
+        .catch((err) => {
+          console.error('Erro ao buscar configurações:', err);
+          alert(`${err.message}. Feche e tente novamente antes de salvar, para não sobrescrever as tags atuais.`);
+          onClose();
+        })
         .finally(() => setLoading(false));
     }
   }, [isOpen]);

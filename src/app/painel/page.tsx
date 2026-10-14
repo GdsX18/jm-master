@@ -14,62 +14,55 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 
+interface DashboardMetrics {
+  blogCount: number;
+  publishedCount: number;
+  draftCount: number;
+  customerCount: number;
+  activeCustomerCount: number;
+  groupCount: number;
+  productCount: number;
+  openInvoices: number;
+  newLeads: number;
+}
+
+interface HealthCheck {
+  label: string;
+  ok: boolean;
+  detail: string;
+}
+
 export default function DashboardPage() {
-  const [blogCount, setBlogCount] = useState(0);
-  const [customerCount, setCustomerCount] = useState(0);
-  const [groupCount, setGroupCount] = useState(0);
-  const [productCount, setProductCount] = useState(0);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [health, setHealth] = useState<HealthCheck[]>([]);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState('');
 
   const loadRealData = async () => {
     setLoading(true);
+    setError('');
     try {
-      // 1. Carregar contagem real de artigos do blog
-      const res = await fetch('/api/blog/posts');
-      if (res.ok) {
-        const posts = await res.json();
-        setBlogCount(Array.isArray(posts) ? posts.length : 0);
-      }
-    } catch (e) {
-      console.error('Erro ao carregar posts:', e);
-    }
-
-    try {
-      // 2. Carregar contagem de clientes
-      const savedCustomers = localStorage.getItem('@JMMaster:customers');
-      if (savedCustomers) {
-        const parsed = JSON.parse(savedCustomers);
-        setCustomerCount(Array.isArray(parsed) ? parsed.length : 0);
-      } else {
-        setCustomerCount(0);
-      }
-
-      // 3. Carregar contagem de grupos
-      const savedGroups = localStorage.getItem('@JMMaster:groups');
-      if (savedGroups) {
-        const parsed = JSON.parse(savedGroups);
-        setGroupCount(Array.isArray(parsed) ? parsed.length : 0);
-      } else {
-        setGroupCount(0);
-      }
-
-      // 4. Carregar contagem de produtos
-      const savedProducts = localStorage.getItem('@JMMaster:products');
-      if (savedProducts) {
-        const parsed = JSON.parse(savedProducts);
-        setProductCount(Array.isArray(parsed) ? parsed.length : 0);
-      } else {
-        setProductCount(0);
-      }
-    } catch (e) {
-      console.error('Erro ao ler localStorage:', e);
+      const res = await fetch('/api/dashboard', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao carregar indicadores');
+      setMetrics(data.metrics);
+      setHealth(data.health || []);
+    } catch (e: any) {
+      setError(e.message || 'Erro ao carregar indicadores');
     } finally {
       setLoading(false);
     }
   };
+
+  const blogCount = metrics?.publishedCount ?? 0;
+  const customerCount = metrics?.customerCount ?? 0;
+  const groupCount = metrics?.groupCount ?? 0;
+  const productCount = metrics?.productCount ?? 0;
+  const allHealthy = health.length > 0 && health.every((h) => h.ok);
 
   useEffect(() => {
     // Formatar data atual
@@ -113,6 +106,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* BLOCO DE DESTAQUE: CRIADOR DE BLOG INTEGRADO */}
       <div className="bg-gradient-to-r from-orange-600/15 via-orange-500/10 to-transparent border border-orange-500/30 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -122,7 +122,7 @@ export default function DashboardPage() {
               Criador de Blog Oficial
             </h2>
             <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-[#E85D26] text-white rounded-md">
-              INTEGRADO & ATIVO
+              INTEGRADO
             </span>
           </div>
           <p className="text-xs text-neutral-600 dark:text-neutral-300 max-w-2xl leading-relaxed">
@@ -147,9 +147,9 @@ export default function DashboardPage() {
             <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E85D26]" />
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Artigos no Blog</p>
+                <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Artigos Publicados</p>
                 <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{blogCount}</h3>
-                <span className="text-[11px] text-[#E85D26] font-semibold mt-1 block">Sincronizado com /blog</span>
+                <span className="text-[11px] text-[#E85D26] font-semibold mt-1 block">{metrics ? `${metrics.draftCount} rascunho(s)` : '—'}</span>
               </div>
               <div className="bg-orange-500/10 p-2.5 rounded-xl text-[#E85D26]">
                 <PenTool className="w-5 h-5" />
@@ -166,7 +166,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Clientes Cadastrados</p>
                 <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{customerCount}</h3>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">Central de Clientes</span>
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">{metrics ? `${metrics.activeCustomerCount} ativo(s) · ${metrics.newLeads} lead(s) do site em 7 dias` : '—'}</span>
               </div>
               <div className="bg-emerald-500/10 p-2.5 rounded-xl text-emerald-600 dark:text-emerald-400">
                 <Users className="w-5 h-5" />
@@ -200,7 +200,7 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Produtos no Catálogo</p>
                 <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{productCount}</h3>
-                <span className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold mt-1 block">Planos & Serviços</span>
+                <span className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold mt-1 block">{metrics ? `${metrics.openInvoices} fatura(s) em aberto` : '—'}</span>
               </div>
               <div className="bg-sky-500/10 p-2.5 rounded-xl text-sky-600 dark:text-sky-400">
                 <Package className="w-5 h-5" />
@@ -221,33 +221,35 @@ export default function DashboardPage() {
               <Zap className="w-4 h-4 text-amber-500" />
               <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Status das Conexões & APIs</h3>
             </div>
-            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              OPERACIONAL
-            </span>
+            {health.length > 0 && (
+              <span
+                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                  allHealthy
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                }`}
+              >
+                {allHealthy ? 'OPERACIONAL' : 'ATENÇÃO'}
+              </span>
+            )}
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-              <span className="font-semibold text-neutral-700 dark:text-neutral-300">API de Publicação de Blog (/api/blog/posts)</span>
-              <span className="text-emerald-500 font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Conectada</span>
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-              <span className="font-semibold text-neutral-700 dark:text-neutral-300">Revalidação Automática de Páginas (/blog)</span>
-              <span className="text-emerald-500 font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Ativa</span>
-              </span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-              <span className="font-semibold text-neutral-700 dark:text-neutral-300">Tema Claro / Escuro & Layout Adaptativo</span>
-              <span className="text-emerald-500 font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Sincronizado</span>
-              </span>
-            </div>
+            {health.length === 0 && (
+              <p className="text-neutral-500">{loading ? 'Verificando conexões...' : 'Sem dados de verificação.'}</p>
+            )}
+            {health.map((h) => (
+              <div
+                key={h.label}
+                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800"
+              >
+                <span className="font-semibold text-neutral-700 dark:text-neutral-300">{h.label}</span>
+                <span className={`font-bold flex items-center gap-1.5 text-right ${h.ok ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {h.ok ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
+                  <span>{h.detail}</span>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 

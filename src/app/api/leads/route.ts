@@ -80,8 +80,7 @@ export async function POST(req: NextRequest) {
           minute: '2-digit',
           timeZone: 'America/Sao_Paulo',
         }),
-        type: 'COMERCIAL',
-        badge: 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20',
+        type: 'LEAD',
       },
     });
 

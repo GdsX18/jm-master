@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useToastState, useConfirm, ToastContainer, ConfirmModal } from '../components/ui/Notifications';
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
 import { UnsavedChangesModal } from '../components/ui/UnsavedChangesModal';
@@ -226,35 +227,9 @@ export default function CustomersDashboardPage() {
   };
 
   const handleDownloadDocument = (docId: string, filename: string) => {
-    try {
-      const token = localStorage.getItem('@JMMaster:token');
-      if (!token) {
-        addToast('error', 'Erro no download', 'Usuário não autenticado.');
-        return;
-      }
-      
-      // Construir a URL direta para o backend passando o token via query parameter
-      const downloadUrl = `/api/customers/documents/${docId}/download?token=${token}`;
-      
-      // Criar um elemento <a> temporário para disparar o download nativo do navegador
-      const anchor = window.document.createElement('a');
-      anchor.style.display = 'none';
-      anchor.href = downloadUrl;
-      // O atributo download ajuda o navegador a entender que é um download
-      // Mas o nome real será fornecido pelo header Content-Disposition do backend (que já configuramos)
-      anchor.setAttribute('download', filename);
-      window.document.body.appendChild(anchor);
-      anchor.click();
-      
-      setTimeout(() => {
-        window.document.body.removeChild(anchor);
-      }, 1000);
-      
-      addToast('success', 'Download iniciado', `Baixando: ${filename}`);
-    } catch (err) {
-      console.error('Erro no download:', err);
-      addToast('error', 'Erro de conexão', 'Não foi possível iniciar o download do documento.');
-    }
+    // A sessão (cookie) autentica; a API redireciona para um link temporário do arquivo privado
+    window.open(`/api/customers/documents/${docId}/download`, '_blank', 'noopener');
+    addToast('success', 'Download iniciado', `Baixando: ${filename}`);
   };
 
 
@@ -339,7 +314,8 @@ export default function CustomersDashboardPage() {
         await fetchCustomerDetails(editingId);
         addToast('success', 'Observação excluída', 'A observação foi removida com sucesso.');
       } else {
-        addToast('error', 'Erro ao excluir', 'Não foi possível excluir a observação.');
+        const errData = await res.json().catch(() => ({}));
+        addToast('error', 'Erro ao excluir', errData.message || 'Não foi possível excluir a observação.');
       }
     } catch (err) {
       console.error('Erro ao excluir observação:', err);
@@ -583,7 +559,7 @@ export default function CustomersDashboardPage() {
   const handleDelete = async (id: string, customerName: string) => {
     const confirmed = await confirm({
       title: 'Excluir Cliente',
-      message: `Deseja realmente excluir o cliente "${customerName}"? Esta ação removerá permanentemente todos os contatos e preços associados e não poderá ser desfeita.`,
+      message: `Deseja realmente excluir o cliente "${customerName}"? Esta ação removerá permanentemente os contatos, documentos anexados e observações, e não poderá ser desfeita. O histórico de faturas é mantido.`,
       confirmLabel: 'Sim, excluir cliente',
       cancelLabel: 'Cancelar',
       variant: 'danger',
@@ -665,9 +641,9 @@ export default function CustomersDashboardPage() {
         zipCode,
         code: code || undefined,
         type,
-        groupIds: groupIds.length > 0 ? groupIds : undefined,
+        groupIds,
         isActive,
-        contacts: contacts.filter(c => c.name.trim() && c.phone.trim() && c.email.trim())
+        contacts: contacts.filter(c => c.name.trim() && (c.phone.trim() || c.email.trim()))
       };
 
       const url = editingId 
@@ -708,6 +684,9 @@ export default function CustomersDashboardPage() {
         setCity('');
         setState('');
         setIsActive(true);
+        setCode('');
+        setType('POS_PAGO');
+        setGroupIds([]);
         setContacts([{ name: '', phone: '', email: '', role: '' }]);
         setEditingId(null);
         addToast('success', 'Cliente cadastrado!', 'Novo cliente registrado com sucesso.');
@@ -1637,6 +1616,14 @@ export default function CustomersDashboardPage() {
                             <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 relative group transition">
                               <div className="flex justify-between items-start gap-4">
                                 <p className="text-sm text-neutral-800 dark:text-neutral-200 font-medium whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteNote(note.id)}
+                                  title="Excluir observação"
+                                  className="shrink-0 text-neutral-400 hover:text-rose-600 p-1 rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-neutral-400 mt-3 font-medium border-t border-neutral-200 dark:border-neutral-800 pt-2 transition-colors uppercase tracking-wide">
                                 <span>Operador: {note.userEmail}</span>

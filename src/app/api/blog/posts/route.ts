@@ -3,11 +3,15 @@ import { revalidatePath } from 'next/cache';
 import { getStoredPosts, saveStoredPost, deleteStoredPost } from '@/lib/blog-storage';
 import { BlogPost } from '@/data/posts';
 import { DEFAULT_OG_IMAGE, resolvePostCanonical } from '@/lib/site';
+import { requirePermission } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
+  const auth = await requirePermission('manageBlog');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const posts = await getStoredPosts();
     return NextResponse.json(
@@ -29,6 +33,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = await requirePermission('manageBlog');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = await request.json();
     // Suporta tanto { post: {...} } quanto { ...article } direto
@@ -139,6 +146,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const auth = await requirePermission('manageBlog');
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
