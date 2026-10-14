@@ -49,6 +49,7 @@ export interface BlogPost {
   views?: number;
   publishedAt?: string;
   updatedAt?: string;
+  createdAt?: string;
 }
 
 export const CATEGORIES = [

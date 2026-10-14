@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   Send,
@@ -15,8 +15,6 @@ import {
 } from 'lucide-react';
 import { Article, ArticleCategory, ArticleStatus, ArticleSEO, ViewMode } from './types';
 import {
-  getStoredArticles,
-  saveStoredArticles,
   OFFICIAL_AUTHOR,
   slugify,
   calculateReadingTime,
@@ -96,6 +94,12 @@ export default function BlogDashboardPage() {
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const dirtyRef = useRef(false);
+  const markDirty = (value: boolean) => {
+    dirtyRef.current = value;
+    setIsDirty(value);
+  };
 
   // Carregar artigos reais da API do site oficial
   const loadPostsFromApi = async (showRefreshToast = false) => {
@@ -108,24 +112,17 @@ export default function BlogDashboardPage() {
           Pragma: 'no-cache',
         },
       });
-      const data = await res.json();
-      const postsArray = data.posts || (Array.isArray(data) ? data : []);
-
-      if (Array.isArray(postsArray)) {
-        const mapped = mapServerPosts(postsArray);
-        setArticles(mapped);
-        saveStoredArticles(mapped);
-        if (showRefreshToast) {
-          showToast('Artigos sincronizados em tempo real com o servidor!', 'success');
-        }
-        return;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !Array.isArray(data.posts)) {
+        throw new Error(data.error || 'Não foi possível carregar os artigos do servidor.');
       }
-    } catch (err) {
+      setArticles(mapServerPosts(data.posts));
+      if (showRefreshToast) {
+        showToast('Artigos sincronizados em tempo real com o servidor!', 'success');
+      }
+    } catch (err: any) {
       console.error('Erro ao conectar com API de posts:', err);
-      const local = getStoredArticles();
-      if (local.length > 0) {
-        setArticles(local);
-      }
+      showToast(err.message || 'Não foi possível carregar os artigos do servidor.', 'info');
     } finally {
       setIsLoading(false);
     }
@@ -137,19 +134,28 @@ export default function BlogDashboardPage() {
 
     // Sincronização em tempo real quando o usuário volta à aba do navegador
     const handleFocus = () => {
-      loadPostsFromApi();
+      if (!dirtyRef.current) loadPostsFromApi();
     };
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && !dirtyRef.current) {
         loadPostsFromApi();
       }
     };
+    // Aviso ao fechar/recarregar a página com alterações não salvas
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     window.addEventListener('focus', handleFocus);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
@@ -164,7 +170,7 @@ export default function BlogDashboardPage() {
   // Sincronizar com a API real
   const syncWithApi = async (
     articleToSync: Article
-  ): Promise<{ success: boolean; message?: string; posts?: Article[] }> => {
+  ): Promise<{ success: boolean; message?: string; posts?: Article[]; saved?: Article }> => {
     try {
       const res = await fetch('/api/blog/posts', {
         method: 'POST',
@@ -176,11 +182,18 @@ export default function BlogDashboardPage() {
         throw new Error(data.error || 'Falha ao sincronizar com o banco de dados.');
       }
       if (Array.isArray(data.posts)) {
-        const mapped = mapServerPosts(data.posts);
-        setArticles(mapped);
-        saveStoredArticles(mapped);
+        setArticles(mapServerPosts(data.posts));
       }
-      return { success: true, message: data.message, posts: data.posts };
+      const saved = data.post ? mapServerPosts([data.post])[0] : undefined;
+      // O artigo aberto passa a usar o id e o slug definitivos do servidor (evita criar duplicatas)
+      if (saved) {
+        setCurrentArticle((current) =>
+          current && (current.id === articleToSync.id || current.slug === articleToSync.slug)
+            ? { ...saved, seo: current.seo }
+            : current
+        );
+      }
+      return { success: true, message: data.message, posts: data.posts, saved };
     } catch (e: any) {
       console.error('Erro de sincronização:', e);
       return { success: false, message: e.message || 'Erro de conexão com o servidor' };
@@ -300,27 +313,30 @@ export default function BlogDashboardPage() {
       updatedAt: new Date().toISOString(),
     };
     setCurrentArticle(updated);
+    markDirty(true);
+  };
 
-    // Atualização otimista local
-    const updatedList = articles.map((a) => (a.id === updated.id ? updated : a));
-    if (!articles.some((a) => a.id === updated.id)) {
-      updatedList.unshift(updated);
-    }
-    setArticles(updatedList);
-    saveStoredArticles(updatedList);
+  // Voltar à lista avisando se há alterações não salvas
+  const handleBackToList = () => {
+    if (dirtyRef.current && !confirm('Há alterações não salvas neste artigo. Sair mesmo assim e descartar?')) return;
+    markDirty(false);
+    setViewMode('list');
+    loadPostsFromApi();
+  };
 
-    const now = new Date();
-    setLastSavedTime(now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+  const markSaved = () => {
+    markDirty(false);
+    setLastSavedTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
   };
 
   const handleSaveDraft = async () => {
     if (!currentArticle) return;
     setIsSaving(true);
     const finalArticle = prepareArticleForSync(currentArticle, 'draft');
-    handleUpdateCurrentArticle(finalArticle);
     const res = await syncWithApi(finalArticle);
     setIsSaving(false);
     if (res.success) {
+      markSaved();
       showToast('Rascunho salvo e sincronizado com sucesso!', 'success');
     } else {
       showToast(`Falha ao salvar rascunho: ${res.message}`, 'info');
@@ -333,16 +349,21 @@ export default function BlogDashboardPage() {
       showToast('Por favor, defina um título para o artigo antes de agendar.', 'info');
       return;
     }
+    const when = currentArticle.publishedAt ? new Date(currentArticle.publishedAt) : null;
+    if (!when || Number.isNaN(when.getTime()) || when.getTime() <= Date.now()) {
+      showToast('Escolha uma data e hora futuras em "Data de Publicação" para agendar.', 'info');
+      return;
+    }
     setIsSaving(true);
-    const scheduledArticle = prepareArticleForSync({
-      ...currentArticle,
-      publishedAt: currentArticle.publishedAt || new Date(Date.now() + 86400000).toISOString(),
-    }, 'scheduled');
-    handleUpdateCurrentArticle(scheduledArticle);
+    const scheduledArticle = prepareArticleForSync(currentArticle, 'scheduled');
     const res = await syncWithApi(scheduledArticle);
     setIsSaving(false);
     if (res.success) {
-      showToast('Artigo agendado e sincronizado no servidor!', 'success');
+      markSaved();
+      showToast(
+        `Artigo agendado para ${when.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}. Ele entra no ar automaticamente.`,
+        'success'
+      );
     } else {
       showToast(`Falha ao agendar: ${res.message}`, 'info');
     }
@@ -360,16 +381,14 @@ export default function BlogDashboardPage() {
     }
 
     setIsSaving(true);
-    const finalArticle = prepareArticleForSync({
-      ...currentArticle,
-      publishedAt: currentArticle.publishedAt || new Date().toISOString(),
-    }, 'published');
+    // A data de publicação é definida no servidor (agora, na primeira publicação)
+    const finalArticle = prepareArticleForSync(currentArticle, 'published');
 
     const res = await syncWithApi(finalArticle);
     setIsSaving(false);
 
     if (res.success) {
-      handleUpdateCurrentArticle(finalArticle);
+      markSaved();
       showToast('🚀 Artigo publicado com sucesso e sincronizado globalmente!', 'success');
       setTimeout(() => {
         setViewMode('list');
@@ -382,28 +401,21 @@ export default function BlogDashboardPage() {
   const handleDeleteArticle = async (id: string) => {
     try {
       const res = await fetch(`/api/blog/posts?id=${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success && Array.isArray(data.posts)) {
-        const mapped = mapServerPosts(data.posts);
-        setArticles(mapped);
-        saveStoredArticles(mapped);
-        showToast('Artigo removido com sucesso.', 'info');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.error || 'Não foi possível excluir o artigo.');
+      if (Array.isArray(data.posts)) {
+        setArticles(mapServerPosts(data.posts));
       } else {
-        const updated = articles.filter((a) => a.id !== id);
-        setArticles(updated);
-        saveStoredArticles(updated);
-        showToast('Artigo removido.', 'info');
+        setArticles((prev) => prev.filter((a) => a.id !== id));
       }
-    } catch (e) {
-      const updated = articles.filter((a) => a.id !== id);
-      setArticles(updated);
-      saveStoredArticles(updated);
-      showToast('Artigo removido.', 'info');
-    }
-
-    if (currentArticle?.id === id) {
-      setCurrentArticle(null);
-      setViewMode('list');
+      showToast('Artigo removido do site.', 'info');
+      if (currentArticle?.id === id) {
+        markDirty(false);
+        setCurrentArticle(null);
+        setViewMode('list');
+      }
+    } catch (e: any) {
+      showToast(`Falha ao excluir: ${e.message}`, 'info');
     }
   };
 
@@ -426,12 +438,9 @@ export default function BlogDashboardPage() {
     };
     const res = await syncWithApi(duplicated);
     if (res.success) {
-      showToast('Artigo duplicado e sincronizado com sucesso!', 'success');
+      showToast('Artigo duplicado como rascunho!', 'success');
     } else {
-      const updated = [duplicated, ...articles];
-      setArticles(updated);
-      saveStoredArticles(updated);
-      showToast(`Artigo duplicado localmente: ${res.message}`, 'info');
+      showToast(`Falha ao duplicar: ${res.message}`, 'info');
     }
   };
 
@@ -499,7 +508,7 @@ export default function BlogDashboardPage() {
           <div className="flex items-center justify-between bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xs">
             <button
               type="button"
-              onClick={() => setViewMode('list')}
+              onClick={handleBackToList}
               className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold transition flex items-center gap-2 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -528,7 +537,7 @@ export default function BlogDashboardPage() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setViewMode('list')}
+                onClick={handleBackToList}
                 className="p-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -541,7 +550,11 @@ export default function BlogDashboardPage() {
                 </h2>
                 <div className="flex items-center gap-2 text-[11px] text-neutral-400">
                   <span className="capitalize">{currentArticle.status === 'published' ? 'Publicado' : currentArticle.status === 'scheduled' ? 'Agendado' : 'Rascunho'}</span>
-                  {lastSavedTime && <span>• Salvo às {lastSavedTime}</span>}
+                  {isDirty ? (
+                    <span className="text-amber-500 font-bold">• Alterações não salvas</span>
+                  ) : (
+                    lastSavedTime && <span>• Salvo no servidor às {lastSavedTime}</span>
+                  )}
                 </div>
               </div>
             </div>

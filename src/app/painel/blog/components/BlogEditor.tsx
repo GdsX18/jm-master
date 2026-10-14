@@ -179,8 +179,8 @@ export default function BlogEditor({
       return null;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('A imagem deve ter no máximo 10MB.');
+    if (file.size > 4 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 4MB.');
       return null;
     }
 
@@ -1180,7 +1180,7 @@ const client = new JMClient({
                             Clique para escolher uma imagem do seu dispositivo
                           </p>
                           <p className="text-[11px] text-neutral-400">
-                            PNG, JPG, WebP ou GIF até 10MB (Salvo permanentemente no Supabase)
+                            PNG, JPG, WebP ou GIF até 4MB (Salvo permanentemente no Supabase)
                           </p>
                         </div>
                       )}

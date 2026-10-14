@@ -5,7 +5,7 @@ import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, absoluteUrl, jsonLd, resolvePost
 import { SinglePostView } from "@/components/blog/single-post-view";
 
 // ISR: o painel chama revalidatePath ao salvar/excluir; slugs novos são gerados sob demanda
-export const revalidate = 3600;
+export const revalidate = 300; // 5 min: posts agendados entram no ar perto do horário
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -104,6 +104,13 @@ export default async function SinglePostPage({ params }: PostPageProps) {
     notFound();
   }
 
+  // Relacionados reais: mesma categoria primeiro, completando com os mais recentes
+  const others = (await getPublishedPosts()).filter((p) => p.id !== post.id);
+  const relatedPosts = [
+    ...others.filter((p) => p.category === post.category),
+    ...others.filter((p) => p.category !== post.category),
+  ].slice(0, 3);
+
   // Schema estruturado JSON-LD FAQPage (quando houver perguntas cadastradas)
   const validFaqs = (post.faqs || []).filter(
     (f) => f.question && f.question.trim() && f.answer && f.answer.trim()
@@ -186,7 +193,7 @@ export default async function SinglePostPage({ params }: PostPageProps) {
           dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
         />
       )}
-      <SinglePostView post={post} />
+      <SinglePostView post={post} relatedPosts={relatedPosts} />
     </>
   );
 }

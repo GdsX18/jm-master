@@ -63,16 +63,11 @@ export default function PainelLoginPage() {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
-    setTimeout(() => {
-      setMessage({
-        type: 'success',
-        text: 'Se o e-mail estiver cadastrado, as instruções foram enviadas!',
-      });
-      setLoading(false);
-    }, 800);
+    // Não há envio de e-mail configurado: a redefinição é feita por um administrador
+    setMessage({
+      type: 'error',
+      text: 'A redefinição de senha é feita por um administrador do sistema, em "Usuários do Sistema". Peça a ele uma nova senha.',
+    });
   };
 
   return (
@@ -152,7 +147,7 @@ export default function PainelLoginPage() {
                   id="email"
                   type="email"
                   required
-                  placeholder="admin@amoadvogados.com"
+                  placeholder="seu.email@jmmaster.com.br"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3.5 bg-white/60 hover:bg-white/80 focus:bg-white/95 backdrop-blur-md border border-neutral-300/80 rounded-2xl text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#E85D26] focus:border-transparent transition font-medium shadow-xs"
@@ -227,7 +222,7 @@ export default function PainelLoginPage() {
                   id="reset-email"
                   type="email"
                   required
-                  placeholder="admin@amoadvogados.com"
+                  placeholder="seu.email@jmmaster.com.br"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3.5 bg-white/60 hover:bg-white/80 focus:bg-white/95 backdrop-blur-md border border-neutral-300/80 rounded-2xl text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#E85D26] focus:border-transparent transition font-medium shadow-xs"

@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { Article, ArticleCategory } from '../types';
-import { getStoredCategories, saveStoredCategories, DEFAULT_CATEGORIES, slugify } from '../mockData';
+import { DEFAULT_CATEGORIES, slugify } from '../mockData';
 import MediaUploader from './MediaUploader';
 import SEOModule from './SEOModule';
 
@@ -31,42 +31,68 @@ export default function ArticleMetadata({
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
 
+  const [categoryError, setCategoryError] = useState('');
+
+  // Categorias compartilhadas por todos os usuários (banco de dados)
+  const loadCategories = async () => {
+    try {
+      const res = await fetch('/api/blog/categories', { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.categories)) throw new Error(data.error || 'Erro ao carregar categorias');
+      setCategories(data.categories);
+    } catch (e: any) {
+      setCategoryError(e.message);
+    }
+  };
+
   useEffect(() => {
-    setCategories(getStoredCategories());
+    loadCategories();
   }, []);
 
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     const trimmed = newCategoryName.trim();
     if (!trimmed) return;
-
-    const exists = categories.some((c) => c.toLowerCase() === trimmed.toLowerCase());
-    if (exists) {
-      const existing = categories.find((c) => c.toLowerCase() === trimmed.toLowerCase()) || trimmed;
-      onChange({ category: existing });
+    setCategoryError('');
+    try {
+      const res = await fetch('/api/blog/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao criar categoria');
+      await loadCategories();
+      onChange({ category: data.name });
       setIsAddingCategory(false);
       setNewCategoryName('');
-      return;
+    } catch (e: any) {
+      setCategoryError(e.message);
     }
-
-    const updated = [...categories, trimmed];
-    setCategories(updated);
-    saveStoredCategories(updated);
-    onChange({ category: trimmed });
-    setIsAddingCategory(false);
-    setNewCategoryName('');
   };
 
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
-  const confirmDeleteCategory = () => {
+  // Exclui a categoria movendo os artigos que a usam para outra categoria
+  const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
-    const updated = categories.filter((c) => c !== categoryToDelete);
-    setCategories(updated);
-    saveStoredCategories(updated);
-    if (article.category === categoryToDelete) {
-      onChange({ category: updated[0] || 'WhatsApp API' });
+    const fallback = categories.find((c) => c !== categoryToDelete) || 'WhatsApp API';
+    setCategoryError('');
+    try {
+      const res = await fetch(
+        `/api/blog/categories?name=${encodeURIComponent(categoryToDelete)}&moveTo=${encodeURIComponent(fallback)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao excluir categoria');
+      if (article.category === categoryToDelete) {
+        onChange({ category: fallback });
+      }
+      await loadCategories();
+    } catch (e: any) {
+      setCategoryError(e.message);
+    } finally {
+      setCategoryToDelete(null);
     }
-    setCategoryToDelete(null);
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,6 +149,9 @@ export default function ArticleMetadata({
           </div>
 
           {/* INPUT PARA CRIAR NOVA CATEGORIA */}
+          {categoryError && (
+            <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400">{categoryError}</p>
+          )}
           {isAddingCategory && (
             <div className="mb-3 p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-[#E85D26]/40 space-y-2">
               <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 block">
@@ -373,14 +402,35 @@ export default function ArticleMetadata({
             <span className="text-[10px] font-bold uppercase text-neutral-500 dark:text-neutral-400 block">
               Data de Publicação
             </span>
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
-              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('pt-BR') : 'Publicação Imediata'}
-              </span>
-            </div>
+            {article.status === 'published' ? (
+              <div className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
+                <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                  {article.publishedAt ? new Date(article.publishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
+                </span>
+              </div>
+            ) : (
+              <input
+                type="datetime-local"
+                value={
+                  article.publishedAt && article.status === 'scheduled'
+                    ? new Date(new Date(article.publishedAt).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                    : ''
+                }
+                min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                onChange={(e) =>
+                  onChange({
+                    publishedAt: e.target.value ? new Date(e.target.value).toISOString() : undefined,
+                    status: e.target.value ? 'scheduled' : 'draft',
+                  })
+                }
+                className="w-full px-2 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+              />
+            )}
             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">
-              Automático ao publicar
+              {article.status === 'published'
+                ? 'Publicado'
+                : 'Defina para usar “Agendar”; vazio = publicar agora'}
             </span>
           </div>
 

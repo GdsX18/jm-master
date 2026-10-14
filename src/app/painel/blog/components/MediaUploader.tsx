@@ -22,6 +22,8 @@ interface MediaUploaderProps {
   onInsertImageIntoContent?: (imageHtml: string) => void;
 }
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
 export default function MediaUploader({
   coverImage,
   coverImageAlt,
@@ -56,8 +58,12 @@ export default function MediaUploader({
   };
 
   const handleFileSelect = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
       alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).');
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      alert('A imagem deve ter no máximo 4 MB. Comprima a imagem e tente novamente.');
       return;
     }
     const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
@@ -74,23 +80,15 @@ export default function MediaUploader({
         body: formData,
       });
 
-      const data = await res.json();
-      if (data.success && data.url) {
-        onCoverChange(data.url, defaultAlt);
-      } else {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          onCoverChange(e.target?.result as string, defaultAlt);
-        };
-        reader.readAsDataURL(file);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success || !data.url) {
+        throw new Error(data.error || 'Falha no envio da imagem.');
       }
-    } catch (err) {
+      onCoverChange(data.url, defaultAlt);
+    } catch (err: any) {
+      // Sem "plano B" em base64: a imagem precisa estar no Storage para aparecer no site
       console.error('Erro no upload para o Supabase Storage:', err);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        onCoverChange(e.target?.result as string, defaultAlt);
-      };
-      reader.readAsDataURL(file);
+      alert(`Não foi possível enviar a imagem: ${err.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -113,6 +111,45 @@ export default function MediaUploader({
     setIsDragging(false);
   };
 
+  const [library, setLibrary] = useState<{ name: string; url: string; size: number }[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState('');
+
+  const loadLibrary = async () => {
+    setLibraryLoading(true);
+    setLibraryError('');
+    try {
+      const res = await fetch('/api/media', { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao carregar a biblioteca');
+      setLibrary(data.files);
+    } catch (e: any) {
+      setLibraryError(e.message);
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showPresets) loadLibrary();
+  }, [showPresets]);
+
+  const handleSelectLibraryImage = (url: string) => {
+    onCoverChange(url, altText);
+    setShowPresets(false);
+  };
+
+  const handleDeleteLibraryImage = async (name: string) => {
+    if (!confirm('Excluir esta imagem da biblioteca? Artigos que ainda a usam ficarão sem a imagem.')) return;
+    const res = await fetch(`/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      alert(data.error || 'Erro ao excluir imagem');
+      return;
+    }
+    setLibrary((prev) => prev.filter((f) => f.name !== name));
+  };
+
   const handleSelectPreset = (preset: typeof COVER_PRESETS[0]) => {
     setAltText(preset.alt);
     onCoverChange(preset.url, preset.alt);
@@ -120,8 +157,12 @@ export default function MediaUploader({
   };
 
   const handleBodyFileSelect = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
       alert('Selecione uma imagem válida.');
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      alert('A imagem deve ter no máximo 4 MB.');
       return;
     }
     const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
@@ -140,19 +181,14 @@ export default function MediaUploader({
         body: formData,
       });
 
-      const data = await res.json();
-      if (data.success && data.url) {
-        setBodyImgUrl(data.url);
-      } else {
-        const reader = new FileReader();
-        reader.onload = (e) => setBodyImgUrl(e.target?.result as string);
-        reader.readAsDataURL(file);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success || !data.url) {
+        throw new Error(data.error || 'Falha no envio da imagem.');
       }
-    } catch (err) {
+      setBodyImgUrl(data.url);
+    } catch (err: any) {
       console.error('Erro no upload da imagem:', err);
-      const reader = new FileReader();
-      reader.onload = (e) => setBodyImgUrl(e.target?.result as string);
-      reader.readAsDataURL(file);
+      alert(`Não foi possível enviar a imagem: ${err.message}`);
     } finally {
       setIsUploadingBody(false);
     }
@@ -327,7 +363,7 @@ export default function MediaUploader({
               <div>
                 <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                   <LayoutTemplate className="w-4 h-4 text-[#E85D26]" />
-                  <span>Templates Oficiais de Capa</span>
+                  <span>Biblioteca de Imagens</span>
                 </h3>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
                   Imagens profissionais em proporção 16:9 alinhadas aos temas da JM Master Group
@@ -342,6 +378,36 @@ export default function MediaUploader({
               </button>
             </div>
 
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500">Imagens já enviadas</h4>
+              {libraryLoading && <p className="text-xs text-neutral-400">Carregando biblioteca...</p>}
+              {libraryError && <p className="text-xs font-bold text-rose-600">{libraryError}</p>}
+              {!libraryLoading && !libraryError && library.length === 0 && (
+                <p className="text-xs text-neutral-400">Nenhuma imagem enviada ainda.</p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {library.map((file) => (
+                  <div
+                    key={file.name}
+                    className="relative group border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden hover:border-[#E85D26] transition"
+                  >
+                    <button type="button" onClick={() => handleSelectLibraryImage(file.url)} className="block w-full aspect-video relative cursor-pointer">
+                      <Image src={file.url} alt={file.name} fill className="object-cover" sizes="200px" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteLibraryImage(file.name)}
+                      title="Excluir da biblioteca"
+                      className="absolute top-1.5 right-1.5 p-1 rounded-md bg-neutral-950/70 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 pt-2">Templates</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {COVER_PRESETS.map((preset) => (
                 <div

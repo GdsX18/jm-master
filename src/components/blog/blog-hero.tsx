@@ -3,7 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Search, X } from "lucide-react";
-import { CATEGORIES, CategoryType } from "@/data/posts";
+import { CategoryType } from "@/data/posts";
 
 interface BlogHeroProps {
   selectedCategory: CategoryType;
@@ -11,6 +11,7 @@ interface BlogHeroProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   totalPosts: number;
+  categories: string[];
 }
 
 export const BlogHero: React.FC<BlogHeroProps> = ({
@@ -19,6 +20,7 @@ export const BlogHero: React.FC<BlogHeroProps> = ({
   searchQuery,
   onSearchChange,
   totalPosts,
+  categories,
 }) => {
   return (
     <section className="relative pt-28 sm:pt-32 md:pt-40 pb-10 sm:pb-14 overflow-hidden bg-slate-50/60 border-b border-slate-200/60">
@@ -112,7 +114,7 @@ export const BlogHero: React.FC<BlogHeroProps> = ({
             className="pt-4 sm:pt-6 w-full"
           >
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 max-w-3xl mx-auto">
-              {CATEGORIES.map((category) => {
+              {categories.map((category) => {
                 const isSelected = selectedCategory === category;
                 return (
                   <button

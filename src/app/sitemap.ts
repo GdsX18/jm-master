@@ -4,7 +4,7 @@ import { SERVICES } from "@/data/services";
 import { SITE_URL, resolvePostCanonical } from "@/lib/site";
 
 // Regenerado quando um post é salvo (revalidatePath('/sitemap.xml')) ou a cada hora
-export const revalidate = 3600;
+export const revalidate = 300; // 5 min: posts agendados entram no ar perto do horário
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getPublishedPosts();

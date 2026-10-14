@@ -6,10 +6,11 @@ import { BLOG_ONLY_ROLE, SESSION_COOKIE, verifySessionToken } from '@/lib/auth';
 const PUBLIC_API_ROUTES = ['/api/auth/login', '/api/auth/logout', '/api/leads', '/api/cron/billing'];
 
 // O perfil "Criador de Blog" só acessa estas rotas
-const BLOG_ROLE_API_PREFIXES = ['/api/blog', '/api/upload', '/api/auth'];
+const BLOG_ROLE_API_PREFIXES = ['/api/blog', '/api/upload', '/api/media', '/api/auth'];
 
 function isPublicApi(pathname: string, method: string) {
-  if (pathname === '/api/leads') return method === 'POST';
+  // Formulário de contato e contador de visualizações do blog são públicos (só POST)
+  if (pathname === '/api/leads' || pathname === '/api/blog/views') return method === 'POST';
   return PUBLIC_API_ROUTES.includes(pathname);
 }
 

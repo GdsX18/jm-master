@@ -29,10 +29,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Limite de 5MB
-    if (file.size > 5 * 1024 * 1024) {
+    // Limite de 4MB (a Vercel aceita no máximo ~4,5MB por requisição)
+    if (file.size > 4 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'A imagem deve ter no máximo 5MB' },
+        { error: 'A imagem deve ter no máximo 4MB' },
         { status: 400 }
       );
     }

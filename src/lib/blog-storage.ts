@@ -1,5 +1,5 @@
 import prisma from './prisma';
-import { BlogPost, BLOG_POSTS, SEOData } from '@/data/posts';
+import { BlogPost, SEOData } from '@/data/posts';
 import { DEFAULT_OG_IMAGE, resolvePostCanonical } from './site';
 
 function toIsoString(value: unknown): string | undefined {
@@ -8,8 +8,35 @@ function toIsoString(value: unknown): string | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
-export function isPublished(post: BlogPost) {
-  return (post.status || 'published') === 'published';
+// Publicado = status "published", ou "scheduled" cuja data de publicação já chegou
+export function isPublished(post: BlogPost, now = Date.now()) {
+  const status = post.status || 'published';
+  if (status === 'published') return true;
+  if (status === 'scheduled' && post.publishedAt) return new Date(post.publishedAt).getTime() <= now;
+  return false;
+}
+
+// Data de publicação a gravar:
+// - agendado: a data escolhida;
+// - primeira publicação (vindo de rascunho/novo): agora;
+// - já publicado: mantém a data original;
+// - rascunho: não altera.
+function resolvePublishedAt(
+  post: BlogPost,
+  existing?: { status: string; publishedAt: Date | null }
+): Date | null | undefined {
+  if (post.status === 'scheduled') {
+    const requested = post.publishedAt ? new Date(post.publishedAt) : null;
+    return requested && !Number.isNaN(requested.getTime()) ? requested : null;
+  }
+  if (post.status === 'published') {
+    const alreadyLive =
+      existing?.publishedAt &&
+      (existing.status === 'published' || (existing.status === 'scheduled' && existing.publishedAt <= new Date()));
+    if (alreadyLive) return existing!.publishedAt;
+    return new Date();
+  }
+  return undefined;
 }
 
 function mapDbToBlogPost(dbPost: any): BlogPost {
@@ -57,38 +84,33 @@ function mapDbToBlogPost(dbPost: any): BlogPost {
       avatar: dbPost.authorAvatar || '/logos/Icone.png',
     },
     featured: dbPost.featured,
-    status: (dbPost.status as 'draft' | 'published') || 'published',
+    status: (dbPost.status as 'draft' | 'published' | 'scheduled') || 'published',
     tags: Array.isArray(dbPost.tags) ? dbPost.tags : [],
     seo: seoData,
     faqs: Array.isArray(dbPost.faqs) ? dbPost.faqs : [],
     views: dbPost.views,
     publishedAt: toIsoString(dbPost.publishedAt) || toIsoString(dbPost.createdAt),
+    createdAt: toIsoString(dbPost.createdAt),
     updatedAt: toIsoString(dbPost.updatedAt),
   };
 }
 
-// Retorna todos os posts do Supabase PostgreSQL
+// Retorna todos os posts (painel). Erros de banco são propagados: a página em cache continua no ar
+// em vez de o site/painel exibirem uma lista vazia como se fosse real.
 export async function getStoredPosts(): Promise<BlogPost[]> {
-  try {
-    const posts = await prisma.blogPost.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (Array.isArray(posts)) {
-      return posts.map(mapDbToBlogPost);
-    }
-  } catch (err) {
-    console.error('[BlogStorage] Erro ao buscar posts no Supabase:', err);
-  }
-
-  // Fallback vazio seguro caso o banco ainda esteja inicializando
-  return [];
+  const posts = await prisma.blogPost.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
+  return posts.map(mapDbToBlogPost);
 }
 
-// Apenas posts publicados — usado pelo site público e pelo sitemap
+// Apenas posts publicados — destaques primeiro, depois os mais recentes (site público e sitemap)
 export async function getPublishedPosts(): Promise<BlogPost[]> {
-  const posts = await getStoredPosts();
-  return posts.filter(isPublished);
+  const posts = (await getStoredPosts()).filter((p) => isPublished(p));
+  return posts.sort((a, b) => {
+    if (!!b.featured !== !!a.featured) return b.featured ? 1 : -1;
+    return (b.publishedAt || '').localeCompare(a.publishedAt || '');
+  });
 }
 
 // Post publicado pelo slug — rascunhos retornam undefined (404 no site)
@@ -99,18 +121,10 @@ export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | u
 
 // Retorna um post específico pelo slug
 export async function getPostBySlug(slug: string): Promise<BlogPost | undefined> {
-  try {
-    const post = await prisma.blogPost.findUnique({
-      where: { slug },
-    });
-
-    return post ? mapDbToBlogPost(post) : undefined;
-  } catch (err) {
-    console.error('[BlogStorage] Erro ao buscar post por slug no Supabase:', err);
-  }
-
-  // Conteúdo estático só como contingência quando o banco está indisponível
-  return BLOG_POSTS.find((p) => p.slug === slug);
+  const post = await prisma.blogPost.findUnique({
+    where: { slug },
+  });
+  return post ? mapDbToBlogPost(post) : undefined;
 }
 
 // Salva ou atualiza um post
@@ -167,6 +181,7 @@ export async function saveStoredPost(post: BlogPost): Promise<BlogPost | null> {
           authorAvatar: post.author?.avatar || '/logos/Icone.png',
           featured: !!post.featured,
           status: post.status || 'published',
+          publishedAt: resolvePublishedAt(post, existingPost),
           tags: post.tags as any,
           seo: (post.seo as any) || null,
           faqs: (post.faqs as any) || null,
@@ -214,6 +229,7 @@ export async function saveStoredPost(post: BlogPost): Promise<BlogPost | null> {
         authorAvatar: post.author?.avatar || '/logos/Icone.png',
         featured: !!post.featured,
         status: post.status || 'published',
+        publishedAt: resolvePublishedAt(post) ?? null,
         tags: post.tags as any,
         seo: (post.seo as any) || null,
         faqs: (post.faqs as any) || null,

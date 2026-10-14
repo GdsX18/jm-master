@@ -306,10 +306,17 @@ export default function ArticleList({
                         <Clock className="w-3 h-3" />
                         <span>{art.readingTimeMinutes} min</span>
                       </span>
+                      <span className="flex items-center gap-1" title="Visualizações no site">
+                        <Eye className="w-3 h-3" />
+                        <span>{(art.views || 0).toLocaleString('pt-BR')} visualizações</span>
+                      </span>
                       {art.publishedAt && (
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          <span>{new Date(art.publishedAt).toLocaleDateString('pt-BR')}</span>
+                          <span>
+                            {art.status === 'scheduled' ? 'Agendado: ' : ''}
+                            {new Date(art.publishedAt).toLocaleString('pt-BR', { dateStyle: 'short', ...(art.status === 'scheduled' ? { timeStyle: 'short' as const } : {}) })}
+                          </span>
                         </span>
                       )}
                     </div>

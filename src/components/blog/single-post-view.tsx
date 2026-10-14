@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BlogPost, BLOG_POSTS } from "@/data/posts";
+import { BlogPost } from "@/data/posts";
 import {
   ArrowLeft,
   Calendar,
@@ -24,12 +24,27 @@ import { WHATSAPP_NUMBER } from "@/lib/site";
 
 interface SinglePostViewProps {
   post: BlogPost;
+  relatedPosts?: BlogPost[];
 }
 
-export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
+export const SinglePostView: React.FC<SinglePostViewProps> = ({ post, relatedPosts = [] }) => {
   const [copied, setCopied] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0); // Primeira FAQ aberta por padrão
-  const relatedPosts = BLOG_POSTS.filter((p) => p.id !== post.id).slice(0, 3);
+
+  // Conta uma visualização por sessão do navegador
+  useEffect(() => {
+    const key = `jm_view_${post.slug}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {}
+    fetch("/api/blog/views", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: post.slug }),
+      keepalive: true,
+    }).catch(() => {});
+  }, [post.slug]);
 
   const handleShare = async () => {
     if (typeof window !== "undefined") {
@@ -336,6 +351,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
           {/* ========================================================
               8. ARTIGOS RELACIONADOS
              ======================================================== */}
+          {relatedPosts.length > 0 && (
           <div className="pt-12 sm:pt-16 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl sm:text-2xl font-black text-[#082B61] tracking-tight">
@@ -376,6 +392,7 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post }) => {
               ))}
             </div>
           </div>
+          )}
 
         </div>
       </article>

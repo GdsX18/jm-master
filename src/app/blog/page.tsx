@@ -4,7 +4,7 @@ import { getPublishedPosts } from "@/lib/blog-storage";
 import { DEFAULT_OG_IMAGE } from "@/lib/site";
 
 // ISR: o painel chama revalidatePath('/blog') ao salvar; o intervalo é só uma rede de segurança
-export const revalidate = 3600;
+export const revalidate = 300; // 5 min: posts agendados entram no ar perto do horário
 
 export const metadata: Metadata = {
   title: "Blog & Notícias | JM MASTER GROUP — Estratégias & Automação",

@@ -41,6 +41,7 @@ export const BlogPageContent: React.FC<BlogPageContentProps> = ({
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           totalPosts={countForCurrentCategory}
+          categories={["Todos", ...Array.from(new Set(initialPosts.map((p) => p.category).filter(Boolean)))]}
         />
 
         {/* Seção Principal de Listagem com Grid 3x2x1 e Título Alinhado à Esquerda */}
