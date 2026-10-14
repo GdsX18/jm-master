@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { BlogPageContent } from "@/components/blog/blog-page-content";
-import { getStoredPosts } from "@/lib/blog-storage";
+import { getPublishedPosts } from "@/lib/blog-storage";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR: o painel chama revalidatePath('/blog') ao salvar; o intervalo é só uma rede de segurança
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Blog & Notícias | JM MASTER GROUP — Estratégias & Automação",
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
     "E-mail Marketing Estratégico",
     "CRM de Vendas",
   ],
+  alternates: { canonical: "/blog" },
   openGraph: {
     title: "Blog & Notícias | JM MASTER GROUP",
     description:
@@ -26,10 +28,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "pt_BR",
     siteName: "JM MASTER GROUP",
+    url: "/blog",
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: "Blog JM MASTER GROUP" }],
   },
 };
 
 export default async function BlogPage() {
-  const posts = await getStoredPosts();
+  const posts = await getPublishedPosts();
   return <BlogPageContent initialPosts={posts} />;
 }

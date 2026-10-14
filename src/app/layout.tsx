@@ -4,6 +4,7 @@ import "./globals.css";
 import { SmoothScrollProvider } from "@/components/smooth-scroll-provider";
 import { MagneticCursor } from "@/components/ui/magnetic-cursor";
 import { TrackingScripts } from "@/components/tracking/tracking-scripts";
+import { DEFAULT_OG_IMAGE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -18,9 +19,12 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "JM MASTER GROUP | Marketing Digital, Automação & Mensageria",
-  description:
-    "Elevando a presença digital do seu negócio com automações avançadas, chatbots inteligentes, API Oficial do WhatsApp, SMS e E-mail Marketing.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "JM MASTER GROUP | Marketing Digital, Automação & Mensageria",
+    template: "%s",
+  },
+  description: SITE_DESCRIPTION,
   keywords: [
     "JM MASTER GROUP",
     "Marketing Digital",
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
     "SMS Marketing",
     "Email Marketing",
   ],
-  authors: [{ name: "JM MASTER GROUP" }],
+  authors: [{ name: SITE_NAME }],
   icons: {
     icon: [
       { url: "/logos/favicon-32x32.png", sizes: "32x32", type: "image/png" },
@@ -47,7 +51,15 @@ export const metadata: Metadata = {
       "Elevando a presença digital do seu negócio com automações avançadas, chatbots de atendimento e alta performance de vendas.",
     type: "website",
     locale: "pt_BR",
-    siteName: "JM MASTER GROUP",
+    siteName: SITE_NAME,
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "JM MASTER GROUP | Comunicação que engaja e converte",
+    description:
+      "Elevando a presença digital do seu negócio com automações avançadas, chatbots de atendimento e alta performance de vendas.",
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 

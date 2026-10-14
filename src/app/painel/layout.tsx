@@ -95,7 +95,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ? [{ name: 'Criador de Blog', shortName: 'Blog', path: '/painel/blog', icon: PenTool }]
     : allMenuItems;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {}
     localStorage.removeItem('@JMMaster:token');
     localStorage.removeItem('@JMMaster:user');
     window.location.href = '/painel/login';

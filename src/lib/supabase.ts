@@ -4,6 +4,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
+if (typeof window === 'undefined' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('[Supabase] SUPABASE_SERVICE_ROLE_KEY ausente: uploads usarão a chave anônima e podem falhar.');
+}
+
 // Cliente para uso no navegador (Client Components)
 export const supabaseClient = createClient(
   supabaseUrl || 'http://localhost:54321',

@@ -285,7 +285,7 @@ export default function ArticleMetadata({
           </div>
           <div className="flex items-center bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-xs">
             <span className="text-neutral-400 select-none mr-1 font-mono text-[11px]">
-              jmmaster.com.br/blog/
+              www.jmmaster.com.br/blog/
             </span>
             <input
               type="text"

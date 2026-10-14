@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import Link from "next/link";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
@@ -13,6 +14,8 @@ export interface StackingCardItem {
   list: string[];
   icon: React.ReactNode;
   whatsappMsg: string;
+  // Quando informado, o CTA vira um link rastreável para a página da solução
+  href?: string;
 }
 
 interface SingleCardProps {
@@ -98,13 +101,23 @@ const SingleCard: React.FC<SingleCardProps> = ({
 
         {/* Rodapé do Card com CTA interativo */}
         <div className="pt-1 relative z-10 flex items-center justify-between">
-          <button
-            onClick={() => onCardClick && onCardClick(item)}
-            className="inline-flex items-center space-x-2.5 text-[#E64F14] group-hover:text-[#c43e0a] font-black text-sm sm:text-base transition-colors py-1"
-          >
-            <span>Saiba mais sobre esta solução</span>
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1.5 transition-transform" />
-          </button>
+          {item.href ? (
+            <Link
+              href={item.href}
+              className="inline-flex items-center space-x-2.5 text-[#E64F14] group-hover:text-[#c43e0a] font-black text-sm sm:text-base transition-colors py-1"
+            >
+              <span>Saiba mais sobre esta solução</span>
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1.5 transition-transform" />
+            </Link>
+          ) : (
+            <button
+              onClick={() => onCardClick && onCardClick(item)}
+              className="inline-flex items-center space-x-2.5 text-[#E64F14] group-hover:text-[#c43e0a] font-black text-sm sm:text-base transition-colors py-1"
+            >
+              <span>Saiba mais sobre esta solução</span>
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1.5 transition-transform" />
+            </button>
+          )}
 
           <span className="text-xs font-black text-slate-400 uppercase tracking-widest">
             {index + 1} DE {total}

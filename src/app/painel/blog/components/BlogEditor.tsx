@@ -1322,7 +1322,7 @@ const client = new JMClient({
                   type="url"
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
-                  placeholder="https://jmmaster.com.br/solucoes"
+                  placeholder="https://www.jmmaster.com.br/solucoes"
                   className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
                 />
               </div>

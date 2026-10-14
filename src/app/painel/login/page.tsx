@@ -43,7 +43,6 @@ export default function PainelLoginPage() {
       }
 
       // Salva dados da sessão autenticada
-      localStorage.setItem('@JMMaster:token', data.token);
       localStorage.setItem('@JMMaster:user', JSON.stringify(data.user));
 
       setMessage({
@@ -52,7 +51,8 @@ export default function PainelLoginPage() {
       });
 
       setTimeout(() => {
-        window.location.href = data.redirectUrl || '/painel';
+        const next = new URLSearchParams(window.location.search).get('next');
+        window.location.href = next && next.startsWith('/painel') ? next : data.redirectUrl || '/painel';
       }, 800);
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Erro ao conectar.' });

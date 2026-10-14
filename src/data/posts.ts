@@ -48,6 +48,7 @@ export interface BlogPost {
   faqs?: FAQItem[];
   views?: number;
   publishedAt?: string;
+  updatedAt?: string;
 }
 
 export const CATEGORIES = [
@@ -97,7 +98,7 @@ export const BLOG_POSTS: BlogPost[] = [
       focusKeyphrase: "WhatsApp Business API Oficial",
       metaTitle: "WhatsApp Business API Oficial: Guia Completo e Definitivo 2026",
       metaDescription: "Aprenda a escalar o suporte e vendas da sua empresa com a API Oficial do WhatsApp Meta. Sem riscos de bloqueio e com atendimento 24/7.",
-      canonicalUrl: "https://jmmaster.com.br/blog/whatsapp-business-api-oficial-guia-completo-2026",
+      canonicalUrl: "https://www.jmmaster.com.br/blog/whatsapp-business-api-oficial-guia-completo-2026",
     },
     faqs: [
       {

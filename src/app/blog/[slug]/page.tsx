@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getStoredPosts, getPostBySlug } from "@/lib/blog-storage";
+import { getPublishedPosts, getPublishedPostBySlug } from "@/lib/blog-storage";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, absoluteUrl, jsonLd, resolvePostCanonical } from "@/lib/site";
 import { SinglePostView } from "@/components/blog/single-post-view";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// ISR: o painel chama revalidatePath ao salvar/excluir; slugs novos são gerados sob demanda
+export const revalidate = 3600;
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  const posts = await getStoredPosts();
+  const posts = await getPublishedPosts();
   return posts.map((post) => ({
     slug: post.slug,
   }));
@@ -19,7 +20,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPublishedPostBySlug(slug);
 
   if (!post) {
     return {
@@ -30,10 +31,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const rawSeo = post.seo && typeof post.seo === 'object' ? post.seo : {};
   const metaTitle = (rawSeo.metaTitle || rawSeo.seoTitle || post.title || '').trim() || `${post.title} | Blog JM MASTER GROUP`;
   const metaDescription = (rawSeo.metaDescription || rawSeo.seoDescription || post.excerpt || '').trim() || post.excerpt;
-  const canonicalUrl = (rawSeo.canonicalUrl || '').trim() || `https://jmmaster.com.br/blog/${post.slug}`;
+  const canonicalUrl = resolvePostCanonical(post.slug, rawSeo.canonicalUrl);
   const ogTitle = (rawSeo.ogTitle || metaTitle || post.title).trim();
   const ogDescription = (rawSeo.ogDescription || metaDescription || post.excerpt).trim();
-  const ogImage = rawSeo.ogImage || post.coverImage || "/images/blog/whatsapp-thumb.jpg";
+  const ogImage = rawSeo.ogImage || post.coverImage || DEFAULT_OG_IMAGE;
   const twitterTitle = (rawSeo.twitterTitle || ogTitle || metaTitle).trim();
   const twitterDescription = (rawSeo.twitterDescription || ogDescription || metaDescription).trim();
   const twitterImage = rawSeo.twitterImage || ogImage;
@@ -74,6 +75,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       url: canonicalUrl,
       siteName: "JM MASTER GROUP",
       publishedTime: post.publishedAt || undefined,
+      modifiedTime: post.updatedAt || undefined,
       authors: [post.author?.name || "JM MASTER GROUP"],
       tags: keywords,
       images: [
@@ -90,14 +92,13 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       title: twitterTitle,
       description: twitterDescription,
       images: [twitterImage],
-      creator: "@jmmastergroup",
     },
   };
 }
 
 export default async function SinglePostPage({ params }: PostPageProps) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  const post = await getPublishedPostBySlug(slug);
 
   if (!post) {
     notFound();
@@ -122,29 +123,34 @@ export default async function SinglePostPage({ params }: PostPageProps) {
   } : null;
 
   // Schema estruturado Article / BlogPosting
+  const postUrl = resolvePostCanonical(post.slug, post.seo?.canonicalUrl);
+  const logoUrl = absoluteUrl("/logos/Icone.png");
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": post.seo?.metaTitle || post.seo?.seoTitle || post.title,
+    "headline": post.title,
     "description": post.seo?.metaDescription || post.seo?.seoDescription || post.excerpt,
-    "image": post.seo?.ogImage || post.coverImage,
+    "image": absoluteUrl(post.seo?.ogImage || post.coverImage || DEFAULT_OG_IMAGE),
     "datePublished": post.publishedAt || undefined,
+    "dateModified": post.updatedAt || post.publishedAt || undefined,
+    "inLanguage": "pt-BR",
+    "articleSection": post.category,
     "author": {
       "@type": "Organization",
-      "name": post.author?.name || "JM MASTER GROUP",
-      "logo": "https://jmmaster.com.br/logos/Icone.png",
+      "name": post.author?.name || SITE_NAME,
+      "url": SITE_URL,
     },
     "publisher": {
       "@type": "Organization",
-      "name": "JM MASTER GROUP",
+      "name": SITE_NAME,
       "logo": {
         "@type": "ImageObject",
-        "url": "https://jmmaster.com.br/logos/Icone.png",
+        "url": logoUrl,
       },
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": post.seo?.canonicalUrl || `https://jmmaster.com.br/blog/${post.slug}`,
+      "@id": postUrl,
     },
     "keywords": Array.isArray(post.seo?.keywords)
       ? post.seo.keywords.join(', ')
@@ -153,17 +159,31 @@ export default async function SinglePostPage({ params }: PostPageProps) {
       : post.tags.join(', '),
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Início", "item": SITE_URL },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": absoluteUrl("/blog") },
+      { "@type": "ListItem", "position": 3, "name": post.title, "item": postUrl },
+    ],
+  };
+
   return (
     <>
       {/* Injeção de Structured Data Schema.org para o Google */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbJsonLd) }}
       />
       {faqJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
         />
       )}
       <SinglePostView post={post} />

@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { WHATSAPP_NUMBER } from "@/lib/site";
 
-const WHATSAPP_NUMBER = "5521998567051";
 
 interface SinglePostViewProps {
   post: BlogPost;

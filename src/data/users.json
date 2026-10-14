@@ -3,7 +3,6 @@
     "id": "usr_admin_master",
     "name": "Administrador JM Master",
     "email": "admin@jmmaster.com.br",
-    "password": "admin",
     "role": "Super administrador",
     "isBlocked": false,
     "permissions": {
@@ -37,7 +36,6 @@
     "id": "usr_redator_blog",
     "name": "Blog Creator",
     "email": "blog@jmmaster.com.br",
-    "password": "blog2131.",
     "role": "Criador de Blog",
     "isBlocked": false,
     "permissions": {

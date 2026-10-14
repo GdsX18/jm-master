@@ -14,8 +14,11 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { Magnetic } from "@/components/ui/magnetic-cursor";
+import Link from "next/link";
+import { CNPJ, CONTACT_EMAIL, LEGAL_NAME, SOCIAL_LINKS, WHATSAPP_DISPLAY, WHATSAPP_NUMBER } from "@/lib/site";
+import { SERVICES } from "@/data/services";
+import { OPEN_COOKIE_SETTINGS_EVENT } from "@/components/tracking/consent-tracking";
 
-const WHATSAPP_NUMBER = "5521998567051";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20JM%20MASTER%20GROUP.`;
 
 export const RuixenGradientFooter: React.FC = () => {
@@ -41,7 +44,7 @@ export const RuixenGradientFooter: React.FC = () => {
           {/* Coluna 1: Logo, Badge, Slogan e Contato */}
           <div className="sm:col-span-2 lg:col-span-4 space-y-5">
             <Magnetic intensity={0.2}>
-              <a href="#" className="inline-block" aria-label="JM Master Group Home">
+              <a href="/" className="inline-block" aria-label="JM Master Group Home">
                 <Logo variant="dark" size="lg" />
               </a>
             </Magnetic>
@@ -78,26 +81,16 @@ export const RuixenGradientFooter: React.FC = () => {
               <Sparkles className="w-3 h-3 text-[#FF5722]" />
             </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-300 font-medium">
-              <li>
-                <a href="#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
-                  WhatsApp Business API
-                </a>
-              </li>
-              <li>
-                <a href="#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
-                  Chatbot de Atendimento
-                </a>
-              </li>
-              <li>
-                <a href="#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
-                  E-mail Marketing Estratégico
-                </a>
-              </li>
-              <li>
-                <a href="#solucoes" className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5">
-                  SMS Marketing Corporativo
-                </a>
-              </li>
+              {SERVICES.map((service) => (
+                <li key={service.slug}>
+                  <Link
+                    href={`/solucoes/${service.slug}`}
+                    className="hover:text-white hover:translate-x-1 transition-all inline-block py-0.5"
+                  >
+                    {service.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -150,16 +143,16 @@ export const RuixenGradientFooter: React.FC = () => {
                   className="hover:text-[#FF5722] transition-colors flex items-center space-x-2 font-bold text-white group py-0.5"
                 >
                   <Phone className="w-3.5 h-3.5 text-[#0070F3] group-hover:text-[#FF5722] shrink-0" />
-                  <span>(21) 99856-7051</span>
+                  <span>{WHATSAPP_DISPLAY}</span>
                 </a>
               </li>
               <li>
                 <a
-                  href="mailto:contato@jmmastergroup.com.br"
+                  href={`mailto:${CONTACT_EMAIL}`}
                   className="text-slate-300 hover:text-white transition-colors flex items-center space-x-2 py-0.5"
                 >
                   <Mail className="w-3.5 h-3.5 text-[#0070F3] shrink-0" />
-                  <span className="truncate">contato@jmmastergroup.com.br</span>
+                  <span className="truncate">{CONTACT_EMAIL}</span>
                 </a>
               </li>
               <li className="text-slate-300 flex items-center space-x-2 py-0.5">
@@ -179,7 +172,24 @@ export const RuixenGradientFooter: React.FC = () => {
         {/* ---------------------------------------------------- */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-[11px] sm:text-xs text-slate-400 font-medium">
           {/* Copyright */}
-          <p>© 2026 JM MASTER GROUP. Todos os direitos reservados.</p>
+          <div className="space-y-1">
+            <p>
+              © {new Date().getFullYear()} {LEGAL_NAME || "JM MASTER GROUP"}. Todos os direitos reservados.
+              {CNPJ && <span className="block sm:inline sm:ml-2">CNPJ {CNPJ}</span>}
+            </p>
+            <p className="space-x-3">
+              <Link href="/politica-de-privacidade" className="hover:text-white underline-offset-2 hover:underline">
+                Política de Privacidade
+              </Link>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT))}
+                className="hover:text-white underline-offset-2 hover:underline"
+              >
+                Preferências de cookies
+              </button>
+            </p>
+          </div>
 
           {/* Status Indicator / Meta Certification */}
           <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-300">
@@ -206,25 +216,33 @@ export const RuixenGradientFooter: React.FC = () => {
               </a>
             </Magnetic>
 
-            <Magnetic intensity={0.25}>
-              <a
-                href="#"
-                className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-[#FF5722] hover:text-white text-slate-300 transition-all flex items-center justify-center"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-            </Magnetic>
+            {SOCIAL_LINKS.instagram && (
+              <Magnetic intensity={0.25}>
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-[#FF5722] hover:text-white text-slate-300 transition-all flex items-center justify-center"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              </Magnetic>
+            )}
 
-            <Magnetic intensity={0.25}>
-              <a
-                href="#"
-                className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-[#0070F3] hover:text-white text-slate-300 transition-all flex items-center justify-center"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-            </Magnetic>
+            {SOCIAL_LINKS.linkedin && (
+              <Magnetic intensity={0.25}>
+                <a
+                  href={SOCIAL_LINKS.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-lg bg-white/5 border border-white/10 hover:bg-[#0070F3] hover:text-white text-slate-300 transition-all flex items-center justify-center"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              </Magnetic>
+            )}
           </div>
         </div>
 

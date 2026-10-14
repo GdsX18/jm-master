@@ -2,11 +2,22 @@ import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { randomBytes, scryptSync } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
+
+// Mesmo formato de src/lib/password.ts
+function hashPassword(password) {
+  const salt = randomBytes(16);
+  const key = scryptSync(password, salt, 64);
+  return `scrypt$${salt.toString('base64')}$${key.toString('base64')}`;
+}
+
+// Senha inicial apenas para usuários novos; usuários existentes mantêm a senha atual
+const SEED_PASSWORD = process.env.SEED_DEFAULT_PASSWORD;
 
 async function main() {
   console.log('🚀 Iniciando sincronização e importação de dados para o Supabase...');
@@ -17,11 +28,15 @@ async function main() {
     const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf-8'));
     console.log(`👤 Importando ${usersData.length} usuários...`);
     for (const u of usersData) {
+      const exists = await prisma.user.findUnique({ where: { email: u.email.toLowerCase() } });
+      if (!exists && !SEED_PASSWORD) {
+        console.warn(`⚠️  ${u.email} não criado: defina SEED_DEFAULT_PASSWORD para criar usuários novos.`);
+        continue;
+      }
       await prisma.user.upsert({
         where: { email: u.email.toLowerCase() },
         update: {
           name: u.name,
-          password: u.password || 'admin',
           role: u.role || 'Criador de Blog',
           isBlocked: !!u.isBlocked,
           permissions: u.permissions || {},
@@ -31,7 +46,7 @@ async function main() {
           id: u.id,
           name: u.name,
           email: u.email.toLowerCase(),
-          password: u.password || 'admin',
+          password: hashPassword(SEED_PASSWORD || ''),
           role: u.role || 'Criador de Blog',
           isBlocked: !!u.isBlocked,
           permissions: u.permissions || {},

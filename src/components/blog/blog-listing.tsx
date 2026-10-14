@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, BookOpen, Filter, MessageSquare, RotateCcw } from "lucide-react";
 import { BlogPost, CategoryType, BLOG_POSTS } from "@/data/posts";
 import { PostCard } from "@/components/blog/post-card";
+import { WHATSAPP_NUMBER } from "@/lib/site";
 
-const WHATSAPP_NUMBER = "5521998567051";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Vim%20pelo%20Blog%20da%20JM%20MASTER%20GROUP%20e%20gostaria%20de%20conversar%20sobre%20as%20solu%C3%A7%C3%B5es.`;
 
 interface BlogListingProps {

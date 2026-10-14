@@ -7,8 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Menu, X, ArrowUpRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { Magnetic } from "@/components/ui/magnetic-cursor";
+import { WHATSAPP_NUMBER } from "@/lib/site";
 
-const WHATSAPP_NUMBER = "5521998567051";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Vim%20pelo%20site%20da%20JM%20MASTER%20GROUP%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20solu%C3%A7%C3%B5es.`;
 
 const NAV_LINKS = [
@@ -17,7 +17,7 @@ const NAV_LINKS = [
   { label: "Soluções", href: "/#solucoes" },
   { label: "Clientes", href: "/#clientes" },
   { label: "Blog", href: "/blog" },
-  { label: "Contato", href: "/#contato" },
+  { label: "Contato", href: "/#contato-form" },
 ];
 
 export const Navbar: React.FC = () => {

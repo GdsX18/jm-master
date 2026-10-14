@@ -52,7 +52,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
       seoTitle: article.seo?.seoTitle || article.seo?.metaTitle || article.title || '',
       metaDescription: article.seo?.metaDescription || article.seo?.seoDescription || article.excerpt || '',
       seoDescription: article.seo?.seoDescription || article.seo?.metaDescription || article.excerpt || '',
-      canonicalUrl: article.seo?.canonicalUrl || (article.slug ? `https://jmmaster.com.br/blog/${article.slug}` : ''),
+      canonicalUrl: article.seo?.canonicalUrl || (article.slug ? `https://www.jmmaster.com.br/blog/${article.slug}` : ''),
       noIndex: !!article.seo?.noIndex,
       noFollow: !!article.seo?.noFollow,
       keywords: currentKeywordsStr,
@@ -615,7 +615,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                       <span>JM Master Group</span>
                     </div>
                     <div className="text-[11px] leading-tight text-[#4d5156] dark:text-[#bdc1c6] truncate">
-                      https://jmmaster.com.br › blog › {article.slug || 'slug-do-artigo'}
+                      https://www.jmmaster.com.br › blog › {article.slug || 'slug-do-artigo'}
                     </div>
                   </div>
                 </div>
@@ -788,7 +788,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                     type="url"
                     value={seo.canonicalUrl || ''}
                     onChange={(e) => updateSEO({ canonicalUrl: e.target.value })}
-                    placeholder={`https://jmmaster.com.br/blog/${article.slug || ''}`}
+                    placeholder={`https://www.jmmaster.com.br/blog/${article.slug || ''}`}
                     className="w-full px-3 py-2 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
                   />
                   <p className="text-[10px] text-neutral-400">

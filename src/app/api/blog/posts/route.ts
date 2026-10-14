@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getStoredPosts, saveStoredPost, deleteStoredPost } from '@/lib/blog-storage';
 import { BlogPost } from '@/data/posts';
+import { DEFAULT_OG_IMAGE, resolvePostCanonical } from '@/lib/site';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -60,16 +61,16 @@ export async function POST(request: Request) {
       seoTitle: seoTitle,
       metaDescription: seoDesc,
       seoDescription: seoDesc,
-      canonicalUrl: rawSeo.canonicalUrl || `https://jmmaster.com.br/blog/${postData.slug}`,
+      canonicalUrl: resolvePostCanonical(postData.slug, rawSeo.canonicalUrl),
       noIndex: !!rawSeo.noIndex,
       noFollow: !!rawSeo.noFollow,
       keywords: seoKeywords,
       ogTitle: rawSeo.ogTitle || seoTitle,
       ogDescription: rawSeo.ogDescription || seoDesc,
-      ogImage: rawSeo.ogImage || postData.coverImage || '/images/blog/whatsapp-thumb.jpg',
+      ogImage: rawSeo.ogImage || postData.coverImage || DEFAULT_OG_IMAGE,
       twitterTitle: rawSeo.twitterTitle || rawSeo.ogTitle || seoTitle,
       twitterDescription: rawSeo.twitterDescription || rawSeo.ogDescription || seoDesc,
-      twitterImage: rawSeo.twitterImage || rawSeo.ogImage || postData.coverImage || '/images/blog/whatsapp-thumb.jpg',
+      twitterImage: rawSeo.twitterImage || rawSeo.ogImage || postData.coverImage || DEFAULT_OG_IMAGE,
     };
 
     const post: BlogPost = {
@@ -80,7 +81,7 @@ export async function POST(request: Request) {
       content: Array.isArray(postData.content) ? postData.content : [],
       contentHtml: postData.contentHtml || '',
       category: postData.category || 'WhatsApp API',
-      coverImage: postData.coverImage || '/images/blog/whatsapp-thumb.jpg',
+      coverImage: postData.coverImage || DEFAULT_OG_IMAGE,
       coverImageAlt: postData.coverImageAlt || postData.title,
       date: postData.date || (postData.publishedAt ? new Date(postData.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Hoje'),
       readTime: postData.readTime || `${postData.readingTimeMinutes || 4} min`,
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
         revalidatePath(`/blog/${postData.slug}`);
       }
       revalidatePath('/');
+      revalidatePath('/sitemap.xml');
     } catch (revalidateErr) {
       console.warn('[BlogAPI] Aviso ao revalidar cache:', revalidateErr);
     }
@@ -161,6 +163,7 @@ export async function DELETE(request: Request) {
       revalidatePath('/blog/[slug]', 'page');
       revalidatePath(`/blog/${id}`);
       revalidatePath('/');
+      revalidatePath('/sitemap.xml');
     } catch {}
 
     const updatedPosts = await getStoredPosts();

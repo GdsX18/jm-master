@@ -173,7 +173,6 @@ const INITIAL_USERS: User[] = [
     id: 'usr_admin_master',
     name: 'Administrador JM Master',
     email: 'admin@jmmaster.com.br',
-    password: 'admin',
     role: 'Super administrador',
     isBlocked: false,
     permissions: ROLE_DEFAULTS['Super administrador'].permissions,
@@ -183,7 +182,6 @@ const INITIAL_USERS: User[] = [
     id: 'usr_redator_blog',
     name: 'Redator de Conteúdo',
     email: 'redacao@jmmaster.com.br',
-    password: '123',
     role: 'Criador de Blog',
     isBlocked: false,
     permissions: ROLE_DEFAULTS['Criador de Blog'].permissions,
@@ -265,7 +263,7 @@ export default function UsersManagementPage() {
     // Preencher formulário com dados reais do usuário selecionado
     setFormName(user.name);
     setFormEmail(user.email);
-    setFormPassword(user.password || '');
+    setFormPassword('');
     setShowPassword(false);
     setFormRole(user.role);
     setFormIsBlocked(user.isBlocked);

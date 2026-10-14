@@ -1,5 +1,16 @@
 import prisma from './prisma';
 import { BlogPost, BLOG_POSTS, SEOData } from '@/data/posts';
+import { DEFAULT_OG_IMAGE, resolvePostCanonical } from './site';
+
+function toIsoString(value: unknown): string | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+export function isPublished(post: BlogPost) {
+  return (post.status || 'published') === 'published';
+}
 
 function mapDbToBlogPost(dbPost: any): BlogPost {
   const rawSeo = dbPost.seo && typeof dbPost.seo === 'object' ? dbPost.seo : {};
@@ -10,7 +21,7 @@ function mapDbToBlogPost(dbPost: any): BlogPost {
     seoTitle: rawSeo.seoTitle || rawSeo.metaTitle || dbPost.title,
     metaDescription: rawSeo.metaDescription || rawSeo.seoDescription || dbPost.excerpt,
     seoDescription: rawSeo.seoDescription || rawSeo.metaDescription || dbPost.excerpt,
-    canonicalUrl: rawSeo.canonicalUrl || `https://jmmaster.com.br/blog/${dbPost.slug}`,
+    canonicalUrl: resolvePostCanonical(dbPost.slug, rawSeo.canonicalUrl),
     noIndex: !!rawSeo.noIndex,
     noFollow: !!rawSeo.noFollow,
     keywords: Array.isArray(rawSeo.keywords)
@@ -22,10 +33,10 @@ function mapDbToBlogPost(dbPost: any): BlogPost {
       : [],
     ogTitle: rawSeo.ogTitle || rawSeo.metaTitle || rawSeo.seoTitle || dbPost.title,
     ogDescription: rawSeo.ogDescription || rawSeo.metaDescription || rawSeo.seoDescription || dbPost.excerpt,
-    ogImage: rawSeo.ogImage || dbPost.coverImage || '/images/blog/whatsapp-thumb.jpg',
+    ogImage: rawSeo.ogImage || dbPost.coverImage || DEFAULT_OG_IMAGE,
     twitterTitle: rawSeo.twitterTitle || rawSeo.ogTitle || rawSeo.metaTitle || dbPost.title,
     twitterDescription: rawSeo.twitterDescription || rawSeo.ogDescription || rawSeo.metaDescription || dbPost.excerpt,
-    twitterImage: rawSeo.twitterImage || rawSeo.ogImage || dbPost.coverImage || '/images/blog/whatsapp-thumb.jpg',
+    twitterImage: rawSeo.twitterImage || rawSeo.ogImage || dbPost.coverImage || DEFAULT_OG_IMAGE,
   };
 
   return {
@@ -50,6 +61,9 @@ function mapDbToBlogPost(dbPost: any): BlogPost {
     tags: Array.isArray(dbPost.tags) ? dbPost.tags : [],
     seo: seoData,
     faqs: Array.isArray(dbPost.faqs) ? dbPost.faqs : [],
+    views: dbPost.views,
+    publishedAt: toIsoString(dbPost.publishedAt) || toIsoString(dbPost.createdAt),
+    updatedAt: toIsoString(dbPost.updatedAt),
   };
 }
 
@@ -71,6 +85,18 @@ export async function getStoredPosts(): Promise<BlogPost[]> {
   return [];
 }
 
+// Apenas posts publicados — usado pelo site público e pelo sitemap
+export async function getPublishedPosts(): Promise<BlogPost[]> {
+  const posts = await getStoredPosts();
+  return posts.filter(isPublished);
+}
+
+// Post publicado pelo slug — rascunhos retornam undefined (404 no site)
+export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | undefined> {
+  const post = await getPostBySlug(slug);
+  return post && isPublished(post) ? post : undefined;
+}
+
 // Retorna um post específico pelo slug
 export async function getPostBySlug(slug: string): Promise<BlogPost | undefined> {
   try {
@@ -78,13 +104,12 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | undefined>
       where: { slug },
     });
 
-    if (post) {
-      return mapDbToBlogPost(post);
-    }
+    return post ? mapDbToBlogPost(post) : undefined;
   } catch (err) {
     console.error('[BlogStorage] Erro ao buscar post por slug no Supabase:', err);
   }
 
+  // Conteúdo estático só como contingência quando o banco está indisponível
   return BLOG_POSTS.find((p) => p.slug === slug);
 }
 

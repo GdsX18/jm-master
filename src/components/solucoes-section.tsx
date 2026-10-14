@@ -4,10 +4,11 @@ import React from "react";
 import { motion } from "framer-motion";
 import { CardStacking, StackingCardItem } from "@/components/ui/card-stacking";
 import { MessageCircle, Bot, Mail, Smartphone, Layers } from "lucide-react";
+import { WHATSAPP_NUMBER } from "@/lib/site";
+import { SERVICES } from "@/data/services";
 
-const WHATSAPP_NUMBER = "5521998567051";
 
-const SOLUCOES_ITEMS: StackingCardItem[] = [
+const SOLUCOES_BASE: StackingCardItem[] = [
   {
     id: "whatsapp",
     title: "WhatsApp Business & Automação",
@@ -71,6 +72,11 @@ const SOLUCOES_ITEMS: StackingCardItem[] = [
   },
 ];
 
+const SOLUCOES_ITEMS: StackingCardItem[] = SOLUCOES_BASE.map((item) => {
+  const service = SERVICES.find((s) => s.cardId === item.id);
+  return service ? { ...item, href: `/solucoes/${service.slug}` } : item;
+});
+
 export const SolucoesSection: React.FC = () => {
   const handleCardClick = (item: StackingCardItem) => {
     window.open(
@@ -118,7 +124,7 @@ export const SolucoesSection: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="text-xs sm:text-sm md:text-lg text-slate-600 max-w-2xl sm:max-w-3xl leading-relaxed"
           >
-            Role a página para ver os cards se empilharem interativamente e clique para falar direto com nossos especialistas.
+            Conheça cada solução em detalhe ou fale direto com nossos especialistas.
           </motion.p>
         </div>
 

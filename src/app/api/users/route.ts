@@ -1,11 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { hashPassword } from '@/lib/password';
+
+// Nunca devolver o hash de senha para o navegador
+const PUBLIC_USER_FIELDS = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  isBlocked: true,
+  permissions: true,
+  prohibitions: true,
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
+const MIN_PASSWORD_LENGTH = 8;
 
 // GET /api/users - Listar usuários do Supabase
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: 'asc' },
+      select: PUBLIC_USER_FIELDS,
     });
     return NextResponse.json(users);
   } catch (error: any) {
@@ -25,6 +42,15 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+    const newPassword =
+      typeof password === 'string' && password.trim() !== '' && password !== '********' ? password.trim() : null;
+
+    if (newPassword && newPassword.length < MIN_PASSWORD_LENGTH) {
+      return NextResponse.json(
+        { error: `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres` },
+        { status: 400 }
+      );
+    }
 
     // Verifica se usuário já existe por ID ou E-mail
     let existingUser = null;
@@ -42,28 +68,34 @@ export async function POST(req: NextRequest) {
         data: {
           name,
           email: cleanEmail,
-          password: password !== undefined && password !== '' && password !== '********' ? password : existingUser.password,
+          password: newPassword ? await hashPassword(newPassword) : existingUser.password,
           role: role || existingUser.role,
           isBlocked: isBlocked !== undefined ? isBlocked : existingUser.isBlocked,
           permissions: permissions !== undefined ? permissions : existingUser.permissions,
           prohibitions: prohibitions !== undefined ? prohibitions : existingUser.prohibitions,
         },
+        select: PUBLIC_USER_FIELDS,
       });
 
       return NextResponse.json({ success: true, user: updatedUser });
     } else {
       // Novo usuário
+      if (!newPassword) {
+        return NextResponse.json({ error: 'Defina uma senha para o novo usuário' }, { status: 400 });
+      }
+
       const newUser = await prisma.user.create({
         data: {
           id: id || undefined,
           name,
           email: cleanEmail,
-          password: password || '123456',
+          password: await hashPassword(newPassword),
           role: role || 'Criador de Blog',
           isBlocked: isBlocked || false,
           permissions: permissions || {},
           prohibitions: prohibitions || {},
         },
+        select: PUBLIC_USER_FIELDS,
       });
 
       return NextResponse.json({ success: true, user: newUser });

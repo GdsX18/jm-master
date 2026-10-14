@@ -23,7 +23,7 @@ export const Logo: React.FC<LogoProps> = ({
   const logoFile =
     variant === "icon"
       ? "/logos/Icone.png"
-      : variant === "secondary"
+      : variant === "secondary" || variant === "dark"
       ? "/logos/JM-Master-2.png"
       : "/logos/JM-Master-1.png";
 

@@ -48,7 +48,7 @@ function mapServerPosts(postsArray: any[]): Article[] {
       seoTitle: rawSeo.seoTitle || rawSeo.metaTitle || p.title || '',
       metaDescription: rawSeo.metaDescription || rawSeo.seoDescription || p.excerpt || '',
       seoDescription: rawSeo.seoDescription || rawSeo.metaDescription || p.excerpt || '',
-      canonicalUrl: rawSeo.canonicalUrl || (p.slug ? `https://jmmaster.com.br/blog/${p.slug}` : ''),
+      canonicalUrl: rawSeo.canonicalUrl || (p.slug ? `https://www.jmmaster.com.br/blog/${p.slug}` : ''),
       noIndex: !!rawSeo.noIndex,
       noFollow: !!rawSeo.noFollow,
       keywords: keywords,
@@ -197,7 +197,7 @@ export default function BlogDashboardPage() {
       seoTitle: (existingSeo.seoTitle || existingSeo.metaTitle || baseArticle.title || '').trim() || baseArticle.title,
       metaDescription: (existingSeo.metaDescription || existingSeo.seoDescription || baseArticle.excerpt || '').trim() || baseArticle.excerpt,
       seoDescription: (existingSeo.seoDescription || existingSeo.metaDescription || baseArticle.excerpt || '').trim() || baseArticle.excerpt,
-      canonicalUrl: (existingSeo.canonicalUrl || '').trim() || `https://jmmaster.com.br/blog/${finalSlug}`,
+      canonicalUrl: (existingSeo.canonicalUrl || '').trim() || `https://www.jmmaster.com.br/blog/${finalSlug}`,
       noIndex: !!existingSeo.noIndex,
       noFollow: !!existingSeo.noFollow,
       keywords: existingSeo.keywords || '',
@@ -270,7 +270,7 @@ export default function BlogDashboardPage() {
       seoTitle: currentSeo.seoTitle || currentSeo.metaTitle || art.title || '',
       metaDescription: currentSeo.metaDescription || currentSeo.seoDescription || art.excerpt || '',
       seoDescription: currentSeo.seoDescription || currentSeo.metaDescription || art.excerpt || '',
-      canonicalUrl: currentSeo.canonicalUrl || (art.slug ? `https://jmmaster.com.br/blog/${art.slug}` : ''),
+      canonicalUrl: currentSeo.canonicalUrl || (art.slug ? `https://www.jmmaster.com.br/blog/${art.slug}` : ''),
       noIndex: !!currentSeo.noIndex,
       noFollow: !!currentSeo.noFollow,
       keywords: keywordsStr,
@@ -421,7 +421,7 @@ export default function BlogDashboardPage() {
       seo: art.seo ? {
         ...art.seo,
         metaTitle: `${art.seo.metaTitle || art.title} (Cópia)`,
-        canonicalUrl: `https://jmmaster.com.br/blog/${duplicatedSlug}`,
+        canonicalUrl: `https://www.jmmaster.com.br/blog/${duplicatedSlug}`,
       } : undefined,
     };
     const res = await syncWithApi(duplicated);
