@@ -655,19 +655,19 @@ const client = new JMClient({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-[6px] border border-jm-border bg-jm-surface">
       
       {/* TOOLBAR FIXA EXPANDIDA COM ALTA VISIBILIDADE */}
-      <div className="border-b border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-950/95 p-3 flex flex-wrap items-center gap-2 sticky top-0 z-20 backdrop-blur-md select-none shadow-xs">
+      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-y-1 border-b border-jm-border bg-jm-subtle px-2 py-1.5 select-none">
         
         {/* GRUPO: HISTÓRICO */}
-        <div className="flex items-center gap-1 pr-2.5 border-r border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center gap-0.5 border-r border-jm-border pr-1.5 mr-1.5">
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('undo')}
             title="Desfazer (Ctrl+Z)"
-            className="h-9 px-2.5 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Undo2 className="w-4 h-4" />
           </button>
@@ -676,20 +676,20 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('redo')}
             title="Refazer (Ctrl+Y)"
-            className="h-9 px-2.5 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Redo2 className="w-4 h-4" />
           </button>
         </div>
 
         {/* GRUPO: HIERARQUIA DE TÍTULOS */}
-        <div className="flex items-center gap-1.5 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center gap-0.5 border-r border-jm-border pr-1.5 mr-1.5">
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('P')}
             title="Texto Normal de Parágrafo"
-            className="h-9 px-3 rounded-xl text-xs font-semibold bg-neutral-100 dark:bg-neutral-800/70 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             Texto
           </button>
@@ -698,7 +698,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('H2')}
             title="Título de Seção (H2 - Grande)"
-            className="h-9 px-3 rounded-xl text-xs font-black bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-orange-500/10 hover:text-[#E85D26] hover:border-[#E85D26]/40 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             H2
           </button>
@@ -707,7 +707,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('H3')}
             title="Subtítulo (H3 - Médio)"
-            className="h-9 px-3 rounded-xl text-xs font-bold bg-neutral-100 dark:bg-neutral-800/70 text-neutral-800 dark:text-neutral-200 hover:bg-orange-500/10 hover:text-[#E85D26] hover:border-[#E85D26]/40 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             H3
           </button>
@@ -716,7 +716,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => formatHeading('H4')}
             title="Tópico Menor (H4)"
-            className="h-9 px-3 rounded-xl text-xs font-medium bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             H4
           </button>
@@ -725,14 +725,14 @@ const client = new JMClient({
         {/* GRUPO: CONTROLE DE TAMANHO DA LETRA (A- / A▾ / A+) */}
         <div 
           ref={fontSizeMenuRef}
-          className="relative flex items-center gap-1.5 px-2 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-1 rounded-xl border border-neutral-200/80 dark:border-neutral-800"
+          className="relative flex items-center gap-0.5 border-r border-jm-border pr-1.5 mr-1.5"
         >
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={decreaseFontSize}
             title="Diminuir Tamanho da Letra (A-)"
-            className="h-7 px-2 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-extrabold shadow-xs transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg font-semibold"
           >
             A-
           </button>
@@ -747,16 +747,16 @@ const client = new JMClient({
               }}
               onClick={() => setIsFontSizeOpen((prev) => !prev)}
               title="Menu de Tamanho da Fonte (A▾)"
-              className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-bold border border-neutral-200 dark:border-neutral-700 shadow-xs transition cursor-pointer"
+              className="inline-flex h-8 items-center gap-1.5 rounded-[4px] border border-jm-border bg-jm-surface px-2 text-xs text-jm-fg2 transition-colors duration-100 cursor-pointer hover:border-jm-border-strong hover:text-jm-fg"
             >
-              <Type className="w-3.5 h-3.5 text-[#E85D26]" />
-              <span className="font-mono text-[11px] font-bold">{currentFontSize}</span>
-              <ChevronDown className={`w-3 h-3 text-neutral-400 transition-transform duration-200 ${isFontSizeOpen ? 'rotate-180' : ''}`} />
+              <Type className="w-3.5 h-3.5 text-jm-muted" />
+              <span className="font-mono text-[11px] tabular-nums">{currentFontSize}</span>
+              <ChevronDown className={`w-3 h-3 text-jm-muted ${isFontSizeOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isFontSizeOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-32 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xl py-1.5 z-50 animate-fadeIn">
-                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 border-b border-neutral-100 dark:border-neutral-800/80 mb-1">
+              <div className="jm-menu absolute top-full left-0 z-50 mt-1 w-32 min-w-0">
+                <div className="mb-1 border-b border-jm-border px-3 pb-1.5 pt-0.5 text-[11px] font-medium text-jm-muted">
                   Tamanho da Fonte
                 </div>
                 {FONT_SIZES.map((size) => {
@@ -770,15 +770,15 @@ const client = new JMClient({
                         applyFontSize(size);
                         setIsFontSizeOpen(false);
                       }}
-                      className={`w-full px-3 py-1.5 text-left flex items-center justify-between text-xs transition cursor-pointer ${
+                      className={`jm-menu-item justify-between text-xs ${
                         isSelected
-                          ? 'bg-[#E85D26]/10 text-[#E85D26] font-extrabold'
-                          : 'text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium'
+                          ? 'bg-jm-primary-soft font-semibold text-jm-primary-text hover:bg-jm-primary-soft hover:text-jm-primary-text'
+                          : ''
                       }`}
                     >
                       <span style={{ fontSize: size }} className="leading-tight">{size}</span>
                       {isSelected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E85D26]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-jm-accent-line" />
                       )}
                     </button>
                   );
@@ -792,20 +792,20 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={increaseFontSize}
             title="Aumentar Tamanho da Letra (A+)"
-            className="h-7 px-2 flex items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-xs font-extrabold shadow-xs transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg font-semibold"
           >
             A+
           </button>
         </div>
 
         {/* GRUPO: FORMATAÇÃO BÁSICA */}
-        <div className="flex items-center gap-1 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center gap-0.5 border-r border-jm-border pr-1.5 mr-1.5">
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('bold')}
             title="Negrito (Ctrl+B)"
-            className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Bold className="w-4 h-4" />
           </button>
@@ -814,7 +814,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('italic')}
             title="Itálico (Ctrl+I)"
-            className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Italic className="w-4 h-4" />
           </button>
@@ -823,7 +823,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('underline')}
             title="Sublinhado (Ctrl+U)"
-            className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Underline className="w-4 h-4" />
           </button>
@@ -832,7 +832,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('strikeThrough')}
             title="Tachado"
-            className="h-9 w-9 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Strikethrough className="w-4 h-4" />
           </button>
@@ -841,20 +841,20 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('removeFormat')}
             title="Limpar Formatação"
-            className="h-9 px-2.5 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Eraser className="w-4 h-4" />
           </button>
         </div>
 
         {/* GRUPO: ALINHAMENTOS */}
-        <div className="flex items-center gap-1 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center gap-0.5 border-r border-jm-border pr-1.5 mr-1.5">
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyLeft')}
             title="Alinhar à Esquerda"
-            className="h-9 w-8 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <AlignLeft className="w-4 h-4" />
           </button>
@@ -863,7 +863,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyCenter')}
             title="Centralizar"
-            className="h-9 w-8 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <AlignCenter className="w-4 h-4" />
           </button>
@@ -872,20 +872,20 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('justifyRight')}
             title="Alinhar à Direita"
-            className="h-9 w-8 flex items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <AlignRight className="w-4 h-4" />
           </button>
         </div>
 
         {/* GRUPO: LISTAS */}
-        <div className="flex items-center gap-1 px-2.5 border-r border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center gap-0.5 border-r border-jm-border pr-1.5 mr-1.5">
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertUnorderedList')}
             title="Lista com Marcadores"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <List className="w-4 h-4" />
             <span>Marcadores</span>
@@ -895,7 +895,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => executeCommand('insertOrderedList')}
             title="Lista Numerada"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <ListOrdered className="w-4 h-4" />
             <span>Numerada</span>
@@ -903,7 +903,7 @@ const client = new JMClient({
         </div>
 
         {/* GRUPO: ELEMENTOS RICOS */}
-        <div className="flex items-center gap-1.5 pl-2">
+        <div className="flex flex-wrap items-center gap-0.5">
           {/* BOTÃO DE INSERIR IMAGEM (UPLOAD / SUPABASE STORAGE) */}
           <button
             type="button"
@@ -916,7 +916,7 @@ const client = new JMClient({
               setShowImageModal(true);
             }}
             title="Inserir Imagem / Ilustração no Texto"
-            className="h-9 px-3 rounded-xl bg-[#E85D26]/10 text-[#E85D26] hover:bg-[#E85D26] hover:text-white border border-[#E85D26]/30 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <ImageIcon className="w-4 h-4" />
             <span>Imagem</span>
@@ -927,7 +927,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={openLinkModal}
             title="Inserir Link"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <LinkIcon className="w-4 h-4" />
             <span>Link</span>
@@ -938,7 +938,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={insertQuote}
             title="Inserir Citação em Destaque (Blockquote)"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Quote className="w-4 h-4" />
             <span>Citação</span>
@@ -949,7 +949,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => setShowCalloutModal(true)}
             title="Inserir Caixa de Aviso ou Destaque"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Lightbulb className="w-4 h-4" />
             <span>Dica / Aviso</span>
@@ -960,7 +960,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={insertCodeBlock}
             title="Inserir Bloco de Código"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Code className="w-4 h-4" />
             <span>Código</span>
@@ -971,7 +971,7 @@ const client = new JMClient({
             onMouseDown={(e) => e.preventDefault()}
             onClick={insertDivider}
             title="Inserir Linha Divisória"
-            className="h-9 px-3 rounded-xl bg-neutral-100 dark:bg-neutral-800/70 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-200 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700/60 transition flex items-center gap-1.5 cursor-pointer"
+            className="inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1.5 rounded-[4px] px-2 text-xs font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer hover:bg-jm-hover hover:text-jm-fg"
           >
             <Minus className="w-4 h-4" />
             <span>Divisor</span>
@@ -987,16 +987,16 @@ const client = new JMClient({
         }}
         onDragLeave={() => setIsEditorDraggingImage(false)}
         onDrop={handleEditorDrop}
-        className={`flex-1 overflow-y-auto p-6 sm:p-10 space-y-6 max-w-4xl w-full mx-auto relative transition-colors ${
-          isEditorDraggingImage ? 'bg-orange-500/5 ring-2 ring-dashed ring-[#E85D26]' : ''
+        className={`relative mx-auto w-full max-w-4xl flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-10 sm:py-10 ${
+          isEditorDraggingImage ? 'bg-jm-accent-soft outline-2 outline-dashed -outline-offset-8 outline-jm-accent-line' : ''
         }`}
       >
         {isEditorDraggingImage && (
-          <div className="absolute inset-0 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xs flex items-center justify-center z-30 pointer-events-none">
-            <div className="p-6 rounded-2xl bg-white dark:bg-neutral-900 border-2 border-dashed border-[#E85D26] shadow-xl text-center space-y-2">
-              <UploadCloud className="w-10 h-10 text-[#E85D26] mx-auto animate-bounce" />
-              <p className="text-sm font-bold text-neutral-900 dark:text-white">Solte a imagem aqui</p>
-              <p className="text-xs text-neutral-500">Ela será enviada automaticamente para o Supabase Storage</p>
+          <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-jm-surface/85">
+            <div className="space-y-1.5 rounded-[6px] border border-dashed border-jm-accent-line bg-jm-surface px-6 py-5 text-center">
+              <UploadCloud className="mx-auto h-7 w-7 text-jm-accent-text" strokeWidth={1.5} />
+              <p className="text-sm font-semibold text-jm-fg">Solte a imagem aqui</p>
+              <p className="text-xs text-jm-muted">Ela será enviada automaticamente para o Supabase Storage</p>
             </div>
           </div>
         )}
@@ -1008,9 +1008,9 @@ const client = new JMClient({
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="Digite aqui o título principal do artigo (H1)..."
-            className="w-full text-2xl sm:text-3xl md:text-4xl font-extrabold text-neutral-900 dark:text-white placeholder-neutral-300 dark:placeholder-neutral-700 bg-transparent border-none focus:outline-none tracking-tight leading-tight"
+            className="w-full border-none bg-transparent text-2xl font-bold leading-tight tracking-tight text-jm-fg placeholder:text-jm-placeholder focus:outline-none sm:text-3xl md:text-[34px]"
           />
-          <div className="h-px w-full bg-neutral-200 dark:border-neutral-800 mt-4" />
+          <div className="mt-4 h-px w-full bg-jm-border" />
         </div>
 
         {/* CORPO DO ARTIGO COM CONTENT EDITABLE & PLACEHOLDER SUAVE */}
@@ -1018,7 +1018,7 @@ const client = new JMClient({
           {isContentEmpty && (
             <div
               onClick={() => editorRef.current?.focus()}
-              className="absolute top-0 left-0 w-full text-neutral-400 dark:text-neutral-500 pointer-events-none select-none text-base leading-relaxed opacity-60 z-0"
+              className="pointer-events-none absolute top-0 left-0 z-0 w-full select-none text-base leading-relaxed text-jm-placeholder"
             >
               <p>
                 Escreva aqui o conteúdo do seu artigo... Use a barra de ferramentas superior para títulos, negrito, listas e imagens.
@@ -1047,74 +1047,66 @@ const client = new JMClient({
               saveSelection();
               updateCurrentFontSizeFromSelection();
             }}
-            className="blog-wysiwyg-editor min-h-[450px] text-base leading-relaxed text-neutral-800 dark:text-neutral-200 focus:outline-none selection:bg-orange-500/20 relative z-10"
+            className="blog-wysiwyg-editor relative z-10 min-h-[450px] text-base leading-relaxed text-jm-fg2 focus:outline-none"
           />
         </div>
       </div>
 
       {/* RODAPÉ DO EDITOR COM CONTADORES DIDÁTICOS */}
-      <div className="border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-6 py-3 flex flex-wrap items-center justify-between gap-4 text-xs font-medium text-neutral-500 dark:text-neutral-400">
-        <div className="flex items-center gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-jm-border bg-jm-subtle px-4 py-2 text-xs text-jm-muted sm:px-5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-neutral-800 dark:text-neutral-200">{stats.words}</span>
+            <span className="font-semibold tabular-nums text-jm-fg">{stats.words}</span>
             <span>palavras</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-neutral-800 dark:text-neutral-200">{stats.chars}</span>
+            <span className="font-semibold tabular-nums text-jm-fg">{stats.chars}</span>
             <span>caracteres</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-neutral-400" />
+            <Clock className="w-3.5 h-3.5" />
             <span>Tempo estimado:</span>
-            <span className="font-bold text-[#E85D26]">{stats.readingTime} min</span>
+            <span className="font-semibold tabular-nums text-jm-fg">{stats.readingTime} min</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px]">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="flex items-center gap-1.5">
+          <span className="jm-dot text-jm-success-fg" />
           <span>Editor Ativo (Sincronizado)</span>
         </div>
       </div>
 
       {/* MODAL PARA INSERIR IMAGEM / UPLOAD SUPABASE STORAGE */}
       {showImageModal && typeof window !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-[#E85D26]" />
+        <div className="jm-overlay z-[99999]">
+          <div className="jm-modal space-y-4 overflow-y-auto p-4 sm:p-5">
+            <div className="-mx-4 -mt-4 flex items-center justify-between gap-3 border-b border-jm-border px-4 py-3 sm:-mx-5 sm:-mt-5 sm:px-5">
+              <h3 className="jm-modal-title flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-jm-muted" />
                 <span>Inserir Imagem / Ilustração no Artigo</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowImageModal(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white cursor-pointer p-1"
+                className="jm-icon-btn"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* ABAS: UPLOAD SUPABASE OU URL DIRETA */}
-            <div className="flex gap-2 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xl">
+            <div className="jm-segmented flex w-full">
               <button
                 type="button"
                 onClick={() => setImageTab('upload')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  imageTab === 'upload'
-                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
-                    : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
-                }`}
+                className={`jm-segment flex-1 justify-center ${imageTab === 'upload' ? 'jm-segment-active' : ''}`}
               >
                 Upload do Computador (Supabase)
               </button>
               <button
                 type="button"
                 onClick={() => setImageTab('url')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
-                  imageTab === 'url'
-                    ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-xs'
-                    : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
-                }`}
+                className={`jm-segment flex-1 justify-center ${imageTab === 'url' ? 'jm-segment-active' : ''}`}
               >
                 URL da Imagem
               </button>
@@ -1136,8 +1128,8 @@ const client = new JMClient({
                   />
 
                   {modalImageUrl ? (
-                    <div className="relative rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 p-2 space-y-2">
-                      <div className="relative h-44 w-full rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                    <div className="relative space-y-2 overflow-hidden rounded-[4px] border border-jm-border bg-jm-subtle p-2">
+                      <div className="relative h-44 w-full overflow-hidden rounded-[3px] bg-jm-hover">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={modalImageUrl}
@@ -1146,7 +1138,7 @@ const client = new JMClient({
                         />
                       </div>
                       <div className="flex items-center justify-between px-1">
-                        <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <span className="flex items-center gap-1 text-xs font-medium text-jm-success-fg">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Pronta no Supabase Storage
                         </span>
@@ -1157,7 +1149,7 @@ const client = new JMClient({
                             setUploadStatusMessage('');
                             imageFileInputRef.current?.click();
                           }}
-                          className="text-[11px] font-bold text-[#E85D26] hover:underline cursor-pointer"
+                          className="jm-link cursor-pointer text-xs"
                         >
                           Trocar Imagem
                         </button>
@@ -1166,20 +1158,20 @@ const client = new JMClient({
                   ) : (
                     <div
                       onClick={() => !isUploadingModalImage && imageFileInputRef.current?.click()}
-                      className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 hover:border-[#E85D26] dark:hover:border-[#E85D26] rounded-xl p-6 text-center cursor-pointer transition bg-neutral-50 dark:bg-neutral-950/60"
+                      className="cursor-pointer rounded-[4px] border border-dashed border-jm-border-strong bg-jm-subtle p-6 text-center transition-colors duration-100 hover:border-jm-primary hover:bg-jm-hover"
                     >
                       {isUploadingModalImage ? (
                         <div className="space-y-2 py-4">
-                          <Loader2 className="w-8 h-8 text-[#E85D26] animate-spin mx-auto" />
-                          <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">{uploadStatusMessage}</p>
+                          <Loader2 className="mx-auto h-6 w-6 animate-spin text-jm-muted" />
+                          <p className="text-xs font-medium text-jm-fg2">{uploadStatusMessage}</p>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <UploadCloud className="w-8 h-8 text-[#E85D26] mx-auto" />
-                          <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                          <UploadCloud className="mx-auto h-6 w-6 text-jm-muted" strokeWidth={1.5} />
+                          <p className="text-sm font-medium text-jm-fg">
                             Clique para escolher uma imagem do seu dispositivo
                           </p>
-                          <p className="text-[11px] text-neutral-400">
+                          <p className="text-xs text-jm-muted">
                             PNG, JPG, WebP ou GIF até 4MB (Salvo permanentemente no Supabase)
                           </p>
                         </div>
@@ -1189,7 +1181,7 @@ const client = new JMClient({
                 </div>
               ) : (
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="jm-label">
                     URL Pública da Imagem
                   </label>
                   <input
@@ -1197,7 +1189,7 @@ const client = new JMClient({
                     value={modalImageUrl}
                     onChange={(e) => setModalImageUrl(e.target.value)}
                     placeholder="https://exemplo.com/grafico-vendas.png"
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input"
                   />
                 </div>
               )}
@@ -1205,7 +1197,7 @@ const client = new JMClient({
               {/* CAMPOS ADICIONAIS: ALT TEXT, LEGENDA E ALINHAMENTO */}
               <div className="space-y-3 pt-2">
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="jm-label">
                     Texto Alternativo / Descrição da Imagem (Alt Text para SEO)
                   </label>
                   <input
@@ -1213,12 +1205,12 @@ const client = new JMClient({
                     value={modalImageAlt}
                     onChange={(e) => setModalImageAlt(e.target.value)}
                     placeholder="Ex: Gráfico demonstrando o crescimento de retenção..."
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="jm-label">
                     Legenda Opcional (Exibida abaixo da imagem)
                   </label>
                   <input
@@ -1226,15 +1218,15 @@ const client = new JMClient({
                     value={modalImageCaption}
                     onChange={(e) => setModalImageCaption(e.target.value)}
                     placeholder="Ex: Fonte: Pesquisa Harvard Business Review"
-                    className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="jm-label">
                     Alinhamento no Texto
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                     {[
                       { id: 'center', label: 'Centralizado' },
                       { id: 'full', label: 'Largura Total' },
@@ -1245,10 +1237,10 @@ const client = new JMClient({
                         key={align.id}
                         type="button"
                         onClick={() => setModalImageAlign(align.id as any)}
-                        className={`px-2 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                        className={`h-8 rounded-[4px] border px-2 text-xs font-medium transition-colors duration-100 cursor-pointer ${
                           modalImageAlign === align.id
-                            ? 'bg-[#E85D26] text-white border-[#E85D26]'
-                            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
+                            ? 'border-jm-primary bg-jm-primary-soft text-jm-primary-text'
+                            : 'border-jm-border bg-jm-surface text-jm-fg2 hover:bg-jm-hover'
                         }`}
                       >
                         {align.label}
@@ -1259,11 +1251,11 @@ const client = new JMClient({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="-mx-4 -mb-4 flex flex-col-reverse gap-2 border-t border-jm-border bg-jm-subtle px-4 py-3 sm:-mx-5 sm:-mb-5 sm:flex-row sm:justify-end sm:px-5">
               <button
                 type="button"
                 onClick={() => setShowImageModal(false)}
-                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
@@ -1271,7 +1263,7 @@ const client = new JMClient({
                 type="button"
                 onClick={() => insertImageIntoEditor(modalImageUrl, modalImageAlt, modalImageCaption, modalImageAlign)}
                 disabled={!modalImageUrl || isUploadingModalImage}
-                className="px-4 py-2 text-xs font-bold bg-[#E85D26] text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                className="jm-btn jm-btn-primary"
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Inserir no Artigo</span>
@@ -1284,17 +1276,17 @@ const client = new JMClient({
 
       {/* MODAL PARA INSERIR LINK */}
       {showLinkModal && typeof window !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <LinkIcon className="w-4 h-4 text-[#E85D26]" />
+        <div className="jm-overlay z-[99999]">
+          <div className="jm-modal space-y-4 overflow-y-auto p-4 sm:max-w-md sm:p-5">
+            <div className="-mx-4 -mt-4 flex items-center justify-between gap-3 border-b border-jm-border px-4 py-3 sm:-mx-5 sm:-mt-5 sm:px-5">
+              <h3 className="jm-modal-title flex items-center gap-2">
+                <LinkIcon className="w-4 h-4 text-jm-muted" />
                 <span>Inserir Link no Texto</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowLinkModal(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white cursor-pointer p-1"
+                className="jm-icon-btn"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1302,7 +1294,7 @@ const client = new JMClient({
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="jm-label">
                   Texto Âncora (Exibido no texto)
                 </label>
                 <input
@@ -1310,12 +1302,12 @@ const client = new JMClient({
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
                   placeholder="Texto clicável..."
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="jm-label">
                   URL de Destino
                 </label>
                 <input
@@ -1323,38 +1315,38 @@ const client = new JMClient({
                   value={linkUrl}
                   onChange={(e) => setLinkUrl(e.target.value)}
                   placeholder="https://www.jmmaster.com.br/solucoes"
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
               </div>
 
               <div className="space-y-2 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-neutral-700 dark:text-neutral-300">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-jm-fg2">
                   <input
                     type="checkbox"
                     checked={linkNewTab}
                     onChange={(e) => setLinkNewTab(e.target.checked)}
-                    className="rounded border-neutral-300 text-[#E85D26] focus:ring-[#E85D26]"
+                    className="h-4 w-4 shrink-0 rounded-[3px]"
                   />
                   <span>Abrir link em nova aba (target="_blank")</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer text-xs text-neutral-700 dark:text-neutral-300">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-jm-fg2">
                   <input
                     type="checkbox"
                     checked={linkNofollow}
                     onChange={(e) => setLinkNofollow(e.target.checked)}
-                    className="rounded border-neutral-300 text-[#E85D26] focus:ring-[#E85D26]"
+                    className="h-4 w-4 shrink-0 rounded-[3px]"
                   />
                   <span>Adicionar rel="nofollow" (Links externos não endossados)</span>
                 </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="-mx-4 -mb-4 flex flex-col-reverse gap-2 border-t border-jm-border bg-jm-subtle px-4 py-3 sm:-mx-5 sm:-mb-5 sm:flex-row sm:justify-end sm:px-5">
               <button
                 type="button"
                 onClick={() => setShowLinkModal(false)}
-                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
@@ -1362,7 +1354,7 @@ const client = new JMClient({
                 type="button"
                 onClick={insertCustomLink}
                 disabled={!linkUrl}
-                className="px-4 py-2 text-xs font-bold bg-[#E85D26] text-white rounded-lg hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer"
+                className="jm-btn jm-btn-primary"
               >
                 Inserir Link
               </button>
@@ -1374,17 +1366,17 @@ const client = new JMClient({
 
       {/* MODAL PARA INSERIR CALLOUT */}
       {showCalloutModal && typeof window !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-[#E85D26]" />
+        <div className="jm-overlay z-[99999]">
+          <div className="jm-modal space-y-4 overflow-y-auto p-4 sm:max-w-md sm:p-5">
+            <div className="-mx-4 -mt-4 flex items-center justify-between gap-3 border-b border-jm-border px-4 py-3 sm:-mx-5 sm:-mt-5 sm:px-5">
+              <h3 className="jm-modal-title flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-jm-muted" />
                 <span>Inserir Caixa de Aviso / Dica</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowCalloutModal(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white cursor-pointer p-1"
+                className="jm-icon-btn"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1392,20 +1384,20 @@ const client = new JMClient({
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="jm-label">
                   Tipo de Aviso
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
                       setCalloutType('info');
                       setCalloutTitle('Ponto de Atenção');
                     }}
-                    className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    className={`h-8 rounded-[4px] border px-2 text-xs font-medium transition-colors duration-100 cursor-pointer ${
                       calloutType === 'info'
-                        ? 'bg-sky-600 text-white border-sky-600'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
+                        ? 'border-jm-primary bg-jm-primary-soft text-jm-primary-text'
+                        : 'border-jm-border bg-jm-surface text-jm-fg2 hover:bg-jm-hover'
                     }`}
                   >
                     Informativo
@@ -1416,10 +1408,10 @@ const client = new JMClient({
                       setCalloutType('tip');
                       setCalloutTitle('Dica Prática');
                     }}
-                    className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    className={`h-8 rounded-[4px] border px-2 text-xs font-medium transition-colors duration-100 cursor-pointer ${
                       calloutType === 'tip'
-                        ? 'bg-emerald-600 text-white border-emerald-600'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
+                        ? 'border-jm-primary bg-jm-primary-soft text-jm-primary-text'
+                        : 'border-jm-border bg-jm-surface text-jm-fg2 hover:bg-jm-hover'
                     }`}
                   >
                     Dica Prática
@@ -1430,10 +1422,10 @@ const client = new JMClient({
                       setCalloutType('warning');
                       setCalloutTitle('Alerta Importante');
                     }}
-                    className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                    className={`h-8 rounded-[4px] border px-2 text-xs font-medium transition-colors duration-100 cursor-pointer ${
                       calloutType === 'warning'
-                        ? 'bg-amber-600 text-white border-amber-600'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700'
+                        ? 'border-jm-primary bg-jm-primary-soft text-jm-primary-text'
+                        : 'border-jm-border bg-jm-surface text-jm-fg2 hover:bg-jm-hover'
                     }`}
                   >
                     Alerta
@@ -1442,42 +1434,42 @@ const client = new JMClient({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="jm-label">
                   Título do Aviso
                 </label>
                 <input
                   type="text"
                   value={calloutTitle}
                   onChange={(e) => setCalloutTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="jm-label">
                   Mensagem / Conteúdo
                 </label>
                 <textarea
                   rows={3}
                   value={calloutContent}
                   onChange={(e) => setCalloutContent(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26] resize-none"
+                  className="jm-input resize-none"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="-mx-4 -mb-4 flex flex-col-reverse gap-2 border-t border-jm-border bg-jm-subtle px-4 py-3 sm:-mx-5 sm:-mb-5 sm:flex-row sm:justify-end sm:px-5">
               <button
                 type="button"
                 onClick={() => setShowCalloutModal(false)}
-                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={insertCalloutBox}
-                className="px-4 py-2 text-xs font-bold bg-[#E85D26] text-white rounded-lg hover:bg-orange-600 transition cursor-pointer"
+                className="jm-btn jm-btn-primary"
               >
                 Inserir Caixa
               </button>

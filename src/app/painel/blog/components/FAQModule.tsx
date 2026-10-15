@@ -90,36 +90,36 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden transition-all">
+    <div className="jm-card overflow-hidden">
       {/* CABEÇALHO DO MÓDULO */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="p-5 flex items-center justify-between cursor-pointer select-none bg-neutral-50/50 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition border-b border-neutral-200 dark:border-neutral-800"
+        className="flex cursor-pointer select-none items-center justify-between gap-3 border-b border-jm-border px-4 py-3 transition-colors hover:bg-jm-hover md:px-5"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black text-sm border border-purple-500/20">
+          <div className="jm-icon-chip jm-icon-chip-neutral hidden sm:grid">
             <HelpCircle className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="jm-card-title">
                 FAQ & Perguntas Frequentes
               </h3>
-              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+              <span className="jm-badge jm-badge-neutral">
                 Rich Snippets JSON-LD
               </span>
             </div>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
+            <p className="mt-0.5 text-xs text-jm-muted">
               Gera Accordion visual no artigo e Schema estruturado para o Google
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full border bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="jm-badge jm-badge-neutral tabular-nums">
             {faqs.length} {faqs.length === 1 ? 'Pergunta' : 'Perguntas'}
           </span>
-          <button type="button" className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white">
+          <button type="button" className="jm-icon-btn">
             {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
@@ -127,18 +127,18 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
 
       {/* CONTEÚDO DO MÓDULO */}
       {isOpen && (
-        <div className="p-5 space-y-6">
+        <div className="jm-card-body space-y-5">
           {/* BOTÃO ADICIONAR PERGUNTA & CALLOUT EXPLICATIVO */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">
+              <p className="text-sm text-jm-muted">
                 Adicione dúvidas comuns para responder aos leitores e habilitar o formato sanfona na busca do Google.
               </p>
             </div>
             <button
               type="button"
               onClick={handleAddFaq}
-              className="inline-flex items-center justify-center space-x-1.5 px-3.5 py-2 rounded-xl bg-[#E85D26] hover:bg-orange-600 text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+              className="jm-btn jm-btn-primary jm-btn-sm shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Adicionar Pergunta</span>
@@ -147,53 +147,53 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
 
           {/* LISTA DINÂMICA DE PERGUNTAS & RESPOSTAS */}
           {faqs.length === 0 ? (
-            <div className="p-8 border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl text-center space-y-3 bg-neutral-50/50 dark:bg-neutral-950/50">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 mx-auto flex items-center justify-center">
-                <HelpCircle className="w-6 h-6" />
+            <div className="space-y-3 rounded-[6px] border border-dashed border-jm-border-strong bg-jm-subtle p-6 text-center">
+              <div className="mx-auto flex h-9 w-9 items-center justify-center text-jm-muted">
+                <HelpCircle className="h-6 w-6" strokeWidth={1.5} />
               </div>
               <div className="max-w-sm mx-auto space-y-1">
-                <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                <p className="text-sm font-medium text-jm-fg">
                   Nenhuma pergunta frequente cadastrada
                 </p>
-                <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-xs leading-relaxed text-jm-muted">
                   Artigos com FAQ estruturada têm até 30% mais visibilidade nos resultados orgânicos através dos Rich Cards do Google.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleAddFaq}
-                className="inline-flex items-center space-x-1 text-xs font-bold text-[#E85D26] hover:underline cursor-pointer pt-1"
+                className="jm-link inline-flex cursor-pointer items-center gap-1 pt-1 text-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Clique para criar a 1ª pergunta</span>
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {faqs.map((faq, index) => (
                 <div
                   key={faq.id || index}
-                  className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-3 shadow-2xs group"
+                  className="group space-y-3 rounded-[6px] border border-jm-border bg-jm-subtle p-3 md:p-4"
                 >
                   {/* BARRA DE CONTROLE DO ITEM */}
-                  <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-2.5">
+                  <div className="flex items-center justify-between border-b border-jm-border pb-2">
                     <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-purple-600 text-white text-[10px] font-black flex items-center justify-center">
+                      <span className="grid h-5 min-w-5 place-items-center rounded-[3px] bg-jm-primary px-1 text-[10px] font-semibold tabular-nums text-white">
                         {index + 1}
                       </span>
-                      <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                      <span className="text-[13px] font-medium text-jm-fg">
                         Pergunta #{index + 1}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-0.5">
                       {/* Subir */}
                       <button
                         type="button"
                         onClick={() => handleMoveFaq(index, 'up')}
                         disabled={index === 0}
                         title="Mover para cima"
-                        className="p-1 rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-white disabled:opacity-30 cursor-pointer"
+                        className="jm-icon-btn !h-7 !w-7"
                       >
                         <ChevronUp className="w-3.5 h-3.5" />
                       </button>
@@ -203,7 +203,7 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
                         onClick={() => handleMoveFaq(index, 'down')}
                         disabled={index === faqs.length - 1}
                         title="Mover para baixo"
-                        className="p-1 rounded text-neutral-400 hover:text-neutral-700 dark:hover:text-white disabled:opacity-30 cursor-pointer"
+                        className="jm-icon-btn !h-7 !w-7"
                       >
                         <ChevronDown className="w-3.5 h-3.5" />
                       </button>
@@ -212,7 +212,7 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
                         type="button"
                         onClick={() => handleDeleteFaq(index)}
                         title="Remover pergunta"
-                        className="p-1 rounded text-neutral-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer"
+                        className="jm-icon-btn !h-7 !w-7 hover:!bg-jm-danger-bg hover:!text-jm-danger-fg"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -221,7 +221,7 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
 
                   {/* CAMPO PERGUNTA (H3) */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                    <label className="jm-label !mb-1 !text-xs">
                       Pergunta (Tag H3 Semântica)
                     </label>
                     <input
@@ -229,13 +229,13 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
                       value={faq.question}
                       onChange={(e) => handleUpdateFaq(index, 'question', e.target.value)}
                       placeholder="Ex: Como funciona a cobrança por mensagens da API Oficial?"
-                      className="w-full px-3.5 py-2 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] font-medium"
+                      className="jm-input"
                     />
                   </div>
 
                   {/* CAMPO RESPOSTA */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
+                    <label className="jm-label !mb-1 !text-xs">
                       Resposta Completa
                     </label>
                     <textarea
@@ -243,7 +243,7 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
                       value={faq.answer}
                       onChange={(e) => handleUpdateFaq(index, 'answer', e.target.value)}
                       placeholder="Ex: A Meta cobra por janelas de conversação de 24 horas iniciadas pelo cliente ou pela empresa..."
-                      className="w-full px-3.5 py-2 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] resize-none font-medium"
+                      className="jm-input resize-none"
                     />
                   </div>
                 </div>
@@ -253,40 +253,40 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
 
           {/* PREVIEW DO ACCORDION INTERATIVO NO EDITOR */}
           {faqs.length > 0 && (
-            <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 space-y-3">
+            <div className="space-y-3 border-t border-jm-border pt-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#E85D26]" />
+                <span className="jm-eyebrow flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
                   <span>Prévia do Accordion no Artigo</span>
                 </span>
-                <span className="text-[10px] text-neutral-400">Clique para testar a abertura</span>
+                <span className="hidden text-[11px] text-jm-muted sm:inline">Clique para testar a abertura</span>
               </div>
 
-              <div className="space-y-2 bg-white dark:bg-neutral-950 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800">
+              <div className="divide-y divide-jm-border overflow-hidden rounded-[6px] border border-jm-border bg-jm-surface">
                 {faqs.map((faq, idx) => {
                   const isExpanded = activePreviewIndex === idx;
                   return (
                     <div
                       key={idx}
-                      className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden"
+                      className="overflow-hidden"
                     >
                       <button
                         type="button"
                         onClick={() => setActivePreviewIndex(isExpanded ? null : idx)}
-                        className="w-full p-3 text-left font-bold text-xs text-neutral-900 dark:text-white flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition"
+                        className="flex w-full items-center justify-between px-3 py-2.5 text-left text-[13px] font-medium text-jm-fg transition-colors hover:bg-jm-hover"
                       >
                         <span className="pr-2">
                           {faq.question || `Pergunta #${idx + 1} (sem título)`}
                         </span>
                         {isExpanded ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-[#E85D26] shrink-0" />
+                          <ChevronUp className="h-3.5 w-3.5 shrink-0 text-jm-accent-text" />
                         ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                          <ChevronDown className="w-3.5 h-3.5 text-jm-muted shrink-0" />
                         )}
                       </button>
 
                       {isExpanded && (
-                        <div className="p-3 text-xs text-neutral-600 dark:text-neutral-300 bg-white dark:bg-neutral-950 border-t border-neutral-100 dark:border-neutral-800 leading-relaxed">
+                        <div className="px-3 pb-3 text-[13px] leading-relaxed text-jm-muted">
                           {faq.answer || 'Resposta não preenchida ainda.'}
                         </div>
                       )}
@@ -299,34 +299,34 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
 
           {/* VISUALIZADOR DO SCHEMA JSON-LD ESTRUTURADO */}
           {faqs.length > 0 && (
-            <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="border-t border-jm-border pt-3">
               <button
                 type="button"
                 onClick={() => setShowSchemaPreview(!showSchemaPreview)}
-                className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-white flex items-center justify-between w-full py-1 cursor-pointer"
+                className="flex w-full cursor-pointer items-center justify-between gap-2 py-1 text-left text-xs font-medium text-jm-muted hover:text-jm-fg"
               >
                 <div className="flex items-center gap-1.5">
-                  <Code2 className="w-3.5 h-3.5 text-purple-500" />
+                  <Code2 className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
                   <span>Injeção Automática de Schema JSON-LD (schema.org/FAQPage)</span>
                 </div>
                 {showSchemaPreview ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
 
               {showSchemaPreview && (
-                <div className="mt-3 p-3.5 bg-neutral-900 text-neutral-100 rounded-xl border border-neutral-800 space-y-2 animate-fadeIn font-mono text-[11px]">
-                  <div className="flex items-center justify-between pb-1 border-b border-neutral-800">
-                    <span className="text-neutral-400 text-[10px]">
+                <div className="mt-3 space-y-2 rounded-[4px] border border-[#1C2535] bg-[#0A1220] p-3 font-mono text-[11px] text-[#E8ECF2]">
+                  <div className="flex items-center justify-between gap-2 border-b border-[#1C2535] pb-1.5">
+                    <span className="text-[10px] text-[#8590A3]">
                       application/ld+json injetado no HTML público
                     </span>
                     <button
                       type="button"
                       onClick={handleCopySchema}
-                      className="px-2 py-1 bg-neutral-800 hover:bg-neutral-700 rounded text-[10px] text-white flex items-center gap-1 cursor-pointer transition"
+                      className="flex shrink-0 cursor-pointer items-center gap-1 rounded-[3px] bg-white/10 px-2 py-1 text-[10px] text-white transition-colors hover:bg-white/15"
                     >
                       {copiedSchema ? (
                         <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span className="text-emerald-400">Copiado</span>
+                          <Check className="h-3 w-3 text-[#4CCB8A]" />
+                          <span className="text-[#4CCB8A]">Copiado</span>
                         </>
                       ) : (
                         <>
@@ -336,7 +336,7 @@ export default function FAQModule({ article, onChange }: FAQModuleProps) {
                       )}
                     </button>
                   </div>
-                  <pre className="overflow-x-auto p-1 text-[10px] text-emerald-400 max-h-48">
+                  <pre className="max-h-48 overflow-x-auto p-1 text-[10px] text-[#4CCB8A]">
                     {jsonLdString}
                   </pre>
                 </div>

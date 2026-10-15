@@ -347,12 +347,15 @@ html.lenis body {
 }
 
 
+
 /* =====================================================================
-   PAINEL ADMIN: Design tokens (estilo Untitled UI, marca JM Master)
-   Escopo: .jm-panel. Não afeta o site público.
+   PAINEL ADMIN — design system
+   Plano, denso e com cantos curtos. Azul JM para ações, laranja JM só
+   para indicar "ativo/atual" e para a ação principal de cada tela.
+   Escopo: .jm-panel e html.jm-root (o layout do painel adiciona a classe,
+   assim modais em portal no <body> também recebem os tokens).
    ===================================================================== */
 
-/* Escalas de marca (estáticas, iguais nos dois temas) */
 @theme {
   --color-jm-blue-50:  #EEF3FB;
   --color-jm-blue-100: #D9E4F5;
@@ -362,7 +365,7 @@ html.lenis body {
   --color-jm-blue-500: #2B5FAF;
   --color-jm-blue-600: #174A93;
   --color-jm-blue-700: #0E3A7A;
-  --color-jm-blue-800: #082B61; /* AZUL OFICIAL */
+  --color-jm-blue-800: #082B61; /* azul oficial */
   --color-jm-blue-900: #061F46;
 
   --color-jm-orange-50:  #FFF4ED;
@@ -370,82 +373,114 @@ html.lenis body {
   --color-jm-orange-200: #FFD0B0;
   --color-jm-orange-300: #FDAA78;
   --color-jm-orange-400: #F5803F;
-  --color-jm-orange-500: #E85D26; /* LARANJA OFICIAL (logo, ícones, gráficos) */
-  --color-jm-orange-600: #CC4310; /* fundo de botão sólido (texto branco passa AA) */
-  --color-jm-orange-700: #A8360C; /* texto laranja sobre fundo claro (passa AA) */
+  --color-jm-orange-500: #E85D26; /* laranja oficial */
+  --color-jm-orange-600: #CC4310;
+  --color-jm-orange-700: #A8360C;
   --color-jm-orange-800: #8A2D0C;
 }
 
-/* Tokens semânticos: TEMA CLARO */
-.jm-panel {
-  --jm-bg:            #FCFCFD;
+/* Tema claro */
+.jm-panel,
+html.jm-root {
+  --jm-bg:            #F4F5F7;
   --jm-surface:       #FFFFFF;
-  --jm-subtle:        #F9FAFB;  /* hover de linha, cabeçalho de tabela */
-  --jm-border:        #E4E7EC;  /* borda padrão 1px */
-  --jm-border-strong: #D0D5DD;  /* inputs, botões secundários */
-  --jm-fg:            #101828;
-  --jm-fg2:           #344054;
-  --jm-muted:         #667085;
-  --jm-placeholder:   #98A2B3;
+  --jm-subtle:        #F7F8FA;
+  --jm-hover:         #F1F3F6;
+  --jm-border:        #E2E5EA;
+  --jm-border-strong: #CBD1DA;
+  --jm-fg:            #0F1729;
+  --jm-fg2:           #2F3B50;
+  --jm-muted:         #5F6B7F;
+  --jm-placeholder:   #97A1B1;
 
   --jm-primary:         #0E3A7A;
   --jm-primary-hover:   #082B61;
   --jm-primary-fg:      #FFFFFF;
   --jm-primary-soft:    #EEF3FB;
   --jm-primary-border:  #B3C9EB;
-  --jm-primary-text:    #082B61;
+  --jm-primary-text:    #0E3A7A;
 
-  --jm-accent:          #CC4310;
-  --jm-accent-hover:    #B33A0C;
+  --jm-accent:          #D24A14;
+  --jm-accent-hover:    #B93F0F;
   --jm-accent-soft:     #FFF4ED;
   --jm-accent-border:   #FFD0B0;
   --jm-accent-text:     #A8360C;
+  --jm-accent-line:     #E85D26;
 
-  --jm-success-bg: #ECFDF3; --jm-success-border: #ABEFC6; --jm-success-fg: #067647;
-  --jm-warning-bg: #FFFAEB; --jm-warning-border: #FEDF89; --jm-warning-fg: #B54708;
-  --jm-danger-bg:  #FEF3F2; --jm-danger-border:  #FECDCA; --jm-danger-fg:  #B42318;
+  --jm-success-bg: #EDFAF2; --jm-success-border: #B7E8CA; --jm-success-fg: #0B7346;
+  --jm-warning-bg: #FFF8E8; --jm-warning-border: #F8DD9C; --jm-warning-fg: #A1500B;
+  --jm-danger-bg:  #FEF2F1; --jm-danger-border:  #F8CBC6; --jm-danger-fg:  #B42318;
 
-  --jm-ring: rgb(23 74 147 / 0.22);
+  /* Menu lateral: azul oficial */
+  --jm-side-bg:     #082B61;
+  --jm-side-border: rgb(255 255 255 / 0.08);
+  --jm-side-fg:     #FFFFFF;
+  --jm-side-muted:  rgb(255 255 255 / 0.66);
+  --jm-side-hover:  rgb(255 255 255 / 0.07);
+  --jm-side-active: rgb(255 255 255 / 0.11);
+
+  --jm-ring: rgb(14 58 122 / 0.20);
+  --jm-overlay: rgb(9 16 30 / 0.45);
+  --jm-shadow-pop: 0 10px 28px -8px rgb(15 23 41 / 0.20), 0 2px 6px rgb(15 23 41 / 0.06);
+
+  /* Cantos curtos em todo o painel (inclusive utilitários rounded-* já usados) */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 6px;
+  --radius-3xl: 8px;
+  --radius: 4px;
 }
 
-/* Tokens semânticos: TEMA ESCURO (azul-petróleo, sem preto puro, bordas sutis) */
+/* Tema escuro */
 .dark .jm-panel,
-.jm-panel.dark {
-  --jm-bg:            #0B0F17;
-  --jm-surface:       #111723;
-  --jm-subtle:        #161D2B;
-  --jm-border:        #232C3B;
-  --jm-border-strong: #2F3A4D;
-  --jm-fg:            #F5F7FA;
-  --jm-fg2:           #CBD2DC;
-  --jm-muted:         #8C97A8;
-  --jm-placeholder:   #667085;
+.jm-panel.dark,
+html.jm-root.dark {
+  --jm-bg:            #0C1018;
+  --jm-surface:       #121822;
+  --jm-subtle:        #161D29;
+  --jm-hover:         #1A2230;
+  --jm-border:        #222B3A;
+  --jm-border-strong: #2F3A4C;
+  --jm-fg:            #E8ECF2;
+  --jm-fg2:           #C2C9D4;
+  --jm-muted:         #8590A3;
+  --jm-placeholder:   #5E697C;
 
   --jm-primary:         #2B5FAF;
   --jm-primary-hover:   #3A6DBD;
   --jm-primary-fg:      #FFFFFF;
-  --jm-primary-soft:    rgb(76 124 200 / 0.16);
-  --jm-primary-border:  rgb(76 124 200 / 0.35);
+  --jm-primary-soft:    rgb(76 124 200 / 0.14);
+  --jm-primary-border:  rgb(76 124 200 / 0.34);
   --jm-primary-text:    #A9C4EE;
 
-  --jm-accent:          #CC4310;
+  --jm-accent:          #D24A14;
   --jm-accent-hover:    #E85D26;
-  --jm-accent-soft:     rgb(232 93 38 / 0.14);
+  --jm-accent-soft:     rgb(232 93 38 / 0.13);
   --jm-accent-border:   rgb(232 93 38 / 0.32);
   --jm-accent-text:     #FF9A66;
+  --jm-accent-line:     #E85D26;
 
-  --jm-success-bg: rgb(71 205 137 / 0.12);  --jm-success-border: rgb(71 205 137 / 0.28);  --jm-success-fg: #47CD89;
-  --jm-warning-bg: rgb(253 176 34 / 0.12);  --jm-warning-border: rgb(253 176 34 / 0.28);  --jm-warning-fg: #FDB022;
-  --jm-danger-bg:  rgb(249 112 102 / 0.12); --jm-danger-border:  rgb(249 112 102 / 0.28); --jm-danger-fg:  #F97066;
+  --jm-success-bg: rgb(71 205 137 / 0.11);  --jm-success-border: rgb(71 205 137 / 0.26);  --jm-success-fg: #4CCB8A;
+  --jm-warning-bg: rgb(253 176 34 / 0.11);  --jm-warning-border: rgb(253 176 34 / 0.26);  --jm-warning-fg: #F5B13D;
+  --jm-danger-bg:  rgb(249 112 102 / 0.11); --jm-danger-border:  rgb(249 112 102 / 0.26); --jm-danger-fg:  #F7867C;
 
-  --jm-ring: rgb(76 124 200 / 0.40);
+  --jm-side-bg:     #0A1220;
+  --jm-side-border: #1C2535;
+
+  --jm-ring: rgb(76 124 200 / 0.35);
+  --jm-overlay: rgb(0 0 0 / 0.6);
+  --jm-shadow-pop: 0 14px 34px -10px rgb(0 0 0 / 0.65), 0 0 0 1px rgb(255 255 255 / 0.03);
 }
 
-/* Expõe os tokens como utilitários Tailwind (bg-jm-surface, text-jm-muted...) */
+/* Utilitários Tailwind a partir dos tokens (bg-jm-surface, text-jm-muted...) */
 @theme inline {
   --color-jm-bg: var(--jm-bg);
   --color-jm-surface: var(--jm-surface);
   --color-jm-subtle: var(--jm-subtle);
+  --color-jm-hover: var(--jm-hover);
   --color-jm-border: var(--jm-border);
   --color-jm-border-strong: var(--jm-border-strong);
   --color-jm-fg: var(--jm-fg);
@@ -465,6 +500,7 @@ html.lenis body {
   --color-jm-accent-soft: var(--jm-accent-soft);
   --color-jm-accent-border: var(--jm-accent-border);
   --color-jm-accent-text: var(--jm-accent-text);
+  --color-jm-accent-line: var(--jm-accent-line);
 
   --color-jm-success-bg: var(--jm-success-bg);
   --color-jm-success-border: var(--jm-success-border);
@@ -476,58 +512,158 @@ html.lenis body {
   --color-jm-danger-border: var(--jm-danger-border);
   --color-jm-danger-fg: var(--jm-danger-fg);
 
+  --color-jm-side-bg: var(--jm-side-bg);
+  --color-jm-side-border: var(--jm-side-border);
+  --color-jm-side-fg: var(--jm-side-fg);
+  --color-jm-side-muted: var(--jm-side-muted);
+  --color-jm-side-hover: var(--jm-side-hover);
+  --color-jm-side-active: var(--jm-side-active);
+
   --color-jm-ring: var(--jm-ring);
+  --color-jm-overlay: var(--jm-overlay);
+  --shadow-jm-pop: var(--jm-shadow-pop);
+}
+
+/* Base do painel: fundo correto no overscroll, scrollbar discreta */
+html.jm-root,
+html.jm-root body {
+  background-color: var(--jm-bg);
+  color: var(--jm-fg);
+}
+html.jm-root { color-scheme: light; }
+html.jm-root.dark { color-scheme: dark; }
+html.jm-root ::-webkit-scrollbar { width: 10px; height: 10px; }
+html.jm-root ::-webkit-scrollbar-track { background: transparent; }
+html.jm-root ::-webkit-scrollbar-thumb {
+  background: var(--jm-border-strong);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 8px;
+}
+html.jm-root ::-webkit-scrollbar-thumb:hover { background-color: var(--jm-muted); }
+html.jm-root input[type="checkbox"],
+html.jm-root input[type="radio"] { accent-color: var(--jm-primary); }
+html.jm-root ::selection { background: var(--jm-primary); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.jm-root *, html.jm-root *::before, html.jm-root *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes jm-pop-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes jm-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 @layer components {
-  .jm-card        { @apply rounded-xl border border-jm-border bg-jm-surface shadow-xs; }
-  .jm-card-header { @apply flex items-center justify-between gap-3 border-b border-jm-border px-5 py-4 md:px-6; }
-  .jm-card-title  { @apply text-base font-semibold text-jm-fg; }
+  /* Estrutura de página */
+  .jm-page        { @apply mx-auto w-full max-w-[1400px] space-y-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-7; }
+  .jm-page-header { @apply flex flex-col gap-3 border-b border-jm-border pb-5 sm:flex-row sm:items-end sm:justify-between; }
+  .jm-page-title  { @apply text-xl font-semibold tracking-[-0.01em] text-jm-fg; }
+  .jm-page-desc   { @apply mt-1 max-w-2xl text-sm text-jm-muted; }
+  .jm-eyebrow     { @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-jm-muted; }
+  .jm-section-title { @apply text-sm font-semibold text-jm-fg; }
+
+  /* Cartões */
+  .jm-card        { @apply rounded-[6px] border border-jm-border bg-jm-surface; }
+  .jm-card-header { @apply flex min-h-12 items-center justify-between gap-3 border-b border-jm-border px-4 py-2.5 md:px-5; }
+  .jm-card-title  { @apply text-sm font-semibold text-jm-fg; }
+  .jm-card-body   { @apply p-4 md:p-5; }
+  .jm-card-footer { @apply flex items-center justify-end gap-2 border-t border-jm-border px-4 py-3 md:px-5; }
 
   /* Botões */
-  .jm-btn { @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-4 focus-visible:ring-jm-ring disabled:cursor-not-allowed disabled:opacity-50; }
-  .jm-btn-sm        { @apply h-9 px-3; }
-  .jm-btn-primary   { @apply bg-jm-primary text-jm-primary-fg shadow-xs hover:bg-jm-primary-hover; }
-  .jm-btn-accent    { @apply bg-jm-accent text-white shadow-xs hover:bg-jm-accent-hover; }
-  .jm-btn-secondary { @apply border border-jm-border-strong bg-jm-surface text-jm-fg2 shadow-xs hover:bg-jm-subtle hover:text-jm-fg; }
-  .jm-btn-ghost     { @apply text-jm-fg2 hover:bg-jm-subtle hover:text-jm-fg; }
-  .jm-btn-danger    { @apply border border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg hover:opacity-90; }
-  .jm-icon-btn      { @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-jm-muted transition-colors cursor-pointer outline-none hover:bg-jm-subtle hover:text-jm-fg focus-visible:ring-4 focus-visible:ring-jm-ring; }
+  .jm-btn { @apply inline-flex h-9 items-center justify-center gap-2 rounded-[4px] px-3.5 text-[13px] font-medium whitespace-nowrap select-none transition-colors duration-100 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-jm-ring disabled:cursor-not-allowed disabled:opacity-50; }
+  .jm-btn-sm        { @apply h-8 gap-1.5 px-2.5 text-xs; }
+  .jm-btn-lg        { @apply h-10 px-4 text-sm; }
+  .jm-btn-primary   { @apply bg-jm-primary text-jm-primary-fg hover:bg-jm-primary-hover; }
+  .jm-btn-accent    { @apply bg-jm-accent text-white hover:bg-jm-accent-hover; }
+  .jm-btn-secondary { @apply border border-jm-border-strong bg-jm-surface text-jm-fg2 hover:bg-jm-hover hover:text-jm-fg; }
+  .jm-btn-ghost     { @apply text-jm-fg2 hover:bg-jm-hover hover:text-jm-fg; }
+  .jm-btn-danger    { @apply border border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg hover:border-jm-danger-fg; }
+  .jm-btn-danger-solid { @apply bg-[#B42318] text-white hover:bg-[#912018]; }
+  .jm-icon-btn      { @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-jm-muted transition-colors duration-100 cursor-pointer outline-none hover:bg-jm-hover hover:text-jm-fg focus-visible:ring-2 focus-visible:ring-jm-ring disabled:cursor-not-allowed disabled:opacity-40; }
+  .jm-link          { @apply font-medium text-jm-primary-text underline-offset-2 hover:underline; }
 
-  /* Navegação */
-  .jm-nav-link        { @apply flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-jm-fg2 transition-colors cursor-pointer outline-none hover:bg-jm-subtle hover:text-jm-fg focus-visible:ring-4 focus-visible:ring-jm-ring; }
+  /* Navegação genérica (menu superior) */
+  .jm-nav-link        { @apply flex h-9 w-full items-center gap-2.5 rounded-[4px] px-2.5 text-[13px] font-medium text-jm-fg2 transition-colors duration-100 cursor-pointer outline-none hover:bg-jm-hover hover:text-jm-fg focus-visible:ring-2 focus-visible:ring-jm-ring; }
   .jm-nav-link-active { @apply bg-jm-primary-soft text-jm-primary-text hover:bg-jm-primary-soft hover:text-jm-primary-text; }
 
-  /* Formulário */
-  .jm-label { @apply mb-1.5 block text-sm font-medium text-jm-fg2; }
-  .jm-input { @apply h-10 w-full rounded-lg border border-jm-border-strong bg-jm-surface px-3.5 text-sm text-jm-fg shadow-xs outline-none transition placeholder:text-jm-placeholder focus:border-jm-primary-border focus:ring-4 focus:ring-jm-ring; }
-  textarea.jm-input { @apply h-auto py-2.5; }
+  /* Menu lateral (fundo azul oficial) */
+  .jm-side-link        { @apply relative flex h-9 w-full items-center gap-2.5 rounded-[4px] px-2.5 text-[13px] font-medium text-jm-side-muted transition-colors duration-100 cursor-pointer outline-none hover:bg-jm-side-hover hover:text-jm-side-fg focus-visible:ring-2 focus-visible:ring-white/30; }
+  .jm-side-link-active { @apply bg-jm-side-active text-jm-side-fg before:absolute before:inset-y-1.5 before:-left-3 before:w-[3px] before:rounded-r-[2px] before:bg-jm-accent-line; }
 
-  /* Badges (somente com dado/estado real) */
-  .jm-badge         { @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
+  /* Formulário */
+  .jm-label { @apply mb-1.5 block text-[13px] font-medium text-jm-fg2; }
+  .jm-help  { @apply mt-1 text-xs text-jm-muted; }
+  .jm-input { @apply h-9 w-full rounded-[4px] border border-jm-border-strong bg-jm-surface px-3 text-sm text-jm-fg outline-none transition-colors duration-100 placeholder:text-jm-placeholder focus:border-jm-primary focus:ring-2 focus:ring-jm-ring disabled:cursor-not-allowed disabled:bg-jm-subtle disabled:text-jm-muted; }
+  textarea.jm-input { @apply h-auto py-2 leading-relaxed; }
+
+  /* Badges: só para estado/dado real */
+  .jm-badge         { @apply inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-px text-[11px] font-medium leading-[18px] whitespace-nowrap; }
   .jm-badge-neutral { @apply border-jm-border bg-jm-subtle text-jm-fg2; }
   .jm-badge-primary { @apply border-jm-primary-border bg-jm-primary-soft text-jm-primary-text; }
   .jm-badge-accent  { @apply border-jm-accent-border bg-jm-accent-soft text-jm-accent-text; }
   .jm-badge-success { @apply border-jm-success-border bg-jm-success-bg text-jm-success-fg; }
   .jm-badge-warning { @apply border-jm-warning-border bg-jm-warning-bg text-jm-warning-fg; }
   .jm-badge-danger  { @apply border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg; }
+  .jm-dot           { @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current; }
 
-  /* Caixa de ícone (função: agrupar domínio por cor) */
-  .jm-icon-chip         { @apply grid h-9 w-9 shrink-0 place-items-center rounded-lg border; }
+  /* Caixa de ícone (uso pontual) */
+  .jm-icon-chip         { @apply grid h-8 w-8 shrink-0 place-items-center rounded-[4px] border; }
   .jm-icon-chip-primary { @apply border-jm-primary-border bg-jm-primary-soft text-jm-primary-text; }
   .jm-icon-chip-accent  { @apply border-jm-accent-border bg-jm-accent-soft text-jm-accent-text; }
   .jm-icon-chip-neutral { @apply border-jm-border bg-jm-subtle text-jm-fg2; }
 
-  /* Abas sublinhadas (estilo "Overview / Table / List view") */
-  .jm-tabs       { @apply flex gap-5 border-b border-jm-border; }
-  .jm-tab        { @apply -mb-px border-b-2 border-transparent pb-3 text-sm font-semibold text-jm-muted transition-colors cursor-pointer hover:text-jm-fg; }
-  .jm-tab-active { @apply border-jm-primary text-jm-primary-text; }
+  /* Abas sublinhadas: indicador laranja = "atual" */
+  .jm-tabs       { @apply flex gap-5 overflow-x-auto border-b border-jm-border [scrollbar-width:none]; }
+  .jm-tab        { @apply -mb-px inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent pb-2.5 text-[13px] font-medium text-jm-muted transition-colors duration-100 cursor-pointer whitespace-nowrap hover:text-jm-fg; }
+  .jm-tab-active { @apply border-jm-accent-line text-jm-fg; }
 
-  /* Tabela */
-  .jm-table-wrap { @apply overflow-hidden rounded-xl border border-jm-border bg-jm-surface shadow-xs; }
+  /* Controle segmentado (filtros, alternância de visão) */
+  .jm-segmented      { @apply inline-flex items-center gap-0.5 rounded-[4px] border border-jm-border bg-jm-subtle p-0.5; }
+  .jm-segment        { @apply inline-flex h-7 items-center gap-1.5 rounded-[3px] px-2.5 text-xs font-medium text-jm-muted transition-colors duration-100 cursor-pointer whitespace-nowrap hover:text-jm-fg; }
+  .jm-segment-active { @apply bg-jm-surface text-jm-fg shadow-[0_0_0_1px_var(--jm-border)]; }
+
+  /* Tabela (rolagem horizontal no mobile) */
+  .jm-table-wrap { @apply overflow-x-auto rounded-[6px] border border-jm-border bg-jm-surface; }
   .jm-table      { @apply w-full border-collapse text-left text-sm; }
-  .jm-th         { @apply h-11 whitespace-nowrap border-b border-jm-border bg-jm-subtle px-4 text-xs font-medium text-jm-muted first:pl-6 last:pr-6; }
-  .jm-td         { @apply border-b border-jm-border px-4 py-4 text-sm text-jm-muted first:pl-6 last:pr-6; }
-  .jm-tr         { @apply transition-colors hover:bg-jm-subtle; }
+  .jm-th         { @apply h-9 whitespace-nowrap border-b border-jm-border bg-jm-subtle px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-jm-muted first:pl-4 last:pr-4; }
+  .jm-td         { @apply border-b border-jm-border px-3 py-2.5 text-sm text-jm-fg2 first:pl-4 last:pr-4; }
+  .jm-tr         { @apply transition-colors duration-75 hover:bg-jm-hover; }
   .jm-table tbody tr:last-child td { border-bottom-width: 0; }
+
+  /* Listas simples */
+  .jm-list      { @apply divide-y divide-jm-border; }
+  .jm-list-item { @apply flex items-center justify-between gap-3 px-4 py-3 md:px-5; }
+
+  /* Estados vazios / carregando */
+  .jm-empty    { @apply flex flex-col items-center justify-center gap-2 px-6 py-12 text-center text-sm text-jm-muted; }
+  .jm-skeleton { @apply animate-pulse rounded-[3px] bg-jm-hover; }
+
+  /* Sobreposições: modal, gaveta, menu */
+  .jm-overlay      { @apply fixed inset-0 z-[100] flex items-end justify-center bg-jm-overlay p-0 sm:items-center sm:p-4; animation: jm-fade-in 120ms ease-out; }
+  .jm-modal        { @apply flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[8px] border border-jm-border bg-jm-surface text-jm-fg shadow-jm-pop sm:max-w-lg sm:rounded-[6px]; animation: jm-pop-in 140ms ease-out; }
+  .jm-modal-header { @apply flex items-center justify-between gap-3 border-b border-jm-border px-4 py-3 md:px-5; }
+  .jm-modal-title  { @apply text-[15px] font-semibold text-jm-fg; }
+  .jm-modal-body   { @apply flex-1 overflow-y-auto px-4 py-4 md:px-5; }
+  .jm-modal-footer { @apply flex flex-col-reverse gap-2 border-t border-jm-border bg-jm-subtle px-4 py-3 sm:flex-row sm:justify-end md:px-5; }
+  .jm-menu         { @apply min-w-44 rounded-[4px] border border-jm-border bg-jm-surface py-1 text-sm shadow-jm-pop; animation: jm-pop-in 100ms ease-out; }
+  .jm-menu-item    { @apply flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] text-jm-fg2 cursor-pointer hover:bg-jm-hover hover:text-jm-fg; }
+
+  /* Alertas inline */
+  .jm-alert         { @apply flex items-start gap-2.5 rounded-[4px] border px-3.5 py-2.5 text-sm; }
+  .jm-alert-info    { @apply border-jm-primary-border bg-jm-primary-soft text-jm-primary-text; }
+  .jm-alert-success { @apply border-jm-success-border bg-jm-success-bg text-jm-success-fg; }
+  .jm-alert-warning { @apply border-jm-warning-border bg-jm-warning-bg text-jm-warning-fg; }
+  .jm-alert-danger  { @apply border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg; }
+
+  /* Indicadores numéricos */
+  .jm-stat-label { @apply text-xs font-medium text-jm-muted; }
+  .jm-stat-value { @apply mt-1.5 text-2xl font-semibold tracking-tight tabular-nums text-jm-fg; }
 }

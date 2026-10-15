@@ -43,11 +43,11 @@ export function useToastState() {
 
 // ─── COMPONENTE: ToastContainer ─────────────────────────────────────────────
 
-const toastConfig: Record<ToastType, { border: string; icon: string; iconColor: string; barColor: string }> = {
-  success: { border: 'border-emerald-200 dark:border-emerald-800/60', icon: '✓', iconColor: 'text-emerald-600 dark:text-emerald-400', barColor: 'bg-emerald-500' },
-  error:   { border: 'border-rose-200 dark:border-rose-800/60',   icon: '✕', iconColor: 'text-rose-600 dark:text-rose-400',   barColor: 'bg-rose-500'   },
-  warning: { border: 'border-amber-200 dark:border-amber-800/60', icon: '⚠', iconColor: 'text-amber-600 dark:text-amber-400', barColor: 'bg-amber-500' },
-  info:    { border: 'border-sky-200 dark:border-sky-800/60',   icon: 'ℹ', iconColor: 'text-sky-600 dark:text-sky-400',   barColor: 'bg-sky-500'   },
+const toastConfig: Record<ToastType, { icon: string; iconColor: string; barColor: string }> = {
+  success: { icon: '✓', iconColor: 'text-jm-success-fg', barColor: 'bg-jm-success-fg' },
+  error:   { icon: '✕', iconColor: 'text-jm-danger-fg',  barColor: 'bg-jm-danger-fg'  },
+  warning: { icon: '!', iconColor: 'text-jm-warning-fg', barColor: 'bg-jm-warning-fg' },
+  info:    { icon: 'i', iconColor: 'text-jm-primary-text', barColor: 'bg-jm-primary' },
 };
 
 export function ToastContainer({
@@ -58,30 +58,28 @@ export function ToastContainer({
   removeToast: (id: string) => void;
 }) {
   return (
-    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <div className="pointer-events-none fixed inset-x-3 bottom-3 z-[9999] flex flex-col gap-2 sm:inset-x-auto sm:bottom-5 sm:right-5">
       {toasts.map(t => {
         const cfg = toastConfig[t.type];
         return (
           <div
             key={t.id}
-            className={`
-              pointer-events-auto flex items-start gap-3 min-w-[320px] max-w-[440px]
-              jm-card ${cfg.border} rounded-xl shadow-lg px-4 py-3
-            `}
-            style={{ animation: 'jm-slide-in 0.3s ease-out forwards' }}
+            className="pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-[4px] border border-jm-border bg-jm-surface py-2.5 pl-4 pr-3 text-jm-fg shadow-jm-pop sm:w-[380px]"
+            style={{ animation: 'jm-pop-in 140ms ease-out' }}
           >
-            <span className={`text-base font-bold mt-0.5 flex-shrink-0 ${cfg.iconColor}`}>
+            <span className={`absolute inset-y-0 left-0 w-[3px] ${cfg.barColor}`} aria-hidden="true" />
+            <span className={`mt-px w-3 shrink-0 text-center text-sm font-semibold ${cfg.iconColor}`}>
               {cfg.icon}
             </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-jm-text leading-snug">{t.title}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-semibold leading-snug text-jm-fg">{t.title}</p>
               {t.message && (
-                <p className="text-xs text-jm-muted mt-0.5 leading-snug">{t.message}</p>
+                <p className="mt-0.5 text-xs leading-snug text-jm-muted">{t.message}</p>
               )}
             </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-jm-muted hover:text-jm-text transition text-lg leading-none flex-shrink-0 mt-0.5 ml-1 cursor-pointer"
+              className="-mr-1 inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-[3px] text-base leading-none text-jm-muted transition-colors hover:bg-jm-hover hover:text-jm-fg"
               aria-label="Fechar"
             >
               ×
@@ -126,9 +124,9 @@ export function useConfirm() {
 // ─── COMPONENTE: ConfirmModal ────────────────────────────────────────────────
 
 const variantCfg = {
-  danger:  { icon: '🗑️', confirmBtn: 'bg-rose-600 hover:bg-rose-700 text-white', iconBg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800' },
-  warning: { icon: '⚠️', confirmBtn: 'bg-amber-600 hover:bg-amber-700 text-white', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
-  default: { icon: '❓', confirmBtn: 'jm-btn-primary', iconBg: 'bg-orange-50 text-jm-orange dark:bg-orange-950/40 dark:text-orange-400 border border-orange-200 dark:border-orange-800' },
+  danger:  { confirmBtn: 'jm-btn-danger-solid', bar: 'bg-jm-danger-fg' },
+  warning: { confirmBtn: 'jm-btn-accent',       bar: 'bg-jm-warning-fg' },
+  default: { confirmBtn: 'jm-btn-primary',      bar: 'bg-jm-primary' },
 };
 
 export function ConfirmModal({
@@ -157,56 +155,36 @@ export function ConfirmModal({
   const v = variantCfg[options.variant ?? 'default'];
 
   return (
-    <>
-      <style>{`
-        @keyframes jm-slide-in {
-          from { opacity: 0; transform: translateX(40px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes jm-scale-in {
-          from { opacity: 0; transform: scale(0.95); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
+    <div className="jm-overlay !z-[9998]" onClick={onCancel}>
       <div
-        className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
-        onClick={onCancel}
+        className="jm-modal sm:max-w-md"
+        onClick={e => e.stopPropagation()}
+        role="alertdialog"
+        aria-modal="true"
       >
-        <div
-          className="jm-card border border-jm-border rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
-          onClick={e => e.stopPropagation()}
-          style={{ animation: 'jm-scale-in 0.2s ease-out' }}
-        >
-          {/* Header */}
-          <div className="px-6 pt-6 pb-4 flex items-start gap-4">
-            <div className={`w-10 h-10 rounded-xl ${v.iconBg} flex items-center justify-center text-lg flex-shrink-0`}>
-              {v.icon}
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-jm-text">{options.title}</h3>
-              <p className="text-xs text-jm-muted mt-1 leading-relaxed">{options.message}</p>
-            </div>
-          </div>
-
-          <div className="border-t border-jm-border mx-6" />
-
-          {/* Actions */}
-          <div className="px-6 py-4 flex gap-2.5 justify-end">
-            <button
-              onClick={onCancel}
-              className="jm-btn jm-btn-secondary"
-            >
-              {options.cancelLabel ?? 'Cancelar'}
-            </button>
-            <button
-              onClick={onConfirm}
-              className={`jm-btn ${v.confirmBtn}`}
-            >
-              {options.confirmLabel ?? 'Confirmar'}
-            </button>
+        <div className="jm-modal-body flex items-start gap-3">
+          <span className={`mt-1 h-4 w-[3px] shrink-0 rounded-[1px] ${v.bar}`} aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <h3 className="jm-modal-title">{options.title}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-jm-muted">{options.message}</p>
           </div>
         </div>
+
+        <div className="jm-modal-footer">
+          <button
+            onClick={onCancel}
+            className="jm-btn jm-btn-secondary"
+          >
+            {options.cancelLabel ?? 'Cancelar'}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`jm-btn ${v.confirmBtn}`}
+          >
+            {options.confirmLabel ?? 'Confirmar'}
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

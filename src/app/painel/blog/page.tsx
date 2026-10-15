@@ -25,6 +25,7 @@ import ArticleMetadata from './components/ArticleMetadata';
 import LivePreview from './components/LivePreview';
 import FAQModule from './components/FAQModule';
 import TrackingSettingsModal from './components/TrackingSettingsModal';
+import { peekCache, setCache } from '../lib/cache';
 
 function mapServerPosts(postsArray: any[]): Article[] {
   return postsArray.map((p: any) => {
@@ -83,6 +84,8 @@ function mapServerPosts(postsArray: any[]): Article[] {
   });
 }
 
+const POSTS_CACHE_KEY = '/api/blog/posts';
+
 export default function BlogDashboardPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
@@ -117,6 +120,7 @@ export default function BlogDashboardPage() {
         throw new Error(data.error || 'Não foi possível carregar os artigos do servidor.');
       }
       setArticles(mapServerPosts(data.posts));
+      setCache(POSTS_CACHE_KEY, data.posts);
       if (showRefreshToast) {
         showToast('Artigos sincronizados em tempo real com o servidor!', 'success');
       }
@@ -130,6 +134,9 @@ export default function BlogDashboardPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // Mostra a última lista conhecida na hora; a busca abaixo atualiza em segundo plano
+    const cachedPosts = peekCache<any[]>(POSTS_CACHE_KEY);
+    if (cachedPosts) setArticles(mapServerPosts(cachedPosts));
     loadPostsFromApi();
 
     // Sincronização em tempo real quando o usuário volta à aba do navegador
@@ -460,19 +467,19 @@ export default function BlogDashboardPage() {
   };
 
   if (!isMounted) {
-    return <div className="min-h-screen bg-neutral-100 dark:bg-neutral-950 p-8" />;
+    return <div className="min-h-screen bg-jm-bg" />;
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 bg-[#f8fafc] text-neutral-900 dark:bg-neutral-950 dark:text-white min-h-screen transition-colors duration-300">
+    <div className="mx-auto w-full max-w-[1400px] min-h-screen px-4 py-5 text-jm-fg sm:px-6 lg:px-8 lg:py-7">
       {/* TOAST DE NOTIFICAÇÃO */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 animate-bounce">
-          <div className="bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 px-5 py-3 rounded-2xl shadow-2xl border border-neutral-700 dark:border-neutral-200 flex items-center gap-2.5 text-xs sm:text-sm font-bold">
+        <div className="fixed inset-x-4 bottom-4 z-[110] sm:inset-x-auto sm:bottom-6 sm:right-6 sm:max-w-sm" role="status" style={{ animation: 'jm-pop-in 140ms ease-out' }}>
+          <div className="flex items-start gap-2.5 rounded-[4px] border border-jm-border bg-jm-surface px-3.5 py-2.5 text-sm text-jm-fg shadow-jm-pop">
             {toastMessage.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-jm-success-fg" />
             ) : (
-              <Info className="w-4 h-4 text-sky-400 dark:text-sky-600 shrink-0" />
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-jm-primary-text" />
             )}
             <span>{toastMessage.text}</span>
           </div>
@@ -505,14 +512,14 @@ export default function BlogDashboardPage() {
       {/* 2. MODO PRÉVIA TELA CHEIA */}
       {viewMode === 'preview' && currentArticle && (
         <div className="space-y-4">
-          <div className="jm-card p-4 flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 border-b border-jm-border pb-4">
             <button
               type="button"
               onClick={handleBackToList}
               className="jm-btn jm-btn-secondary"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Voltar à Lista</span>
+              <span>Voltar à lista</span>
             </button>
             <button
               type="button"
@@ -520,10 +527,10 @@ export default function BlogDashboardPage() {
               className="jm-btn jm-btn-primary"
             >
               <Edit className="w-3.5 h-3.5" />
-              <span>Editar Artigo</span>
+              <span>Editar artigo</span>
             </button>
           </div>
-          <div className="jm-card p-6 sm:p-10 overflow-hidden">
+          <div className="jm-card overflow-hidden p-4 sm:p-8">
             <LivePreview article={currentArticle} />
           </div>
         </div>
@@ -531,10 +538,10 @@ export default function BlogDashboardPage() {
 
       {/* 3. MODO EDITOR COMPLETO COM WORKSPACE */}
       {viewMode === 'editor' && currentArticle && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* HEADER DO EDITOR */}
-          <div className="jm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 border-b border-jm-border pb-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 onClick={handleBackToList}
@@ -544,14 +551,14 @@ export default function BlogDashboardPage() {
                 <span className="hidden sm:inline">Voltar</span>
               </button>
 
-              <div>
-                <h2 className="text-sm sm:text-base font-semibold text-jm-text truncate max-w-xs sm:max-w-md md:max-w-lg">
+              <div className="min-w-0">
+                <h2 className="truncate text-[15px] font-semibold text-jm-fg sm:max-w-md md:max-w-lg">
                   {currentArticle.title || 'Novo Artigo'}
                 </h2>
-                <div className="flex items-center gap-2 text-[11px] text-jm-muted">
-                  <span className="capitalize">{currentArticle.status === 'published' ? 'Publicado' : currentArticle.status === 'scheduled' ? 'Agendado' : 'Rascunho'}</span>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-jm-muted">
+                  <span>{currentArticle.status === 'published' ? 'Publicado' : currentArticle.status === 'scheduled' ? 'Agendado' : 'Rascunho'}</span>
                   {isDirty ? (
-                    <span className="text-amber-500 font-semibold">• Alterações não salvas</span>
+                    <span className="font-medium text-jm-warning-fg">• Alterações não salvas</span>
                   ) : (
                     lastSavedTime && <span>• Salvo no servidor às {lastSavedTime}</span>
                   )}
@@ -562,27 +569,19 @@ export default function BlogDashboardPage() {
             {/* SELETOR DE SUB-MODO & BOTÕES DE SALVAMENTO */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Abas de Visualização do Workspace */}
-              <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg border border-jm-border">
+              <div className="jm-segmented max-w-full overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setEditorSubMode('editor_meta')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                    editorSubMode === 'editor_meta'
-                      ? 'bg-jm-orange text-white shadow-xs'
-                      : 'text-jm-muted hover:text-jm-text'
-                  }`}
+                  className={`jm-segment ${editorSubMode === 'editor_meta' ? 'jm-segment-active' : ''}`}
                 >
                   <FileEdit className="w-3.5 h-3.5" />
-                  <span>Editor & Meta</span>
+                  <span>Editor</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditorSubMode('split')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                    editorSubMode === 'split'
-                      ? 'bg-jm-orange text-white shadow-xs'
-                      : 'text-jm-muted hover:text-jm-text'
-                  }`}
+                  className={`jm-segment ${editorSubMode === 'split' ? 'jm-segment-active' : ''}`}
                 >
                   <Columns className="w-3.5 h-3.5" />
                   <span>Lado a Lado</span>
@@ -590,14 +589,10 @@ export default function BlogDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setEditorSubMode('preview_only')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                    editorSubMode === 'preview_only'
-                      ? 'bg-jm-orange text-white shadow-xs'
-                      : 'text-jm-muted hover:text-jm-text'
-                  }`}
+                  className={`jm-segment ${editorSubMode === 'preview_only' ? 'jm-segment-active' : ''}`}
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span>Prévia Live</span>
+                  <span>Prévia</span>
                 </button>
               </div>
 
@@ -609,14 +604,14 @@ export default function BlogDashboardPage() {
                 className="jm-btn jm-btn-secondary"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>{isSaving ? 'Salvando...' : 'Salvar Rascunho'}</span>
+                <span>{isSaving ? 'Salvando...' : 'Salvar rascunho'}</span>
               </button>
 
               <button
                 type="button"
                 disabled={isSaving}
                 onClick={handleSchedule}
-                className="jm-btn bg-sky-600 hover:bg-sky-700 text-white"
+                className="jm-btn jm-btn-secondary"
               >
                 <Calendar className="w-3.5 h-3.5" />
                 <span>{isSaving ? 'Agendando...' : 'Agendar'}</span>
@@ -626,18 +621,18 @@ export default function BlogDashboardPage() {
                 type="button"
                 disabled={isSaving}
                 onClick={handlePublish}
-                className="jm-btn jm-btn-primary"
+                className="jm-btn jm-btn-accent"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>{isSaving ? 'Publicando...' : 'Publicar no Site'}</span>
+                <span>{isSaving ? 'Publicando...' : 'Publicar no site'}</span>
               </button>
             </div>
           </div>
 
           {/* CORPO DO WORKSPACE DE EDIÇÃO */}
           {editorSubMode === 'editor_meta' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <div className="lg:col-span-8 space-y-6">
+            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
+              <div className="space-y-5 lg:col-span-8">
                 <BlogEditor
                   key={currentArticle.id}
                   title={currentArticle.title}
@@ -661,7 +656,7 @@ export default function BlogDashboardPage() {
                 />
               </div>
 
-              <div className="lg:col-span-4 sticky top-6">
+              <div className="lg:sticky lg:top-6 lg:col-span-4">
                 <ArticleMetadata
                   article={currentArticle}
                   onChange={handleUpdateCurrentArticle}
@@ -671,8 +666,8 @@ export default function BlogDashboardPage() {
           )}
 
           {editorSubMode === 'split' && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
+              <div className="space-y-5">
                 <BlogEditor
                   key={currentArticle.id}
                   title={currentArticle.title}
@@ -701,23 +696,23 @@ export default function BlogDashboardPage() {
                 />
               </div>
 
-              <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900 p-6 sticky top-6 shadow-xs">
-                <div className="border-b border-neutral-200 dark:border-neutral-800 pb-3 mb-4 flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-                    Prévia em Tempo Real
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                    Live
+              <div className="jm-card overflow-hidden xl:sticky xl:top-6">
+                <div className="jm-card-header">
+                  <span className="jm-card-title">Prévia em tempo real</span>
+                  <span className="jm-badge jm-badge-success">
+                    <span className="jm-dot" />
+                    Ao vivo
                   </span>
                 </div>
-                <LivePreview article={currentArticle} />
+                <div className="p-4 sm:p-6">
+                  <LivePreview article={currentArticle} />
+                </div>
               </div>
             </div>
           )}
 
           {editorSubMode === 'preview_only' && (
-            <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900 p-6 sm:p-10 shadow-xs">
+            <div className="jm-card overflow-hidden p-4 sm:p-8">
               <LivePreview article={currentArticle} />
             </div>
           )}

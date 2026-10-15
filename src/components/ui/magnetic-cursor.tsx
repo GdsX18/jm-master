@@ -2,8 +2,16 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { motion, useSpring, useMotionValue } from "framer-motion";
+import { usePathname } from "next/navigation";
 
+// No painel administrativo o cursor customizado só custaria processamento a cada movimento do mouse
 export const MagneticCursor: React.FC = () => {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/painel")) return null;
+  return <MagneticCursorInner />;
+};
+
+const MagneticCursorInner: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);

@@ -26,6 +26,7 @@ import {
   type Permissions,
   type UserRole,
 } from '@/lib/permissions';
+import { peekCache, setCache } from '../lib/cache';
 
 export interface User {
   id: string;
@@ -84,6 +85,7 @@ export default function UsersManagementPage() {
         throw new Error(data?.error || 'Não foi possível carregar os usuários.');
       }
       setUsers(data);
+      setCache('/api/users', data);
       if (data.length > 0) {
         if (!selectedUser && !isNewUser) {
           selectUser(data[0]);
@@ -102,6 +104,12 @@ export default function UsersManagementPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // Lista da última visita aparece na hora; a requisição atualiza em seguida
+    const cached = peekCache<User[]>('/api/users');
+    if (cached && cached.length > 0) {
+      setUsers(cached);
+      selectUser(cached[0]);
+    }
     fetchUsersFromApi();
   }, []);
 
@@ -297,11 +305,11 @@ export default function UsersManagementPage() {
   };
 
   const roleStyles: Record<UserRole, string> = {
-    'Super administrador': 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    Administrador: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-    Supervisor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-    Operador: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    'Criador de Blog': 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+    'Super administrador': 'jm-badge-primary',
+    Administrador: 'jm-badge-accent',
+    Supervisor: 'jm-badge-warning',
+    Operador: 'jm-badge-success',
+    'Criador de Blog': 'jm-badge-neutral',
   };
 
   const permissionsList = [
@@ -317,74 +325,81 @@ export default function UsersManagementPage() {
     { key: 'structuralManagement', label: 'Gerenciamento Estrutural', desc: 'Permite gerenciar departamentos e configurações corporativas.' },
   ] as const;
 
+  // Interruptor compacto (cantos retos, sem sombra)
+  const switchTrack = (on: boolean, onClass: string) =>
+    `relative inline-flex h-[18px] w-8 shrink-0 cursor-pointer items-center rounded-[3px] border transition-colors duration-100 outline-none focus-visible:ring-2 focus-visible:ring-jm-ring disabled:cursor-not-allowed disabled:opacity-60 ${
+      on ? `${onClass} border-transparent` : 'border-jm-border-strong bg-jm-hover'
+    }`;
+  const switchThumb = (on: boolean) =>
+    `pointer-events-none absolute top-[2px] h-3 w-3 rounded-[2px] transition-[left] duration-100 ${on ? 'left-[16px] bg-white' : 'left-[2px] bg-jm-muted'}`;
+
   return (
-    <div className="space-y-6 relative">
-      
+    <div className="jm-page relative">
+
       {/* TOAST DE NOTIFICAÇÃO FLUTUANTE */}
       {toastMessage && (
-        <div className={`fixed top-6 right-6 z-[999999] px-4 py-3 rounded-xl shadow-lg border border-jm-border flex items-center gap-2.5 animate-fadeIn text-xs font-semibold ${
-          toastMessage.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
-        }`}>
+        <div className={`fixed right-4 top-4 z-[999999] flex max-w-[calc(100vw-2rem)] items-center gap-2.5 rounded-[4px] border px-3.5 py-2.5 text-[13px] font-medium shadow-jm-pop ${
+          toastMessage.type === 'success'
+            ? 'border-jm-success-border bg-jm-surface text-jm-success-fg'
+            : 'border-jm-danger-border bg-jm-surface text-jm-danger-fg'
+        }`} style={{ animation: 'jm-pop-in 140ms ease-out' }}>
           {toastMessage.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
           ) : (
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <AlertTriangle className="h-4 w-4 shrink-0" />
           )}
-          <span>{toastMessage.text}</span>
+          <span className="text-jm-fg">{toastMessage.text}</span>
         </div>
       )}
 
       {/* CABEÇALHO DA PÁGINA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-jm-border">
+      <header className="jm-page-header">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-jm-text flex items-center gap-2.5">
-            <Users className="w-6 h-6 text-jm-orange" />
-            <span>Usuários do Sistema</span>
-          </h1>
-          <p className="text-xs text-jm-muted mt-1">
-            Gerencie os acessos, senhas, classes de permissão e restrições dos operadores, redatores e administradores.
+          <h1 className="jm-page-title">Usuários do sistema</h1>
+          <p className="jm-page-desc">
+            Acessos, senhas, classes de permissão e restrições de operadores, redatores e administradores.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={fetchUsersFromApi}
             className="jm-btn jm-btn-secondary"
             title="Atualizar lista de usuários"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="h-3.5 w-3.5" />
             <span>Recarregar</span>
           </button>
           <button
             type="button"
             onClick={handleStartNewUser}
-            className="jm-btn jm-btn-primary"
+            className="jm-btn jm-btn-accent"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>Adicionar Novo Usuário</span>
+            <UserPlus className="h-4 w-4" />
+            <span>Novo usuário</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {/* GRID DE PAINEL DUPLO */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
-        
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
+
         {/* PAINEL ESQUERDO: LISTA DE USUÁRIOS */}
-        <div className="lg:col-span-4 jm-card p-4 sm:p-5 flex flex-col justify-between space-y-4 h-[75vh]">
-          
-          <div className="flex items-center justify-between gap-3 pb-3 border-b border-jm-border shrink-0">
+        <div className="jm-card flex max-h-[420px] flex-col overflow-hidden lg:h-[calc(100vh-200px)] lg:max-h-none lg:min-h-[520px]">
+
+          <div className="shrink-0 border-b border-jm-border p-3">
             <input
               type="text"
-              placeholder="Buscar usuário por nome ou email..."
+              placeholder="Buscar por nome ou e-mail..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="jm-input text-xs"
+              className="jm-input"
             />
           </div>
 
           {/* LISTA SCROLLABLE */}
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+          <div className="flex-1 divide-y divide-jm-border overflow-y-auto">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((u) => {
                 const isSelected = selectedUser?.id === u.id && !isNewUser;
@@ -392,29 +407,29 @@ export default function UsersManagementPage() {
                   <div
                     key={u.id}
                     onClick={() => selectUser(u)}
-                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                    className={`relative flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5 transition-colors duration-100 ${
                       isSelected
-                        ? 'border-jm-blue-600 bg-jm-blue-50/60 dark:bg-jm-blue-950/30 dark:border-jm-blue-500 shadow-xs'
-                        : 'border-jm-border hover:bg-neutral-50 dark:hover:bg-neutral-800/50 bg-jm-surface'
+                        ? 'bg-jm-primary-soft before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-jm-accent-line'
+                        : 'hover:bg-jm-hover'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
                       {/* Avatar */}
-                      <div className="w-9 h-9 rounded-full bg-jm-blue-50 dark:bg-neutral-800 border border-jm-border flex items-center justify-center text-xs font-semibold text-jm-blue-900 dark:text-neutral-200 shrink-0">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[4px] border border-jm-border bg-jm-subtle text-[11px] font-semibold text-jm-fg2">
                         {getInitials(u.name)}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs font-semibold text-jm-text leading-snug truncate max-w-[140px]">{u.name}</h4>
-                        <p className="text-[11px] text-jm-muted truncate max-w-[140px]">{u.email}</p>
+                        <h4 className="truncate text-[13px] font-medium leading-snug text-jm-fg">{u.name}</h4>
+                        <p className="truncate text-xs text-jm-muted">{u.email}</p>
                       </div>
                     </div>
-                    
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`text-[10px] font-medium uppercase px-2 py-0.5 rounded-full border ${roleStyles[u.role] || roleStyles['Operador']}`}>
+
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className={`jm-badge ${roleStyles[u.role] || roleStyles['Operador']}`}>
                         {u.role}
                       </span>
                       {u.isBlocked && (
-                        <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded border border-rose-200 dark:border-rose-800">
+                        <span className="jm-badge jm-badge-danger">
                           Bloqueado
                         </span>
                       )}
@@ -423,63 +438,57 @@ export default function UsersManagementPage() {
                 );
               })
             ) : (
-              <div className="py-12 text-center text-jm-muted text-xs">
+              <div className="jm-empty">
                 Nenhum usuário cadastrado.
               </div>
             )}
           </div>
 
-          <div className="pt-2 border-t border-jm-border text-center text-[11px] text-jm-muted shrink-0">
-            Total: <strong className="text-jm-text font-semibold">{users.length}</strong> usuários cadastrados
+          <div className="shrink-0 border-t border-jm-border bg-jm-subtle px-3 py-2 text-xs text-jm-muted">
+            Total: <strong className="font-semibold text-jm-fg tabular-nums">{users.length}</strong> usuários cadastrados
           </div>
 
         </div>
 
         {/* PAINEL DIREITO: DETALHES OU FORMULÁRIO DE CADASTRO */}
-        <div className="lg:col-span-8 jm-card p-5 sm:p-6 flex flex-col justify-between h-[75vh]">
-          
+        <div className="jm-card flex min-w-0 flex-col overflow-hidden lg:h-[calc(100vh-200px)] lg:min-h-[520px]">
+
           {selectedUser || isNewUser ? (
-            <form onSubmit={handleSave} className="flex flex-col h-full justify-between">
-              
-              {/* ÁREA SCROLLABLE DO FORMULÁRIO */}
-              <div className="flex-1 overflow-y-auto space-y-6 pr-2 scrollbar-thin">
-                
-                {/* CABEÇALHO DO FORMULÁRIO & TOGGLE BLOQUEADO */}
-                <div className="flex justify-between items-center pb-3 border-b border-jm-border shrink-0">
-                  <div>
-                    <h3 className="text-sm font-semibold text-jm-text">
-                      {isNewUser ? 'Cadastrar Novo Usuário' : 'Detalhes do Usuário'}
-                    </h3>
-                    <p className="text-xs text-jm-muted">
-                      {isNewUser ? 'Defina os dados de login, senha e escolha a classe de acesso.' : 'Edite dados, altere a senha ou ajuste permissões de acesso.'}
-                    </p>
-                  </div>
-                  
-                  {/* Toggle Bloqueado */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-jm-text">Bloqueado:</span>
-                    <button
-                      type="button"
-                      disabled={!isEditing}
-                      onClick={() => setFormIsBlocked(!formIsBlocked)}
-                      className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        formIsBlocked ? 'bg-rose-500' : 'bg-neutral-300 dark:bg-neutral-700'
-                      } ${!isEditing && 'opacity-65 cursor-not-allowed'}`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          formIsBlocked ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
+            <form onSubmit={handleSave} className="flex h-full min-h-0 flex-col">
+
+              {/* CABEÇALHO DO FORMULÁRIO & TOGGLE BLOQUEADO */}
+              <div className="flex shrink-0 flex-col gap-3 border-b border-jm-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-5">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-semibold text-jm-fg">
+                    {isNewUser ? 'Cadastrar novo usuário' : 'Detalhes do usuário'}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-jm-muted">
+                    {isNewUser ? 'Defina os dados de login, senha e escolha a classe de acesso.' : 'Edite dados, altere a senha ou ajuste permissões de acesso.'}
+                  </p>
                 </div>
 
+                {/* Toggle Bloqueado */}
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-xs font-medium text-jm-fg2">Bloqueado</span>
+                  <button
+                    type="button"
+                    disabled={!isEditing}
+                    onClick={() => setFormIsBlocked(!formIsBlocked)}
+                    className={switchTrack(formIsBlocked, 'bg-jm-danger-fg')}
+                  >
+                    <span className={switchThumb(formIsBlocked)} />
+                  </button>
+                </div>
+              </div>
+
+              {/* ÁREA SCROLLABLE DO FORMULÁRIO */}
+              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-4 md:px-5">
+
                 {/* DADOS CADASTRAIS (CAMPOS) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                      Nome Completo *
+                    <label className="jm-label">
+                      Nome completo *
                     </label>
                     <input
                       type="text"
@@ -488,13 +497,13 @@ export default function UsersManagementPage() {
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                       placeholder="Ex: João da Silva"
-                      className="jm-input text-xs"
+                      className="jm-input"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                      E-mail (Login de Acesso) *
+                    <label className="jm-label">
+                      E-mail (login de acesso) *
                     </label>
                     <input
                       type="email"
@@ -503,19 +512,19 @@ export default function UsersManagementPage() {
                       value={formEmail}
                       onChange={(e) => setFormEmail(e.target.value)}
                       placeholder="usuario@jmmaster.com.br"
-                      className="jm-input text-xs"
+                      className="jm-input"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                      Classe de Acesso
+                    <label className="jm-label">
+                      Classe de acesso
                     </label>
                     <select
                       disabled={!isEditing}
                       value={formRole}
                       onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                      className="jm-input text-xs font-semibold"
+                      className="jm-input"
                     >
                       <option value="Criador de Blog">Criador de Blog (Acesso Exclusivo ao Blog)</option>
                       <option value="Super administrador">Super administrador (Acesso Total)</option>
@@ -524,8 +533,8 @@ export default function UsersManagementPage() {
                       <option value="Operador">Operador (Atendimento & Disparos)</option>
                     </select>
                     {formRole === 'Criador de Blog' && (
-                      <p className="text-[11px] text-jm-orange font-medium mt-1.5 flex items-center gap-1.5">
-                        <Info className="w-3.5 h-3.5 shrink-0" />
+                      <p className="mt-1.5 flex items-start gap-1.5 text-xs text-jm-accent-text">
+                        <Info className="mt-px h-3.5 w-3.5 shrink-0" />
                         <span>Esta classe concede acesso somente ao Criador de Blog, bloqueando módulos confidenciais.</span>
                       </p>
                     )}
@@ -533,36 +542,36 @@ export default function UsersManagementPage() {
 
                   {/* CAMPO DE SENHA FUNCIONAL */}
                   <div>
-                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                      Senha de Acesso {isNewUser && '*'}
+                    <label className="jm-label">
+                      Senha de acesso {isNewUser && '*'}
                     </label>
-                    <div className="relative flex rounded-lg border border-jm-border overflow-hidden bg-jm-surface">
+                    <div className="relative flex h-9 overflow-hidden rounded-[4px] border border-jm-border-strong bg-jm-surface focus-within:border-jm-primary focus-within:ring-2 focus-within:ring-jm-ring">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         disabled={!isEditing}
                         value={formPassword}
                         onChange={(e) => setFormPassword(e.target.value)}
                         placeholder={isNewUser ? "Digite a senha do novo usuário..." : "Digite uma nova senha para alterar..."}
-                        className="flex-1 px-3 py-2 text-jm-text bg-transparent focus:outline-none text-xs disabled:opacity-60 font-mono"
+                        className="min-w-0 flex-1 bg-transparent px-3 font-mono text-sm text-jm-fg outline-none placeholder:font-sans placeholder:text-jm-placeholder disabled:opacity-60"
                       />
-                      
+
                       {isEditing && (
-                        <div className="flex items-center pr-2 gap-1.5 shrink-0 bg-transparent">
+                        <div className="flex shrink-0 items-center gap-1 pr-1">
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             title={showPassword ? "Ocultar Senha" : "Ver Senha"}
-                            className="p-1.5 text-xs text-jm-muted hover:text-jm-text rounded-md transition cursor-pointer"
+                            className="jm-icon-btn h-7 w-7"
                           >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                           <button
                             type="button"
                             onClick={handleGeneratePassword}
                             title="Gerar Senha Forte Aleatória"
-                            className="jm-btn jm-btn-secondary jm-btn-sm"
+                            className="jm-btn jm-btn-secondary h-7 px-2 text-xs"
                           >
-                            <Sparkles className="w-3 h-3 text-jm-orange" />
+                            <Sparkles className="h-3 w-3" />
                             <span>Gerar</span>
                           </button>
                         </div>
@@ -572,87 +581,75 @@ export default function UsersManagementPage() {
                 </div>
 
                 {/* GESTÃO DE PERMISSÕES */}
-                <div className="space-y-3 pt-3 border-t border-jm-border">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-jm-text flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-jm-blue-600" />
-                      <span>Permissões Habilitadas</span>
+                <section className="space-y-2.5">
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between">
+                    <h4 className="flex items-center gap-1.5 text-sm font-semibold text-jm-fg">
+                      <ShieldCheck className="h-4 w-4 text-jm-primary-text" strokeWidth={1.75} />
+                      <span>Permissões habilitadas</span>
                     </h4>
-                    <span className="text-[11px] text-jm-muted">
+                    <span className="text-xs text-jm-muted">
                       Defina os módulos liberados para este usuário
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 overflow-hidden rounded-[4px] border border-jm-border md:grid-cols-2 [&>*]:border-jm-border [&>*]:border-b md:[&>*:nth-child(odd)]:border-r">
                     {permissionsList.map((p) => (
-                      <div key={p.key} className="flex items-start justify-between p-3 rounded-xl border border-jm-border bg-neutral-50/50 dark:bg-neutral-900/40">
-                        <div className="space-y-0.5 pr-2">
-                          <p className="text-xs font-semibold text-jm-text">{p.label}</p>
-                          <p className="text-[11px] text-jm-muted leading-snug">{p.desc}</p>
+                      <div key={p.key} className="flex items-start justify-between gap-3 bg-jm-surface px-3 py-2.5">
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="text-[13px] font-medium text-jm-fg">{p.label}</p>
+                          <p className="text-xs leading-snug text-jm-muted">{p.desc}</p>
                         </div>
                         <button
                           type="button"
                           disabled={!isEditing}
                           onClick={() => handleTogglePermission(p.key as keyof Permissions, 'permission')}
-                          className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            formPermissions[p.key as keyof Permissions] ? 'bg-jm-blue-700' : 'bg-neutral-300 dark:bg-neutral-700'
-                          } ${!isEditing && 'opacity-65 cursor-not-allowed'}`}
+                          className={`mt-0.5 ${switchTrack(!!formPermissions[p.key as keyof Permissions], 'bg-jm-primary')}`}
                         >
-                          <span
-                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              formPermissions[p.key as keyof Permissions] ? 'translate-x-4' : 'translate-x-0'
-                            }`}
-                          />
+                          <span className={switchThumb(!!formPermissions[p.key as keyof Permissions])} />
                         </button>
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
 
                 {/* GESTÃO DE PROIBIÇÕES */}
-                <div className="space-y-3 pt-3 border-t border-jm-border">
-                  <h4 className="text-xs font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
-                    <ShieldAlert className="w-4 h-4 text-rose-600" />
-                    <span>Proibições Explícitas</span>
+                <section className="space-y-2.5">
+                  <h4 className="flex items-center gap-1.5 text-sm font-semibold text-jm-danger-fg">
+                    <ShieldAlert className="h-4 w-4" strokeWidth={1.75} />
+                    <span>Proibições explícitas</span>
                   </h4>
-                  
+
                   {/* Banner de Aviso de Proibições */}
-                  <div className="bg-rose-50 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/40 rounded-xl p-3 flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-                    <p className="text-xs font-medium text-rose-800 dark:text-rose-300">
-                      Atenção: As proibições têm prioridade sobre as permissões!
+                  <div className="jm-alert jm-alert-danger">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p className="text-[13px] font-medium">
+                      Atenção: as proibições têm prioridade sobre as permissões.
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 overflow-hidden rounded-[4px] border border-jm-border md:grid-cols-2 [&>*]:border-jm-border [&>*]:border-b md:[&>*:nth-child(odd)]:border-r">
                     {permissionsList.map((p) => (
-                      <div key={p.key} className="flex items-start justify-between p-3 rounded-xl border border-jm-border bg-neutral-50/50 dark:bg-neutral-900/40">
-                        <div className="space-y-0.5 pr-2">
-                          <p className="text-xs font-semibold text-jm-text">{p.label}</p>
-                          <p className="text-[11px] text-jm-muted leading-snug">{p.desc}</p>
+                      <div key={p.key} className="flex items-start justify-between gap-3 bg-jm-surface px-3 py-2.5">
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="text-[13px] font-medium text-jm-fg">{p.label}</p>
+                          <p className="text-xs leading-snug text-jm-muted">{p.desc}</p>
                         </div>
                         <button
                           type="button"
                           disabled={!isEditing}
                           onClick={() => handleTogglePermission(p.key as keyof Permissions, 'prohibition')}
-                          className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            formProhibitions[p.key as keyof Permissions] ? 'bg-rose-500' : 'bg-neutral-300 dark:bg-neutral-700'
-                          } ${!isEditing && 'opacity-65 cursor-not-allowed'}`}
+                          className={`mt-0.5 ${switchTrack(!!formProhibitions[p.key as keyof Permissions], 'bg-jm-danger-fg')}`}
                         >
-                          <span
-                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              formProhibitions[p.key as keyof Permissions] ? 'translate-x-4' : 'translate-x-0'
-                            }`}
-                          />
+                          <span className={switchThumb(!!formProhibitions[p.key as keyof Permissions])} />
                         </button>
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
 
               </div>
 
               {/* BOTÕES DE AÇÃO NA BASE */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-jm-border shrink-0">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-jm-border bg-jm-subtle px-4 py-3 md:px-5">
                 <div className="flex items-center gap-2">
                   <button
                     type="submit"
@@ -661,11 +658,11 @@ export default function UsersManagementPage() {
                   >
                     {isSaving ? (
                       <>
-                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                         <span>Salvando...</span>
                       </>
                     ) : (
-                      <span>{isNewUser ? 'Criar Usuário' : 'Salvar Alterações'}</span>
+                      <span>{isNewUser ? 'Criar usuário' : 'Salvar alterações'}</span>
                     )}
                   </button>
                   {isNewUser && (
@@ -683,17 +680,17 @@ export default function UsersManagementPage() {
                   <button
                     type="button"
                     onClick={() => confirmDelete(selectedUser.id)}
-                    className="jm-btn jm-btn-secondary text-rose-600 hover:border-rose-300 dark:hover:border-rose-800"
+                    className="jm-btn jm-btn-danger"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Excluir Usuário</span>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Excluir usuário</span>
                   </button>
                 )}
               </div>
 
             </form>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-jm-muted text-xs">
+            <div className="jm-empty flex-1">
               Selecione um usuário na lista ou crie um novo para gerenciar.
             </div>
           )}
@@ -704,27 +701,26 @@ export default function UsersManagementPage() {
 
       {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO COM CREATEPORTAL */}
       {showDeleteConfirm && isMounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn">
-          <div className="jm-card rounded-2xl w-full max-w-md p-6 shadow-xl border border-jm-border flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center justify-center text-lg shrink-0">
-                <Trash2 className="w-5 h-5" />
+        <div className="jm-overlay z-[99999]">
+          <div className="jm-modal sm:max-w-md">
+            <div className="jm-modal-body flex gap-3">
+              <div className="jm-icon-chip border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg">
+                <Trash2 className="h-4 w-4" />
               </div>
-              <div>
-                <h3 className="text-sm font-semibold text-jm-text">
-                  Confirmar Exclusão
+              <div className="min-w-0">
+                <h3 className="jm-modal-title">
+                  Confirmar exclusão
                 </h3>
-                <p className="text-xs text-jm-muted mt-0.5">
+                <p className="mt-1 text-sm text-jm-muted">
                   Esta ação removerá o usuário e seus privilégios permanentemente.
+                </p>
+                <p className="mt-2 text-sm text-jm-fg2">
+                  Tem certeza que deseja excluir o usuário selecionado?
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-jm-muted leading-relaxed">
-              Tem certeza que deseja excluir o usuário selecionado?
-            </p>
-
-            <div className="flex items-center justify-end gap-2.5 mt-2">
+            <div className="jm-modal-footer">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
@@ -735,9 +731,9 @@ export default function UsersManagementPage() {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="jm-btn bg-rose-600 hover:bg-rose-700 text-white"
+                className="jm-btn jm-btn-danger-solid"
               >
-                Sim, Excluir
+                Sim, excluir
               </button>
             </div>
           </div>

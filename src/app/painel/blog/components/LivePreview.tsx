@@ -27,83 +27,81 @@ export default function LivePreview({ article }: LivePreviewProps) {
   );
 
   return (
-    <div className="flex flex-col h-full bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-[6px] border border-jm-border bg-jm-subtle">
       
       {/* BARRA DE CONTROLE DO PREVIEW */}
-      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 p-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-jm-border bg-jm-surface px-3 py-2">
         
         {/* ABAS: CARD DO FEED vs PÁGINA COMPLETA */}
-        <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-950 p-1 rounded-xl border border-neutral-200 dark:border-neutral-800">
+        <div className="jm-segmented">
           <button
             type="button"
             onClick={() => setTab('full_post')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`jm-segment ${
               tab === 'full_post'
-                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                ? 'jm-segment-active'
+                : ''
             }`}
           >
-            📄 Página do Artigo
+            Página do artigo
           </button>
           <button
             type="button"
             onClick={() => setTab('feed_card')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+            className={`jm-segment ${
               tab === 'feed_card'
-                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                ? 'jm-segment-active'
+                : ''
             }`}
           >
-            🎴 Card do Feed
+            Card do feed
           </button>
         </div>
 
         {/* CONTROLE DE DISPOSITIVO: DESKTOP vs MOBILE */}
-        <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-950 p-1 rounded-xl border border-neutral-200 dark:border-neutral-800">
+        <div className="jm-segmented">
           <button
             type="button"
             onClick={() => setDevice('desktop')}
             title="Visualização Desktop"
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            className={`jm-segment ${
               device === 'desktop'
-                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                ? 'jm-segment-active'
+                : ''
             }`}
           >
-            <span>🖥️</span>
-            <span className="hidden sm:inline">Desktop</span>
+                        <span className="">Desktop</span>
           </button>
           <button
             type="button"
             onClick={() => setDevice('mobile')}
             title="Visualização Mobile (390px)"
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+            className={`jm-segment ${
               device === 'mobile'
-                ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                ? 'jm-segment-active'
+                : ''
             }`}
           >
-            <span>📱</span>
-            <span className="hidden sm:inline">Mobile</span>
+                        <span className="">Mobile</span>
           </button>
         </div>
 
         {/* SELO DE SIMULAÇÃO DO SITE OFICIAL */}
-        <div className="hidden md:flex items-center gap-1.5 text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">
-          <span className="w-2 h-2 rounded-full bg-[#E85D26]" />
-          <span>Simulação Oficial Blog JM Master</span>
+        <div className="hidden items-center gap-1.5 text-[11px] font-medium text-jm-muted md:flex">
+          <span className="jm-dot text-jm-accent-line" />
+          <span>Simulação do blog oficial</span>
         </div>
       </div>
 
       {/* ÁREA DE SCROLL DO PREVIEW */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+      <div className="flex flex-1 items-start justify-center overflow-y-auto p-3 sm:p-6">
         
         {/* CONTAINER DO DISPOSITIVO */}
         <div
-          className={`transition-all duration-300 w-full ${
+          className={`w-full ${
             device === 'mobile'
-              ? 'max-w-[400px] border-4 border-neutral-800 rounded-3xl overflow-hidden shadow-2xl bg-white dark:bg-neutral-900 my-2'
-              : 'max-w-4xl bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm'
+              ? 'my-1 max-w-[400px] overflow-hidden rounded-[18px] border-[6px] border-[#1A2230] bg-white dark:bg-neutral-900'
+              : 'max-w-4xl rounded-[6px] border border-jm-border bg-white dark:bg-neutral-900'
           }`}
         >
           

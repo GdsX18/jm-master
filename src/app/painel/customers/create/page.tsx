@@ -11,10 +11,10 @@ export default function RedirectToCustomersPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 dark:bg-neutral-950 text-neutral-900 dark:text-white">
+    <div className="flex min-h-[60vh] items-center justify-center bg-jm-bg text-jm-fg">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-4 border-master-orange border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-bold text-neutral-500 dark:text-master-textMuted animate-pulse">Redirecionando para a nova central de clientes...</p>
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-jm-primary border-t-transparent"></div>
+        <p className="text-sm text-jm-muted">Redirecionando para a nova central de clientes...</p>
       </div>
     </div>
   );

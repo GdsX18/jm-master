@@ -225,17 +225,19 @@ export default function MediaUploader({
     setShowBodyImageModal(false);
   };
 
-  return (
-    <div className="space-y-4">
-      {/* CARD DE UPLOAD DA CAPA PRINCIPAL */}
-      <div className="space-y-2">
-        <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-          Imagem de Capa (Proporção 16:9)
-        </label>
 
+  return (
+    <div>
+      {/* CARD DE UPLOAD DA CAPA PRINCIPAL */}
+      <div className="jm-card-header">
+        <span className="jm-card-title">Imagem de capa</span>
+        <span className="text-xs text-jm-muted">Proporção 16:9</span>
+      </div>
+
+      <div className="jm-card-body space-y-3">
         {coverImage ? (
           <div className="space-y-3">
-            <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800 group shadow-xs bg-neutral-100 dark:bg-neutral-950">
+            <div className="relative aspect-video w-full overflow-hidden rounded-[4px] border border-jm-border bg-jm-subtle">
               <Image
                 src={coverImage}
                 alt={altText || 'Capa do Artigo'}
@@ -243,46 +245,47 @@ export default function MediaUploader({
                 className="object-cover"
                 unoptimized
               />
+            </div>
 
-              <div className="absolute inset-0 bg-neutral-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 bg-white text-neutral-900 text-xs font-bold rounded-lg hover:bg-neutral-100 transition shadow cursor-pointer flex items-center gap-1.5"
-                >
-                  <UploadCloud className="w-3.5 h-3.5" />
-                  <span>Trocar Imagem</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPresets(true)}
-                  className="px-3 py-1.5 bg-[#E85D26] text-white text-xs font-bold rounded-lg hover:bg-orange-600 transition shadow cursor-pointer flex items-center gap-1.5"
-                >
-                  <LayoutTemplate className="w-3.5 h-3.5" />
-                  <span>Ver Templates</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onCoverChange('', '')}
-                  className="p-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition shadow cursor-pointer"
-                  title="Remover Imagem"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="jm-btn jm-btn-secondary jm-btn-sm"
+              >
+                <UploadCloud className="h-3.5 w-3.5" />
+                <span>Trocar imagem</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPresets(true)}
+                className="jm-btn jm-btn-secondary jm-btn-sm"
+              >
+                <LayoutTemplate className="h-3.5 w-3.5" />
+                <span>Biblioteca</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onCoverChange('', '')}
+                className="jm-btn jm-btn-ghost jm-btn-sm ml-auto text-jm-danger-fg hover:bg-jm-danger-bg hover:text-jm-danger-fg"
+                title="Remover Imagem"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Remover</span>
+              </button>
             </div>
 
             {/* Input de Texto Alternativo (SEO) */}
             <div>
-              <label className="block text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 mb-1">
-                Texto Alternativo da Imagem (SEO / Alt Text):
+              <label className="jm-label text-xs">
+                Texto alternativo (alt)
               </label>
               <input
                 type="text"
                 value={altText}
                 onChange={handleAltChange}
                 placeholder="Descreva a imagem para motores de busca e acessibilidade..."
-                className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                className="jm-input text-[13px]"
               />
             </div>
           </div>
@@ -291,37 +294,37 @@ export default function MediaUploader({
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+            className={`rounded-[4px] border border-dashed px-4 py-6 text-center transition-colors duration-100 ${
               isDragging
-                ? 'border-[#E85D26] bg-orange-50/20 dark:bg-orange-950/20 scale-[0.99]'
-                : 'border-neutral-300 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/50 hover:border-neutral-400 dark:hover:border-neutral-700'
+                ? 'border-jm-primary bg-jm-primary-soft'
+                : 'border-jm-border-strong bg-jm-subtle hover:border-jm-muted'
             }`}
           >
-            <div className="space-y-2">
-              <ImageIcon className="w-8 h-8 mx-auto text-neutral-400" />
-              <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+            <div className="space-y-1.5">
+              <ImageIcon className="mx-auto h-6 w-6 text-jm-muted" strokeWidth={1.5} />
+              <p className="text-[13px] font-medium text-jm-fg">
                 Arraste uma imagem de capa aqui
               </p>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
-                PNG, JPG ou WebP (Recomendado: 1200 x 675 px)
+              <p className="text-xs text-jm-muted">
+                PNG, JPG ou WebP (recomendado: 1200 x 675 px)
               </p>
-              <div className="pt-2 flex items-center justify-center gap-2">
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
                 <button
                   type="button"
                   disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-bold rounded-lg hover:opacity-90 transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  className="jm-btn jm-btn-primary jm-btn-sm"
                 >
-                  <UploadCloud className={`w-3.5 h-3.5 ${isUploading ? 'animate-bounce text-[#E85D26]' : ''}`} />
-                  <span>{isUploading ? 'Enviando para Supabase...' : 'Upload do Arquivo'}</span>
+                  <UploadCloud className={`h-3.5 w-3.5 ${isUploading ? 'animate-pulse' : ''}`} />
+                  <span>{isUploading ? 'Enviando...' : 'Enviar arquivo'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowPresets(true)}
-                  className="px-3 py-1.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs font-bold rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition cursor-pointer flex items-center gap-1.5"
+                  className="jm-btn jm-btn-secondary jm-btn-sm"
                 >
-                  <LayoutTemplate className="w-3.5 h-3.5" />
-                  <span>Templates da Marca</span>
+                  <LayoutTemplate className="h-3.5 w-3.5" />
+                  <span>Biblioteca</span>
                 </button>
               </div>
             </div>
@@ -339,108 +342,110 @@ export default function MediaUploader({
             }
           }}
         />
-      </div>
 
-      {/* BOTÃO PARA INSERIR IMAGEM NO CORPO */}
-      {onInsertImageIntoContent && (
-        <div className="pt-1">
+        {/* BOTÃO PARA INSERIR IMAGEM NO CORPO */}
+        {onInsertImageIntoContent && (
           <button
             type="button"
             onClick={() => setShowBodyImageModal(true)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-bold text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-850 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-800 transition cursor-pointer"
+            className="jm-btn jm-btn-secondary w-full"
           >
-            <Camera className="w-4 h-4 text-[#E85D26]" />
-            <span>Inserir Imagem no Corpo do Artigo</span>
+            <Camera className="h-4 w-4" />
+            <span>Inserir imagem no corpo do artigo</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* MODAL DE PRESETS DE CAPAS (ISOLADO NO BODY VIA CREATEPORTAL) */}
       {showPresets && isMounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <LayoutTemplate className="w-4 h-4 text-[#E85D26]" />
-                  <span>Biblioteca de Imagens</span>
+        <div className="jm-overlay z-[99999]">
+          <div className="jm-modal sm:max-w-2xl">
+            <div className="jm-modal-header">
+              <div className="min-w-0">
+                <h3 className="jm-modal-title">
+                  Biblioteca de imagens
                 </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                <p className="text-xs text-jm-muted">
                   Imagens profissionais em proporção 16:9 alinhadas aos temas da JM Master Group
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowPresets(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white p-1 cursor-pointer"
+                className="jm-icon-btn"
+                aria-label="Fechar"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500">Imagens já enviadas</h4>
-              {libraryLoading && <p className="text-xs text-neutral-400">Carregando biblioteca...</p>}
-              {libraryError && <p className="text-xs font-bold text-rose-600">{libraryError}</p>}
-              {!libraryLoading && !libraryError && library.length === 0 && (
-                <p className="text-xs text-neutral-400">Nenhuma imagem enviada ainda.</p>
-              )}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {library.map((file) => (
-                  <div
-                    key={file.name}
-                    className="relative group border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden hover:border-[#E85D26] transition"
-                  >
-                    <button type="button" onClick={() => handleSelectLibraryImage(file.url)} className="block w-full aspect-video relative cursor-pointer">
-                      <Image src={file.url} alt={file.name} fill className="object-cover" sizes="200px" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteLibraryImage(file.name)}
-                      title="Excluir da biblioteca"
-                      className="absolute top-1.5 right-1.5 p-1 rounded-md bg-neutral-950/70 text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition cursor-pointer"
+            <div className="jm-modal-body space-y-5">
+              <div className="space-y-2">
+                <h4 className="jm-eyebrow">Imagens já enviadas</h4>
+                {libraryLoading && <p className="text-xs text-jm-muted">Carregando biblioteca...</p>}
+                {libraryError && <p className="text-xs font-medium text-jm-danger-fg">{libraryError}</p>}
+                {!libraryLoading && !libraryError && library.length === 0 && (
+                  <p className="text-xs text-jm-muted">Nenhuma imagem enviada ainda.</p>
+                )}
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {library.map((file) => (
+                    <div
+                      key={file.name}
+                      className="group relative overflow-hidden rounded-[4px] border border-jm-border transition-colors hover:border-jm-primary"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
+                      <button type="button" onClick={() => handleSelectLibraryImage(file.url)} className="relative block aspect-video w-full cursor-pointer">
+                        <Image src={file.url} alt={file.name} fill className="object-cover" sizes="200px" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLibraryImage(file.name)}
+                        title="Excluir da biblioteca"
+                        className="absolute right-1 top-1 cursor-pointer rounded-[3px] bg-black/65 p-1 text-white opacity-100 transition-opacity hover:bg-[#B42318] focus:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="jm-eyebrow">Templates</h4>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {COVER_PRESETS.map((preset) => (
+                    <div
+                      key={preset.id}
+                      onClick={() => handleSelectPreset(preset)}
+                      className="cursor-pointer overflow-hidden rounded-[4px] border border-jm-border bg-jm-surface transition-colors hover:border-jm-primary"
+                    >
+                      <div className="relative aspect-video w-full overflow-hidden bg-jm-subtle">
+                        <Image
+                          src={preset.url}
+                          alt={preset.alt}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="space-y-1 px-3 py-2">
+                        <span className="jm-badge jm-badge-neutral">
+                          {preset.category}
+                        </span>
+                        <h4 className="line-clamp-1 text-[13px] font-medium text-jm-fg">
+                          {preset.name}
+                        </h4>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 pt-2">Templates</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {COVER_PRESETS.map((preset) => (
-                <div
-                  key={preset.id}
-                  onClick={() => handleSelectPreset(preset)}
-                  className="cursor-pointer border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden hover:border-[#E85D26] transition group bg-neutral-50 dark:bg-neutral-950 shadow-xs"
-                >
-                  <div className="relative aspect-video w-full overflow-hidden">
-                    <Image
-                      src={preset.url}
-                      alt={preset.alt}
-                      fill
-                      className="object-cover group-hover:scale-105 transition duration-300"
-                      unoptimized
-                    />
-                  </div>
-                  <div className="p-3">
-                    <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-600/10 text-[#E85D26] rounded">
-                      {preset.category}
-                    </span>
-                    <h4 className="text-xs font-bold text-neutral-900 dark:text-white mt-1.5 line-clamp-1">
-                      {preset.name}
-                    </h4>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end pt-2">
+            <div className="jm-modal-footer">
               <button
                 type="button"
                 onClick={() => setShowPresets(false)}
-                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
@@ -452,26 +457,26 @@ export default function MediaUploader({
 
       {/* MODAL PARA INSERÇÃO DE IMAGEM NO CORPO (ISOLADO NO BODY VIA CREATEPORTAL) */}
       {showBodyImageModal && isMounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-              <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <Camera className="w-4 h-4 text-[#E85D26]" />
-                <span>Inserir Imagem no Conteúdo</span>
+        <div className="jm-overlay z-[99999]">
+          <div className="jm-modal">
+            <div className="jm-modal-header">
+              <h3 className="jm-modal-title">
+                Inserir imagem no conteúdo
               </h3>
               <button
                 type="button"
                 onClick={() => setShowBodyImageModal(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white p-1 cursor-pointer"
+                className="jm-icon-btn"
+                aria-label="Fechar"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="jm-modal-body space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Origem da Imagem
+                <label className="jm-label">
+                  Origem da imagem
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -479,15 +484,15 @@ export default function MediaUploader({
                     value={bodyImgUrl}
                     onChange={(e) => setBodyImgUrl(e.target.value)}
                     placeholder="Cole a URL da imagem ou faça upload..."
-                    className="flex-1 px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input min-w-0 flex-1"
                   />
                   <button
                     type="button"
                     disabled={isUploadingBody}
                     onClick={() => bodyFileInputRef.current?.click()}
-                    className="px-3 py-2 bg-neutral-800 dark:bg-neutral-700 text-white text-xs font-bold rounded-lg hover:opacity-90 transition shrink-0 cursor-pointer flex items-center gap-1 disabled:opacity-50"
+                    className="jm-btn jm-btn-secondary shrink-0"
                   >
-                    <UploadCloud className={`w-3.5 h-3.5 ${isUploadingBody ? 'animate-bounce text-[#E85D26]' : ''}`} />
+                    <UploadCloud className={`h-3.5 w-3.5 ${isUploadingBody ? 'animate-pulse' : ''}`} />
                     <span>{isUploadingBody ? 'Enviando...' : 'Upload'}</span>
                   </button>
                   <input
@@ -505,45 +510,43 @@ export default function MediaUploader({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Texto Alternativo (Alt Text)
+                <label className="jm-label">
+                  Texto alternativo (alt)
                 </label>
                 <input
                   type="text"
                   value={bodyImgAlt}
                   onChange={(e) => setBodyImgAlt(e.target.value)}
                   placeholder="Descrição da imagem para acessibilidade e SEO..."
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Legenda (Opcional)
+                <label className="jm-label">
+                  Legenda <span className="font-normal text-jm-muted">(opcional)</span>
                 </label>
                 <input
                   type="text"
                   value={bodyImgCaption}
                   onChange={(e) => setBodyImgCaption(e.target.value)}
                   placeholder="Legenda exibida abaixo da imagem..."
-                  className="w-full px-3 py-2 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="jm-label">
                   Alinhamento
                 </label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="jm-segmented grid w-full grid-cols-2 sm:grid-cols-4">
                   {(['center', 'full', 'left', 'right'] as const).map((align) => (
                     <button
                       key={align}
                       type="button"
                       onClick={() => setBodyImgAlign(align)}
-                      className={`py-1.5 text-xs font-bold rounded-lg border transition capitalize cursor-pointer ${
-                        bodyImgAlign === align
-                          ? 'bg-[#E85D26] text-white border-[#E85D26]'
-                          : 'bg-neutral-100 dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800'
+                      className={`jm-segment justify-center ${
+                        bodyImgAlign === align ? 'jm-segment-active' : ''
                       }`}
                     >
                       {align === 'center' ? 'Centro' : align === 'full' ? 'Largura Total' : align === 'left' ? 'Esquerda' : 'Direita'}
@@ -553,11 +556,11 @@ export default function MediaUploader({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="jm-modal-footer">
               <button
                 type="button"
                 onClick={() => setShowBodyImageModal(false)}
-                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
@@ -565,9 +568,9 @@ export default function MediaUploader({
                 type="button"
                 onClick={handleInsertBodyImage}
                 disabled={!bodyImgUrl}
-                className="px-4 py-2 bg-[#E85D26] hover:bg-orange-600 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition shadow cursor-pointer"
+                className="jm-btn jm-btn-primary"
               >
-                Inserir no Artigo
+                Inserir no artigo
               </button>
             </div>
           </div>

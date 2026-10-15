@@ -21,6 +21,7 @@ import {
   Pencil,
   Globe,
 } from 'lucide-react';
+import { peekCache, setCache } from '../lib/cache';
 
 interface CrmItem {
   id: string;
@@ -37,41 +38,13 @@ interface CrmItem {
 }
 
 const TYPE_CONFIG: Record<string, { label: string; badge: string; icon: any }> = {
-  COMERCIAL: {
-    label: 'Comercial',
-    badge: 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300 border border-orange-200 dark:border-orange-800',
-    icon: Briefcase,
-  },
-  SUPORTE: {
-    label: 'Suporte',
-    badge: 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-800',
-    icon: Headphones,
-  },
-  REUNIAO: {
-    label: 'Reunião',
-    badge: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
-    icon: Users,
-  },
-  NPS: {
-    label: 'NPS & Feedback',
-    badge: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
-    icon: Award,
-  },
-  COBRANCA: {
-    label: 'Cobrança',
-    badge: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
-    icon: Clock,
-  },
-  LEAD: {
-    label: 'Lead do Site',
-    badge: 'bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300 border border-teal-200 dark:border-teal-800',
-    icon: Globe,
-  },
-  OUTROS: {
-    label: 'Outros',
-    badge: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700',
-    icon: MessageSquare,
-  },
+  COMERCIAL: { label: 'Comercial', badge: 'jm-badge-accent', icon: Briefcase },
+  SUPORTE: { label: 'Suporte', badge: 'jm-badge-primary', icon: Headphones },
+  REUNIAO: { label: 'Reunião', badge: 'jm-badge-success', icon: Users },
+  NPS: { label: 'NPS & Feedback', badge: 'jm-badge-neutral', icon: Award },
+  COBRANCA: { label: 'Cobrança', badge: 'jm-badge-warning', icon: Clock },
+  LEAD: { label: 'Lead do Site', badge: 'jm-badge-primary', icon: Globe },
+  OUTROS: { label: 'Outros', badge: 'jm-badge-neutral', icon: MessageSquare },
 };
 
 export default function CrmHistoryPage() {
@@ -100,20 +73,32 @@ export default function CrmHistoryPage() {
       }
     } catch {}
 
+    const cachedCustomers = peekCache<any[]>('/api/customers');
+    if (Array.isArray(cachedCustomers)) setCustomers(cachedCustomers.map((c: any) => ({ id: c.id, name: c.name })));
     fetch('/api/customers', { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : []))
-      .then((data) => Array.isArray(data) && setCustomers(data.map((c: any) => ({ id: c.id, name: c.name }))))
+      .then((data) => {
+        if (Array.isArray(data)) setCache('/api/customers', data);
+        return Array.isArray(data) && setCustomers(data.map((c: any) => ({ id: c.id, name: c.name })));
+      })
       .catch(() => {});
   }, []);
 
   const loadInteractions = async () => {
-    setLoading(true);
+    const cached = peekCache<CrmItem[]>('/api/crm');
+    if (cached) {
+      setInteractions(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setLoadError('');
     try {
       const res = await fetch('/api/crm', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok || !Array.isArray(data.interactions)) throw new Error(data.error || 'Erro ao carregar o CRM');
       setInteractions(data.interactions);
+      setCache('/api/crm', data.interactions);
     } catch (e: any) {
       setLoadError(e.message || 'Erro ao carregar o CRM');
     } finally {
@@ -198,16 +183,13 @@ export default function CrmHistoryPage() {
   });
 
   return (
-    <div className="space-y-6">
-      
+    <div className="jm-page">
+
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-jm-border">
+      <div className="jm-page-header">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-jm-text flex items-center gap-2.5">
-            <MessageSquare className="w-6 h-6 text-jm-orange" />
-            <span>CRM & Linha do Tempo</span>
-          </h1>
-          <p className="text-xs text-jm-muted mt-1">
+          <h1 className="jm-page-title">CRM & Linha do Tempo</h1>
+          <p className="jm-page-desc">
             Histórico oficial de atendimentos, reuniões comerciais e tratativas com clientes.
           </p>
         </div>
@@ -215,270 +197,264 @@ export default function CrmHistoryPage() {
         <button
           type="button"
           onClick={openNew}
-          className="jm-btn jm-btn-primary shrink-0"
+          className="jm-btn jm-btn-accent shrink-0"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
           <span>Registrar Interação</span>
         </button>
       </div>
 
       {loadError && (
-        <div className="flex items-center gap-2 p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-medium">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div role="alert" className="jm-alert jm-alert-danger">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{loadError}</span>
         </div>
       )}
 
       {/* BARRA DE FILTROS & PESQUISA */}
-      <div className="jm-card p-3 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-jm-muted absolute left-3 top-2.5 pointer-events-none" />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative w-full lg:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-jm-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por cliente, assunto ou descrição..."
-            className="jm-input pl-9 text-xs"
+            className="jm-input pl-9"
           />
         </div>
 
         {/* Abas de Tipos */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-          <button
-            type="button"
-            onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
-              filterType === 'all'
-                ? 'bg-jm-blue-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs'
-                : 'text-jm-muted hover:text-jm-text hover:bg-neutral-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            Todos ({interactions.length})
-          </button>
-          {Object.keys(TYPE_CONFIG).map((typeKey) => {
-            const count = interactions.filter((i) => i.type === typeKey).length;
-            return (
-              <button
-                key={typeKey}
-                type="button"
-                onClick={() => setFilterType(typeKey)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
-                  filterType === typeKey
-                    ? 'bg-jm-orange text-white shadow-xs'
-                    : 'text-jm-muted hover:text-jm-text hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                }`}
-              >
-                {TYPE_CONFIG[typeKey].label} {count > 0 && `(${count})`}
-              </button>
-            );
-          })}
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0 [scrollbar-width:none]">
+          <div className="jm-segmented">
+            <button
+              type="button"
+              onClick={() => setFilterType('all')}
+              className={`jm-segment ${filterType === 'all' ? 'jm-segment-active' : ''}`}
+            >
+              Todos <span className="tabular-nums text-jm-muted">{interactions.length}</span>
+            </button>
+            {Object.keys(TYPE_CONFIG).map((typeKey) => {
+              const count = interactions.filter((i) => i.type === typeKey).length;
+              return (
+                <button
+                  key={typeKey}
+                  type="button"
+                  onClick={() => setFilterType(typeKey)}
+                  className={`jm-segment ${filterType === typeKey ? 'jm-segment-active' : ''}`}
+                >
+                  {TYPE_CONFIG[typeKey].label} {count > 0 && <span className="tabular-nums text-jm-muted">{count}</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* TIMELINE DE TRATATIVAS */}
-      <div className="jm-card p-5 sm:p-6 space-y-6">
-        <div className="flex items-center justify-between border-b border-jm-border pb-4">
-          <h2 className="text-sm font-semibold text-jm-text">Linha do Tempo de Atendimentos</h2>
-          <span className="text-xs text-jm-muted font-medium">{filteredInteractions.length} registros</span>
+      <div className="jm-card">
+        <div className="jm-card-header">
+          <h2 className="jm-card-title">Linha do Tempo de Atendimentos</h2>
+          <span className="text-xs tabular-nums text-jm-muted">{filteredInteractions.length} registros</span>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs text-jm-muted font-medium animate-pulse">
+          <div className="jm-empty">
             Carregando registros do banco de dados...
           </div>
         ) : filteredInteractions.length === 0 ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 flex items-center justify-center text-jm-orange">
-              <MessageSquare className="w-6 h-6" />
-            </div>
-            <h3 className="text-sm font-semibold text-jm-text">
+          <div className="jm-empty">
+            <MessageSquare className="mb-1 h-6 w-6 text-jm-muted" strokeWidth={1.75} />
+            <h3 className="text-sm font-semibold text-jm-fg">
               {interactions.length > 0 ? 'Nenhum registro encontrado para o filtro' : 'Nenhuma interação registrada ainda'}
             </h3>
-            <p className="text-xs text-jm-muted max-w-sm mx-auto">
+            <p className="max-w-sm text-sm text-jm-muted">
               Utilize o botão acima para registrar o primeiro atendimento, reunião ou contato comercial no CRM.
             </p>
             <button
               type="button"
               onClick={openNew}
-              className="mt-2 jm-btn jm-btn-primary"
+              className="jm-btn jm-btn-primary mt-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="h-4 w-4" />
               <span>Registrar Primeiro Atendimento</span>
             </button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <ol className="px-4 py-4 md:px-5">
             {filteredInteractions.map((item) => {
               const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.COMERCIAL;
               const IconComponent = config.icon;
 
               return (
-                <div key={item.id} className="relative pl-6 border-l-2 border-jm-border space-y-2 group pb-6 last:pb-0">
-                  <div className="absolute -left-[7px] top-1.5 w-3 h-3 rounded-full bg-jm-orange ring-4 ring-jm-surface" />
-                  
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ${config.badge}`}>
-                        <IconComponent className="w-3 h-3" />
+                <li key={item.id} className="group relative border-l border-jm-border pb-6 pl-5 last:pb-1">
+                  <div className="absolute -left-[4.5px] top-[7px] h-2 w-2 rounded-full bg-jm-accent-line" />
+
+                  <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className={`jm-badge ${config.badge}`}>
+                        <IconComponent className="h-3 w-3" />
                         <span>{config.label}</span>
                       </span>
-                      <span className="text-xs font-semibold text-jm-text">
+                      <span className="truncate text-[13px] font-medium text-jm-fg">
                         {item.customer?.name || item.customerName || 'Cliente Geral'}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <span className="text-[11px] text-jm-muted flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-jm-muted" />
+                    <div className="flex items-center gap-1">
+                      <span className="mr-1 flex items-center gap-1 text-xs tabular-nums text-jm-muted">
+                        <Calendar className="h-3 w-3" />
                         <span>{item.date}</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => openEdit(item)}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-jm-muted hover:text-jm-orange p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        className="jm-icon-btn h-7 w-7 lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100"
                         title="Editar Registro"
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(item.id)}
-                        className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-jm-muted hover:text-rose-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        className="jm-icon-btn h-7 w-7 hover:text-jm-danger-fg lg:opacity-0 lg:group-hover:opacity-100 lg:focus:opacity-100"
                         title="Excluir Registro"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
 
-                  <h4 className="text-sm font-semibold text-jm-text">
+                  <h4 className="mt-1.5 text-sm font-semibold text-jm-fg">
                     {item.title}
                   </h4>
 
-                  <p className="text-xs text-jm-muted leading-relaxed max-w-3xl whitespace-pre-wrap">
+                  <p className="mt-1 max-w-3xl whitespace-pre-wrap text-sm leading-relaxed text-jm-fg2">
                     {item.description}
                   </p>
 
-                  <div className="flex items-center gap-1.5 pt-1 text-[11px] text-jm-muted">
-                    <UserIcon className="w-3 h-3" />
-                    <span>Responsável: <strong className="text-jm-text font-medium">{item.operator || 'Equipe JM Master'}</strong></span>
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-jm-muted">
+                    <UserIcon className="h-3 w-3" />
+                    <span>Responsável: <strong className="font-medium text-jm-fg2">{item.operator || 'Equipe JM Master'}</strong></span>
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ol>
         )}
       </div>
 
       {/* MODAL REGISTRAR INTERAÇÃO */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="jm-card w-full max-w-lg overflow-hidden shadow-xl border border-jm-border animate-fadeIn">
-            <div className="flex items-center justify-between p-5 border-b border-jm-border bg-neutral-50/50 dark:bg-neutral-900/50">
-              <h3 className="text-sm font-semibold text-jm-text flex items-center gap-2">
-                <Plus className="w-4 h-4 text-jm-orange" />
-                <span>{editingId ? 'Editar Interação' : 'Registrar Nova Interação CRM'}</span>
+        <div className="jm-overlay">
+          <div className="jm-modal">
+            <div className="jm-modal-header">
+              <h3 className="jm-modal-title">
+                {editingId ? 'Editar Interação' : 'Registrar Nova Interação CRM'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-jm-muted hover:text-jm-text p-1.5 rounded-lg transition"
+                className="jm-icon-btn"
+                aria-label="Fechar"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="p-5 space-y-4 text-xs">
-              {formError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{formError}</span>
+            <form onSubmit={handleCreate} className="flex min-h-0 flex-1 flex-col">
+              <div className="jm-modal-body space-y-4">
+                {formError && (
+                  <div role="alert" className="jm-alert jm-alert-danger">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
+                <div>
+                  <label className="jm-label">
+                    Tipo de Interação
+                  </label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className="jm-input"
+                  >
+                    <option value="COMERCIAL">Comercial / Vendas</option>
+                    <option value="SUPORTE">Suporte Técnico</option>
+                    <option value="REUNIAO">Reunião / Apresentação</option>
+                    <option value="NPS">NPS / Feedback</option>
+                    <option value="COBRANCA">Cobrança / Financeiro</option>
+                    <option value="LEAD">Lead do Site</option>
+                    <option value="OUTROS">Outros</option>
+                  </select>
                 </div>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Tipo de Interação
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="jm-input text-xs font-semibold"
-                >
-                  <option value="COMERCIAL">Comercial / Vendas</option>
-                  <option value="SUPORTE">Suporte Técnico</option>
-                  <option value="REUNIAO">Reunião / Apresentação</option>
-                  <option value="NPS">NPS / Feedback</option>
-                  <option value="COBRANCA">Cobrança / Financeiro</option>
-                  <option value="LEAD">Lead do Site</option>
-                  <option value="OUTROS">Outros</option>
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Cliente / Empresa
-                </label>
-                <select
-                  value={formData.customerId}
-                  onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  className="jm-input text-xs font-semibold"
-                >
-                  <option value="">— Não cadastrado (digitar nome) —</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                {!formData.customerId && (
+                <div>
+                  <label className="jm-label">
+                    Cliente / Empresa
+                  </label>
+                  <select
+                    value={formData.customerId}
+                    onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+                    className="jm-input"
+                  >
+                    <option value="">— Não cadastrado (digitar nome) —</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  {!formData.customerId && (
+                    <input
+                      type="text"
+                      value={formData.customerName}
+                      onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                      placeholder="Ex: Empresa ABC Ltda"
+                      className="jm-input mt-2"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="jm-label">
+                    Título da Tratativa
+                  </label>
                   <input
                     type="text"
-                    value={formData.customerName}
-                    onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-                    placeholder="Ex: Empresa ABC Ltda"
-                    className="mt-2 jm-input text-xs"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Ex: Alinhamento de Proposta WhatsApp API Oficial"
+                    className="jm-input"
                   />
-                )}
+                </div>
+
+                <div>
+                  <label className="jm-label">
+                    Descrição / Detalhes
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Descreva o que foi tratado, decisões tomadas e próximos passos acordados..."
+                    className="jm-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="jm-label">
+                    Responsável / Operador
+                  </label>
+                  <p className="flex h-9 w-full items-center rounded-[4px] border border-jm-border bg-jm-subtle px-3 text-sm text-jm-muted">
+                    {editingId ? 'Mantido o responsável original' : operatorName || 'Usuário logado'}
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Título da Tratativa
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Ex: Alinhamento de Proposta WhatsApp API Oficial"
-                  className="jm-input text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Descrição / Detalhes
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Descreva o que foi tratado, decisões tomadas e próximos passos acordados..."
-                  className="jm-input text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Responsável / Operador
-                </label>
-                <p className="w-full px-3 py-2 text-xs bg-neutral-100 dark:bg-neutral-900 border border-jm-border rounded-lg text-jm-muted">
-                  {editingId ? 'Mantido o responsável original' : operatorName || 'Usuário logado'}
-                </p>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="jm-modal-footer">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -491,7 +467,7 @@ export default function CrmHistoryPage() {
                   disabled={saving}
                   className="jm-btn jm-btn-primary"
                 >
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="h-3.5 w-3.5" />
                   <span>{saving ? 'Salvando...' : 'Salvar Registro'}</span>
                 </button>
               </div>

@@ -115,220 +115,218 @@ export default function ArticleMetadata({
   const excerptLength = article.excerpt.length;
   const isExcerptOver = excerptLength > maxExcerptLength;
 
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 1. METADADOS PRINCIPAIS */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-5">
-        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
-              Configurações do Artigo
-            </span>
-          </div>
-          <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400">
-            SEO & Classificação
-          </span>
+      <div className="jm-card">
+        <div className="jm-card-header">
+          <span className="jm-card-title">Configurações do artigo</span>
+          <span className="text-xs text-jm-muted">SEO e classificação</span>
         </div>
 
-        {/* CATEGORIA PRINCIPAL COM BOTÃO DE CRIAR NOVA CATEGORIA */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-              Categoria Oficial
+        <div className="jm-card-body space-y-5">
+          {/* CATEGORIA PRINCIPAL COM BOTÃO DE CRIAR NOVA CATEGORIA */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-[13px] font-medium text-jm-fg2">
+                Categoria
+              </label>
+              {!isAddingCategory && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingCategory(true)}
+                  className="jm-link flex cursor-pointer items-center gap-1 text-xs"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span>Nova categoria</span>
+                </button>
+              )}
+            </div>
+
+            {/* INPUT PARA CRIAR NOVA CATEGORIA */}
+            {categoryError && (
+              <p className="mb-2 text-xs font-medium text-jm-danger-fg">{categoryError}</p>
+            )}
+            {isAddingCategory && (
+              <div className="mb-3 space-y-1.5 rounded-[4px] border border-jm-border bg-jm-subtle p-3">
+                <span className="block text-xs font-medium text-jm-fg2">
+                  Nome da nova categoria
+                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCategory();
+                      } else if (e.key === 'Escape') {
+                        setIsAddingCategory(false);
+                        setNewCategoryName('');
+                      }
+                    }}
+                    placeholder="Ex: LGPD & Segurança, Tecnologia, Cases..."
+                    className="jm-input h-8 min-w-0 flex-1 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    disabled={!newCategoryName.trim()}
+                    className="jm-btn jm-btn-primary jm-btn-sm"
+                  >
+                    Adicionar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingCategory(false);
+                      setNewCategoryName('');
+                    }}
+                    className="jm-icon-btn"
+                    aria-label="Cancelar"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* PILLS DAS CATEGORIAS */}
+            <div className="flex flex-wrap gap-1.5">
+              {categories.map((catName) => {
+                const isSelected = article.category === catName;
+                const isDefault = DEFAULT_CATEGORIES.includes(catName as any);
+                return (
+                  <div
+                    key={catName}
+                    onClick={() => onChange({ category: catName })}
+                    className={`group relative flex h-7 cursor-pointer select-none items-center gap-1.5 rounded-[4px] border px-2.5 text-xs font-medium transition-colors duration-100 ${
+                      isSelected
+                        ? 'border-jm-primary bg-jm-primary text-jm-primary-fg'
+                        : 'border-jm-border bg-jm-surface text-jm-fg2 hover:border-jm-border-strong hover:text-jm-fg'
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-jm-accent-line' : 'bg-jm-border-strong'}`} />
+                    <span>{catName}</span>
+
+                    {/* BOTÃO PARA APAGAR CATEGORIA CRIADA */}
+                    {!isDefault && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCategoryToDelete(catName);
+                        }}
+                        title={`Apagar categoria "${catName}"`}
+                        className={`-mr-1 ml-0.5 cursor-pointer rounded-[3px] p-0.5 leading-none transition-colors ${
+                          isSelected
+                            ? 'text-white/75 hover:bg-white/15 hover:text-white'
+                            : 'text-jm-muted hover:bg-jm-danger-bg hover:text-jm-danger-fg'
+                        }`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* TOGGLE ARTIGO EM DESTAQUE */}
+          <div className="flex items-center justify-between gap-3 rounded-[4px] border border-jm-border bg-jm-subtle px-3 py-2.5">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[13px] font-medium text-jm-fg">
+                  Artigo em destaque
+                </span>
+                {article.isFeatured && (
+                  <span className="jm-badge jm-badge-accent">
+                    Destaque ativo
+                  </span>
+                )}
+              </div>
+              <p className="mt-0.5 text-xs text-jm-muted">
+                Exibe a badge laranja e fixa o artigo no topo do feed do blog
+              </p>
+            </div>
+
+            <label className="relative inline-flex shrink-0 cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={article.isFeatured}
+                onChange={(e) => onChange({ isFeatured: e.target.checked })}
+                className="peer sr-only"
+              />
+              <div className="h-5 w-9 rounded-full bg-jm-border-strong transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:bg-jm-primary peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-jm-ring" />
             </label>
-            {!isAddingCategory && (
-              <button
-                type="button"
-                onClick={() => setIsAddingCategory(true)}
-                className="text-[11px] font-bold text-[#E85D26] hover:underline flex items-center gap-1 cursor-pointer"
+          </div>
+
+          {/* SUBTÍTULO / RESUMO (EXCERPT) */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-[13px] font-medium text-jm-fg2">
+                Resumo / subtítulo
+              </label>
+              <span
+                className={`text-xs tabular-nums ${
+                  isExcerptOver
+                    ? 'font-medium text-jm-danger-fg'
+                    : 'text-jm-muted'
+                }`}
               >
-                <Plus className="w-3 h-3" />
-                <span>Nova Categoria</span>
-              </button>
+                {excerptLength}/{maxExcerptLength} caracteres
+              </span>
+            </div>
+            <textarea
+              rows={3}
+              value={article.excerpt}
+              onChange={handleExcerptChange}
+              placeholder="Texto curto e objetivo que resume o tema principal do artigo para o card do feed e snippets de SEO..."
+              className="jm-input resize-none text-[13px]"
+            />
+            {isExcerptOver && (
+              <p className="mt-1 text-xs text-jm-danger-fg">
+                Recomendamos até 180 caracteres para melhor legibilidade nos cards de feed.
+              </p>
             )}
           </div>
 
-          {/* INPUT PARA CRIAR NOVA CATEGORIA */}
-          {categoryError && (
-            <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400">{categoryError}</p>
-          )}
-          {isAddingCategory && (
-            <div className="mb-3 p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-[#E85D26]/40 space-y-2">
-              <span className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 block">
-                Nome da Nova Categoria
-              </span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  autoFocus
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddCategory();
-                    } else if (e.key === 'Escape') {
-                      setIsAddingCategory(false);
-                      setNewCategoryName('');
-                    }
-                  }}
-                  placeholder="Ex: LGPD & Segurança, Tecnologia, Cases..."
-                  className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCategory}
-                  disabled={!newCategoryName.trim()}
-                  className="px-3 py-1.5 bg-[#E85D26] text-white text-xs font-bold rounded-lg hover:bg-orange-600 transition disabled:opacity-50 cursor-pointer"
-                >
-                  Adicionar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddingCategory(false);
-                    setNewCategoryName('');
-                  }}
-                  className="p-1 text-neutral-400 hover:text-neutral-700 dark:hover:text-white cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* PILLS DAS CATEGORIAS */}
-          <div className="flex flex-wrap gap-2">
-            {categories.map((catName) => {
-              const isSelected = article.category === catName;
-              const isDefault = DEFAULT_CATEGORIES.includes(catName as any);
-              return (
-                <div
-                  key={catName}
-                  onClick={() => onChange({ category: catName })}
-                  className={`group relative px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border cursor-pointer select-none ${
-                    isSelected
-                      ? 'bg-[#E85D26] text-white border-[#E85D26] shadow-xs'
-                      : 'bg-neutral-50 dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700'
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-neutral-400'}`} />
-                  <span>{catName}</span>
-                  
-                  {/* BOTÃO PARA APAGAR CATEGORIA CRIADA */}
-                  {!isDefault && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCategoryToDelete(catName);
-                      }}
-                      title={`Apagar categoria "${catName}"`}
-                      className={`ml-1 px-1 py-0.5 rounded text-[10px] font-black leading-none transition cursor-pointer ${
-                        isSelected
-                          ? 'text-white/80 hover:text-white hover:bg-black/20'
-                          : 'text-neutral-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40'
-                      }`}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* TOGGLE ARTIGO EM DESTAQUE */}
-        <div className="flex items-center justify-between p-3.5 bg-neutral-50 dark:bg-neutral-950/60 rounded-xl border border-neutral-200 dark:border-neutral-800">
+          {/* SLUG / URL AMIGÁVEL */}
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-neutral-900 dark:text-white">
-                Artigo em Destaque
-              </span>
-              {article.isFeatured && (
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 bg-[#E85D26] text-white rounded">
-                  DESTAQUE ATIVO
-                </span>
-              )}
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label className="text-[13px] font-medium text-jm-fg2">
+                Slug da URL
+              </label>
+              <button
+                type="button"
+                onClick={handleRegenerateSlug}
+                className="jm-link cursor-pointer text-xs"
+              >
+                Regerar do título
+              </button>
             </div>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Exibe a badge laranja e fixa o artigo no topo do feed do blog
-            </p>
-          </div>
-
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={article.isFeatured}
-              onChange={(e) => onChange({ isFeatured: e.target.checked })}
-              className="sr-only peer"
-            />
-            <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-[#E85D26]" />
-          </label>
-        </div>
-
-        {/* SUBTÍTULO / RESUMO (EXCERPT) */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-              Resumo / Subtítulo (Excerpt)
-            </label>
-            <span
-              className={`text-[11px] font-semibold ${
-                isExcerptOver
-                  ? 'text-rose-500 font-bold'
-                  : 'text-neutral-500 dark:text-neutral-400'
-              }`}
-            >
-              {excerptLength}/{maxExcerptLength} caracteres
-            </span>
-          </div>
-          <textarea
-            rows={3}
-            value={article.excerpt}
-            onChange={handleExcerptChange}
-            placeholder="Texto curto e objetivo que resume o tema principal do artigo para o card do feed e snippets de SEO..."
-            className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] resize-none transition"
-          />
-          {isExcerptOver && (
-            <p className="text-[11px] text-rose-500 mt-1">
-              Recomendamos até 180 caracteres para melhor legibilidade nos cards de feed.
-            </p>
-          )}
-        </div>
-
-        {/* SLUG / URL AMIGÁVEL */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-              Slug da URL (SEO)
-            </label>
-            <button
-              type="button"
-              onClick={handleRegenerateSlug}
-              className="text-[11px] font-semibold text-[#E85D26] hover:underline cursor-pointer"
-            >
-              Regerar do Título
-            </button>
-          </div>
-          <div className="flex items-center bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-3 py-2 text-xs">
-            <span className="text-neutral-400 select-none mr-1 font-mono text-[11px]">
-              www.jmmaster.com.br/blog/
-            </span>
-            <input
-              type="text"
-              value={article.slug}
-              onChange={(e) => onChange({ slug: slugify(e.target.value) })}
-              placeholder="url-amigavel-do-artigo"
-              className="flex-1 bg-transparent text-neutral-900 dark:text-white font-mono text-xs focus:outline-none"
-            />
+            <div className="flex h-9 items-center overflow-hidden rounded-[4px] border border-jm-border-strong bg-jm-surface text-xs focus-within:border-jm-primary focus-within:ring-2 focus-within:ring-jm-ring">
+              <span className="flex h-full shrink-0 select-none items-center border-r border-jm-border bg-jm-subtle px-2.5 font-mono text-[11px] text-jm-muted">
+                <span className="hidden sm:inline">www.jmmaster.com.br</span>/blog/
+              </span>
+              <input
+                type="text"
+                value={article.slug}
+                onChange={(e) => onChange({ slug: slugify(e.target.value) })}
+                placeholder="url-amigavel-do-artigo"
+                className="h-full min-w-0 flex-1 bg-transparent px-2.5 font-mono text-xs text-jm-fg placeholder:text-jm-placeholder focus:outline-none"
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* 2. GESTÃO DE MÍDIA / CAPA */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
+      <div className="jm-card">
         <MediaUploader
           coverImage={article.coverImage}
           coverImageAlt={article.coverImageAlt}
@@ -342,138 +340,137 @@ export default function ArticleMetadata({
       <SEOModule article={article} onChange={onChange} />
 
       {/* 4. AUTORIA & PUBLICAÇÃO 100% AUTOMÁTICAS */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-neutral-900 dark:text-white">
-            Autoria & Publicação
-          </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 rounded flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>100% Automático</span>
+      <div className="jm-card">
+        <div className="jm-card-header">
+          <span className="jm-card-title">Autoria e publicação</span>
+          <span className="jm-badge jm-badge-success">
+            <CheckCircle2 className="h-3 w-3" />
+            <span>Automático</span>
           </span>
         </div>
 
-        {/* CARD DO AUTOR OFICIAL FIXO DA MARCA */}
-        <div className="p-3.5 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 flex items-center gap-3">
-          <div className="relative w-11 h-11 rounded-lg bg-neutral-900 p-1 flex items-center justify-center border border-neutral-700 shrink-0 overflow-hidden">
-            <Image
-              src="/logos/Icone.png"
-              alt="JM Master Group"
-              fill
-              className="object-contain p-1"
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">
-                JM Master Group
-              </p>
-              <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-orange-600/10 text-[#E85D26] rounded border border-orange-500/20">
-                OFICIAL
-              </span>
+        <div className="jm-card-body space-y-3">
+          {/* CARD DO AUTOR OFICIAL FIXO DA MARCA */}
+          <div className="flex items-center gap-3 rounded-[4px] border border-jm-border bg-jm-subtle p-3">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-[4px] border border-jm-border bg-jm-side-bg">
+              <Image
+                src="/logos/Icone.png"
+                alt="JM Master Group"
+                fill
+                className="object-contain p-1.5"
+              />
             </div>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate">
-              Especialistas em Mensageria & IA
-            </p>
-          </div>
-        </div>
-
-        {/* CARDS DINÂMICOS AUTOMÁTICOS: TEMPO DE LEITURA & DATA */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          
-          {/* TEMPO DE LEITURA AUTOMÁTICO */}
-          <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-1">
-            <span className="text-[10px] font-bold uppercase text-neutral-500 dark:text-neutral-400 block">
-              Tempo de Leitura
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[#E85D26]" />
-              <span className="text-sm font-black text-[#E85D26]">
-                {article.readingTimeMinutes || 1} min
-              </span>
-            </div>
-            <span className="text-[10px] text-neutral-400 block">
-              Calculado automaticamente do texto
-            </span>
-          </div>
-
-          {/* DATA DE PUBLICAÇÃO AUTOMÁTICA */}
-          <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-1">
-            <span className="text-[10px] font-bold uppercase text-neutral-500 dark:text-neutral-400 block">
-              Data de Publicação
-            </span>
-            {article.status === 'published' ? (
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-neutral-500 dark:text-neutral-400" />
-                <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                  {article.publishedAt ? new Date(article.publishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
+                <p className="truncate text-[13px] font-medium text-jm-fg">
+                  JM Master Group
+                </p>
+                <span className="jm-badge jm-badge-primary">
+                  Oficial
                 </span>
               </div>
-            ) : (
-              <input
-                type="datetime-local"
-                value={
-                  article.publishedAt && article.status === 'scheduled'
-                    ? new Date(new Date(article.publishedAt).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                    : ''
-                }
-                min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
-                onChange={(e) =>
-                  onChange({
-                    publishedAt: e.target.value ? new Date(e.target.value).toISOString() : undefined,
-                    status: e.target.value ? 'scheduled' : 'draft',
-                  })
-                }
-                className="w-full px-2 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
-              />
-            )}
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold block">
-              {article.status === 'published'
-                ? 'Publicado'
-                : 'Defina para usar “Agendar”; vazio = publicar agora'}
-            </span>
+              <p className="truncate text-xs text-jm-muted">
+                Especialistas em Mensageria & IA
+              </p>
+            </div>
           </div>
 
-        </div>
+          {/* CARDS DINÂMICOS AUTOMÁTICOS: TEMPO DE LEITURA & DATA */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 
+            {/* TEMPO DE LEITURA AUTOMÁTICO */}
+            <div className="space-y-1 rounded-[4px] border border-jm-border p-3">
+              <span className="block text-xs text-jm-muted">
+                Tempo de leitura
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-jm-muted" />
+                <span className="text-sm font-semibold tabular-nums text-jm-fg">
+                  {article.readingTimeMinutes || 1} min
+                </span>
+              </div>
+              <span className="block text-[11px] text-jm-muted">
+                Calculado automaticamente do texto
+              </span>
+            </div>
+
+            {/* DATA DE PUBLICAÇÃO AUTOMÁTICA */}
+            <div className="space-y-1 rounded-[4px] border border-jm-border p-3">
+              <span className="block text-xs text-jm-muted">
+                Data de publicação
+              </span>
+              {article.status === 'published' ? (
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-jm-muted" />
+                  <span className="text-[13px] font-medium text-jm-fg">
+                    {article.publishedAt ? new Date(article.publishedAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}
+                  </span>
+                </div>
+              ) : (
+                <input
+                  type="datetime-local"
+                  value={
+                    article.publishedAt && article.status === 'scheduled'
+                      ? new Date(new Date(article.publishedAt).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                      : ''
+                  }
+                  min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                  onChange={(e) =>
+                    onChange({
+                      publishedAt: e.target.value ? new Date(e.target.value).toISOString() : undefined,
+                      status: e.target.value ? 'scheduled' : 'draft',
+                    })
+                  }
+                  className="jm-input h-8 px-2 text-xs"
+                />
+              )}
+              <span className="block text-[11px] text-jm-muted">
+                {article.status === 'published'
+                  ? 'Publicado'
+                  : 'Defina para usar “Agendar”; vazio = publicar agora'}
+              </span>
+            </div>
+
+          </div>
+        </div>
       </div>
 
-      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE CATEGORIA ESTILIZADO */}
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE CATEGORIA */}
       {categoryToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-fadeIn">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-                  Excluir Categoria
+        <div className="jm-overlay">
+          <div className="jm-modal sm:max-w-md">
+            <div className="jm-modal-header">
+              <div className="flex items-center gap-2.5">
+                <Trash2 className="h-4 w-4 text-jm-danger-fg" />
+                <h3 className="jm-modal-title">
+                  Excluir categoria
                 </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Esta ação removerá a categoria do sistema.
-                </p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              Tem certeza que deseja apagar a categoria <strong className="text-[#E85D26] font-bold">"{categoryToDelete}"</strong>? Caso algum artigo esteja com ela selecionada, ele será reatribuído para a categoria oficial.
-            </p>
+            <div className="jm-modal-body space-y-2">
+              <p className="text-xs text-jm-muted">
+                Esta ação removerá a categoria do sistema.
+              </p>
+              <p className="text-sm leading-relaxed text-jm-fg2">
+                Tem certeza que deseja apagar a categoria <strong className="font-semibold text-jm-fg">"{categoryToDelete}"</strong>? Caso algum artigo esteja com ela selecionada, ele será reatribuído para a categoria oficial.
+              </p>
+            </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="jm-modal-footer">
               <button
                 type="button"
                 onClick={() => setCategoryToDelete(null)}
-                className="px-4 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmDeleteCategory}
-                className="px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition shadow-lg shadow-rose-950/20 cursor-pointer"
+                className="jm-btn jm-btn-danger-solid"
               >
-                Sim, Excluir Categoria
+                Sim, excluir categoria
               </button>
             </div>
           </div>

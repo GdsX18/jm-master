@@ -21,6 +21,7 @@ import {
   Zap,
   MessageCircle,
 } from 'lucide-react';
+import { peekCache, setCache } from '../lib/cache';
 
 interface FinancialItem {
   id: string;
@@ -130,12 +131,15 @@ export default function FinancePage() {
   const [notice, setNotice] = useState('');
 
   const loadRecurring = async () => {
-    setRecurringLoading(true);
+    const cached = peekCache<RecurringCustomer[]>('/api/finance/recurring');
+    if (cached) setRecurring(cached);
+    setRecurringLoading(!cached);
     try {
       const res = await fetch('/api/finance/recurring', { cache: 'no-store' });
       const data = await readJson(res);
       if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao carregar cobranças recorrentes');
       setRecurring(data.customers);
+      setCache('/api/finance/recurring', data.customers);
     } catch (e: any) {
       setLoadError(e.message);
     } finally {
@@ -203,7 +207,12 @@ export default function FinancePage() {
   };
 
   const loadFinanceData = async () => {
-    setLoading(true);
+    const cached = peekCache<{ records: FinancialItem[]; metrics: Metrics }>('/api/finance');
+    if (cached) {
+      setRecords(cached.records);
+      setMetrics(cached.metrics);
+    }
+    setLoading(!cached);
     setLoadError('');
     try {
       const res = await fetch('/api/finance', { cache: 'no-store' });
@@ -211,6 +220,7 @@ export default function FinancePage() {
       if (!res.ok || !Array.isArray(data.records)) throw new Error(data.error || 'Erro ao carregar faturas');
       setRecords(data.records);
       setMetrics(data.metrics || EMPTY_METRICS);
+      setCache('/api/finance', { records: data.records, metrics: data.metrics || EMPTY_METRICS });
     } catch (e: any) {
       setLoadError(e.message || 'Erro ao carregar faturas');
     } finally {
@@ -219,10 +229,13 @@ export default function FinancePage() {
   };
 
   const loadCustomers = async () => {
+    const cached = peekCache<any[]>('/api/customers');
+    if (Array.isArray(cached)) setCustomers(cached.map((c: any) => ({ id: c.id, name: c.name })));
     try {
       const res = await fetch('/api/customers', { cache: 'no-store' });
       const data = await readJson(res);
       if (res.ok && Array.isArray(data)) {
+        setCache('/api/customers', data);
         setCustomers(data.map((c: any) => ({ id: c.id, name: c.name })));
       }
     } catch {}
@@ -373,98 +386,95 @@ export default function FinancePage() {
   });
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-8 bg-jm-bg text-jm-fg min-h-screen transition-colors duration-300">
-      
+    <div className="jm-page">
+
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-jm-border">
+      <div className="jm-page-header">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-jm-fg flex items-center gap-2.5">
-            <DollarSign className="w-6 h-6 text-jm-primary-text" strokeWidth={1.75} />
-            <span>Gestão Financeira & Faturamento</span>
-          </h1>
-          <p className="text-sm text-jm-muted mt-1">
+          <h1 className="jm-page-title">Financeiro</h1>
+          <p className="jm-page-desc">
             Emissão e acompanhamento de faturas, recebimentos e inadimplência por cliente.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={generateNow}
             disabled={generating}
             title="Gera agora as faturas recorrentes do mês (também roda automaticamente todo dia)"
-            className="jm-btn jm-btn-secondary jm-btn-sm"
+            className="jm-btn jm-btn-secondary"
           >
-            <Zap className={`w-3.5 h-3.5 text-jm-primary-text ${generating ? 'animate-pulse' : ''}`} />
+            <Zap className="h-3.5 w-3.5" />
             <span>{generating ? 'Gerando...' : 'Gerar Faturas'}</span>
           </button>
           <button
             type="button"
             onClick={exportCsv}
             disabled={filteredRecords.length === 0}
-            className="jm-btn jm-btn-secondary jm-btn-sm"
+            className="jm-btn jm-btn-secondary"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="h-3.5 w-3.5" />
             <span>Exportar CSV</span>
           </button>
           <button
             type="button"
             onClick={handleOpenModal}
-            className="jm-btn jm-btn-primary jm-btn-sm"
+            className="jm-btn jm-btn-accent"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="h-4 w-4" />
             <span>Nova Fatura</span>
           </button>
         </div>
       </div>
 
       {loadError && (
-        <div role="alert" className="flex items-start gap-3 rounded-xl border border-jm-danger-border bg-jm-danger-bg p-4 text-sm font-medium text-jm-danger-fg">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+        <div role="alert" className="jm-alert jm-alert-danger">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{loadError}</span>
         </div>
       )}
 
       {notice && (
-        <div className="flex items-center justify-between gap-2 p-4 rounded-xl border border-jm-success-border bg-jm-success-bg text-jm-success-fg text-sm font-medium">
+        <div className="jm-alert jm-alert-success items-center justify-between">
           <span>{notice}</span>
-          <button type="button" onClick={() => setNotice('')} className="cursor-pointer text-jm-success-fg hover:opacity-75"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setNotice('')} className="jm-icon-btn h-7 w-7 text-jm-success-fg hover:bg-transparent hover:text-jm-success-fg hover:opacity-75" aria-label="Fechar aviso"><X className="h-4 w-4" /></button>
         </div>
       )}
 
-      {/* CARDS DE RESUMO FINANCEIRO (MÉTRICAS REAIS) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        <div className="jm-card p-5 md:p-6 shadow-xs">
-          <p className="text-sm font-medium text-jm-muted">Receita Recebida</p>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-success-fg mt-2">
+      {/* RESUMO FINANCEIRO (MÉTRICAS REAIS) */}
+      <div className="grid grid-cols-2 overflow-hidden rounded-[6px] border border-jm-border bg-jm-border gap-px lg:grid-cols-4">
+
+        <div className="bg-jm-surface p-4 md:p-5">
+          <p className="jm-stat-label flex items-center gap-1.5"><span className="jm-dot text-jm-success-fg" />Receita Recebida</p>
+          <p className="jm-stat-value text-xl md:text-2xl">
             {formatCurrency(metrics.receitaRecebida)}
           </p>
-          <span className="text-xs text-jm-muted font-medium mt-1 block">Faturas liquidadas</span>
+          <span className="mt-1 block text-xs text-jm-muted">Faturas liquidadas</span>
         </div>
 
-        <div className="jm-card p-5 md:p-6 shadow-xs">
-          <p className="text-sm font-medium text-jm-muted">A Receber (No Prazo)</p>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-primary-text mt-2">
+        <div className="bg-jm-surface p-4 md:p-5">
+          <p className="jm-stat-label flex items-center gap-1.5"><span className="jm-dot text-jm-primary-text" />A Receber (No Prazo)</p>
+          <p className="jm-stat-value text-xl md:text-2xl">
             {formatCurrency(metrics.aReceber)}
           </p>
-          <span className="text-xs text-jm-muted font-medium mt-1 block">{metrics.openCount} fatura(s) no prazo</span>
+          <span className="mt-1 block text-xs text-jm-muted">{metrics.openCount} fatura(s) no prazo</span>
         </div>
 
-        <div className="jm-card p-5 md:p-6 shadow-xs">
-          <p className="text-sm font-medium text-jm-muted">Inadimplência</p>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-danger-fg mt-2">
+        <div className="bg-jm-surface p-4 md:p-5">
+          <p className="jm-stat-label flex items-center gap-1.5"><span className="jm-dot text-jm-danger-fg" />Inadimplência</p>
+          <p className="jm-stat-value text-xl text-jm-danger-fg md:text-2xl">
             {formatCurrency(metrics.inadimplencia)}
           </p>
-          <span className="text-xs text-jm-muted font-medium mt-1 block">{metrics.overdueCount} fatura(s) vencida(s)</span>
+          <span className="mt-1 block text-xs text-jm-muted">{metrics.overdueCount} fatura(s) vencida(s)</span>
         </div>
 
-        <div className="jm-card p-5 md:p-6 shadow-xs">
-          <p className="text-sm font-medium text-jm-muted">Total Faturado</p>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-fg mt-2">
+        <div className="bg-jm-surface p-4 md:p-5">
+          <p className="jm-stat-label">Total Faturado</p>
+          <p className="jm-stat-value text-xl md:text-2xl">
             {formatCurrency(metrics.totalFaturado)}
           </p>
-          <span className="text-xs text-jm-muted font-medium mt-1 block">{metrics.totalCount - metrics.canceledCount} cobrança(s) válida(s)</span>
+          <span className="mt-1 block text-xs text-jm-muted">{metrics.totalCount - metrics.canceledCount} cobrança(s) válida(s)</span>
         </div>
 
       </div>
@@ -474,34 +484,35 @@ export default function FinancePage() {
         <button
           type="button"
           onClick={() => setTab('faturas')}
-          className={`jm-tab flex items-center gap-1.5 ${tab === 'faturas' ? 'jm-tab-active' : ''}`}
+          className={`jm-tab ${tab === 'faturas' ? 'jm-tab-active' : ''}`}
         >
-          <Receipt className="w-4 h-4" />
+          <Receipt className="h-4 w-4" />
           Faturas
         </button>
         <button
           type="button"
           onClick={() => setTab('recorrentes')}
-          className={`jm-tab flex items-center gap-1.5 ${tab === 'recorrentes' ? 'jm-tab-active' : ''}`}
+          className={`jm-tab ${tab === 'recorrentes' ? 'jm-tab-active' : ''}`}
         >
-          <Repeat className="w-4 h-4" />
-          Cobrança Recorrente ({recurring.filter((c) => c.billing.enabled).length})
+          <Repeat className="h-4 w-4" />
+          Cobrança Recorrente
+          <span className="jm-badge jm-badge-neutral tabular-nums">{recurring.filter((c) => c.billing.enabled).length}</span>
         </button>
       </div>
 
       {tab === 'recorrentes' && (
         <div className="jm-table-wrap">
-          <div className="p-4 sm:p-5 border-b border-jm-border bg-jm-subtle text-xs text-jm-muted leading-relaxed">
+          <div className="border-b border-jm-border bg-jm-subtle px-4 py-3 text-xs leading-relaxed text-jm-muted">
             Configure a mensalidade de cada cliente. Todo dia o sistema gera automaticamente a fatura do mês de quem tem a cobrança ativa
             (uma por cliente por mês, sem duplicar), marca como atrasada após o vencimento e registra no CRM.
           </div>
           {recurringLoading ? (
-            <div className="py-12 text-center text-xs text-jm-muted font-medium animate-pulse">Carregando clientes...</div>
+            <div className="jm-empty">Carregando clientes...</div>
           ) : recurring.length === 0 ? (
-            <div className="py-12 text-center text-xs text-jm-muted">Nenhum cliente cadastrado. Cadastre clientes em “Cadastro de Clientes”.</div>
+            <div className="jm-empty">Nenhum cliente cadastrado. Cadastre clientes em “Cadastro de Clientes”.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="jm-table">
+              <table className="jm-table min-w-[720px]">
                 <thead>
                   <tr>
                     <th className="jm-th">Cliente</th>
@@ -512,17 +523,17 @@ export default function FinancePage() {
                     <th className="jm-th text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-jm-border">
+                <tbody>
                   {recurring.map((c) => (
                     <tr key={c.id} className="jm-tr">
-                      <td className="jm-td font-semibold text-jm-fg">
+                      <td className="jm-td font-medium text-jm-fg">
                         {c.name}
-                        {!c.isActive && <span className="ml-2 text-[10px] text-jm-muted font-normal">(inativo)</span>}
+                        {!c.isActive && <span className="ml-2 text-[11px] font-normal text-jm-muted">(inativo)</span>}
                         {c.groupName && <span className="block text-xs font-normal text-jm-muted">Grupo: {c.groupName}</span>}
                       </td>
-                      <td className="jm-td font-semibold text-jm-fg">{c.billing.amount > 0 ? formatCurrency(c.billing.amount) : '-'}</td>
+                      <td className="jm-td font-medium tabular-nums text-jm-fg">{c.billing.amount > 0 ? formatCurrency(c.billing.amount) : '-'}</td>
                       <td className="jm-td text-jm-muted">Todo dia {c.billing.dueDay}</td>
-                      <td className="jm-td text-jm-fg2">{c.billing.method}</td>
+                      <td className="jm-td">{c.billing.method}</td>
                       <td className="jm-td">
                         {c.billing.enabled && c.isActive ? (
                           <span className="jm-badge jm-badge-success">Ativa</span>
@@ -556,159 +567,144 @@ export default function FinancePage() {
       {/* TABELA DE FATURAS RECENTES */}
       {tab === 'faturas' && (
       <div className="jm-card overflow-hidden">
-        
+
         {/* FILTROS DA TABELA */}
-        <div className="p-4 sm:p-5 border-b border-jm-border flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-neutral-50/50 dark:bg-neutral-900/40">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-jm-muted absolute left-3 top-2.5 pointer-events-none" />
+        <div className="flex flex-col gap-3 border-b border-jm-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-jm-muted" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por cliente, ID ou descrição..."
-              className="jm-input pl-9 text-xs"
+              className="jm-input pl-9"
             />
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <button
-              type="button"
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                statusFilter === 'all'
-                  ? 'bg-jm-blue-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs'
-                  : 'text-jm-muted hover:text-jm-text hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              Todas ({records.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('PAGO')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                statusFilter === 'PAGO'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-jm-muted hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-              }`}
-            >
-              Pagas
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('ABERTO')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                statusFilter === 'ABERTO'
-                  ? 'bg-sky-600 text-white shadow-xs'
-                  : 'text-jm-muted hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30'
-              }`}
-            >
-              Em Aberto
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('ATRASADO')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                statusFilter === 'ATRASADO'
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-jm-muted hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30'
-              }`}
-            >
-              Atrasadas
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusFilter('CANCELADO')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                statusFilter === 'CANCELADO'
-                  ? 'bg-neutral-700 text-white shadow-xs'
-                  : 'text-jm-muted hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              Canceladas
-            </button>
+          <div className="overflow-x-auto [scrollbar-width:none]">
+            <div className="jm-segmented">
+              <button
+                type="button"
+                onClick={() => setStatusFilter('all')}
+                className={`jm-segment ${statusFilter === 'all' ? 'jm-segment-active' : ''}`}
+              >
+                Todas <span className="tabular-nums text-jm-muted">{records.length}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('PAGO')}
+                className={`jm-segment ${statusFilter === 'PAGO' ? 'jm-segment-active' : ''}`}
+              >
+                <span className="jm-dot text-jm-success-fg" />
+                Pagas
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('ABERTO')}
+                className={`jm-segment ${statusFilter === 'ABERTO' ? 'jm-segment-active' : ''}`}
+              >
+                <span className="jm-dot text-jm-primary-text" />
+                Em Aberto
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('ATRASADO')}
+                className={`jm-segment ${statusFilter === 'ATRASADO' ? 'jm-segment-active' : ''}`}
+              >
+                <span className="jm-dot text-jm-danger-fg" />
+                Atrasadas
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter('CANCELADO')}
+                className={`jm-segment ${statusFilter === 'CANCELADO' ? 'jm-segment-active' : ''}`}
+              >
+                <span className="jm-dot text-jm-muted" />
+                Canceladas
+              </button>
+            </div>
           </div>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs text-jm-muted font-medium animate-pulse">
+          <div className="jm-empty">
             Carregando registros financeiros do banco...
           </div>
         ) : filteredRecords.length === 0 ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 flex items-center justify-center text-jm-orange">
-              <Receipt className="w-6 h-6" />
-            </div>
+          <div className="jm-empty">
+            <Receipt className="mb-1 h-6 w-6 text-jm-muted" strokeWidth={1.75} />
             {records.length > 0 ? (
               <>
-                <h3 className="text-sm font-semibold text-jm-text">Nenhuma fatura encontrada</h3>
-                <p className="text-xs text-jm-muted max-w-sm mx-auto">
+                <h3 className="text-sm font-semibold text-jm-fg">Nenhuma fatura encontrada</h3>
+                <p className="max-w-sm text-sm text-jm-muted">
                   Nenhum resultado para a busca ou o filtro selecionado.
                 </p>
               </>
             ) : (
               <>
-                <h3 className="text-sm font-semibold text-jm-text">Nenhuma fatura cadastrada</h3>
-                <p className="text-xs text-jm-muted max-w-sm mx-auto">
+                <h3 className="text-sm font-semibold text-jm-fg">Nenhuma fatura cadastrada</h3>
+                <p className="max-w-sm text-sm text-jm-muted">
                   Utilize o botão acima para emitir a primeira fatura ou cobrança do sistema.
                 </p>
                 <button
                   type="button"
                   onClick={handleOpenModal}
-                  className="mt-2 jm-btn jm-btn-primary"
+                  className="jm-btn jm-btn-primary mt-2"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="h-4 w-4" />
                   <span>Emitir Primeira Fatura</span>
                 </button>
               </>
             )}
           </div>
         ) : (
-          <div className="jm-table-wrap border-0 rounded-none">
-            <table className="jm-table">
+          <div className="overflow-x-auto">
+            <table className="jm-table min-w-[860px]">
               <thead>
-                <tr className="jm-tr">
+                <tr>
                   <th className="jm-th">Identificador</th>
                   <th className="jm-th">Cliente / Razão Social</th>
-                  <th className="jm-th">Valor</th>
+                  <th className="jm-th text-right">Valor</th>
                   <th className="jm-th">Vencimento</th>
                   <th className="jm-th">Método</th>
                   <th className="jm-th">Status</th>
                   <th className="jm-th text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-jm-border text-xs">
+              <tbody>
                 {filteredRecords.map((inv) => (
                   <tr key={inv.id} className="jm-tr group">
-                    <td className="jm-td font-mono font-bold text-jm-orange">
+                    <td className="jm-td whitespace-nowrap font-mono text-xs font-medium text-jm-fg">
                       {inv.invoiceNumber}
                       {inv.recurring && (
                         <span className="ml-1.5 inline-flex align-middle" title="Gerada automaticamente (cobrança recorrente)">
-                          <Repeat className="w-3 h-3 text-jm-muted" />
+                          <Repeat className="h-3 w-3 text-jm-muted" />
                         </span>
                       )}
                     </td>
                     <td className="jm-td">
-                      <span className="block font-semibold text-jm-text">{inv.customerName}</span>
-                      <span className="block text-[11px] text-jm-muted">{inv.description}</span>
+                      <span className="block font-medium text-jm-fg">{inv.customerName}</span>
+                      <span className="block text-xs text-jm-muted">{inv.description}</span>
                     </td>
-                    <td className="jm-td font-semibold text-jm-text">
+                    <td className="jm-td whitespace-nowrap text-right font-medium tabular-nums text-jm-fg">
                       {formatCurrency(inv.amount)}
                     </td>
-                    <td className="jm-td text-jm-muted">
+                    <td className="jm-td whitespace-nowrap tabular-nums text-jm-muted">
                       {formatDate(inv.dueDate)}
                     </td>
-                    <td className="jm-td text-jm-text">
+                    <td className="jm-td whitespace-nowrap">
                       {inv.method}
                     </td>
-                    <td className="jm-td">
+                    <td className="jm-td whitespace-nowrap">
                       {inv.status === 'PAGO' && (
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para alternar status"
-                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+                          className="jm-badge jm-badge-success cursor-pointer hover:border-jm-success-fg"
                         >
-                          ✓ PAGO
+                          <span className="jm-dot" />
+                          Pago
                         </button>
                       )}
                       {(inv.status === 'ABERTO' || inv.status === 'PENDENTE') && (
@@ -716,9 +712,10 @@ export default function FinancePage() {
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para marcar como pago"
-                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition cursor-pointer"
+                          className="jm-badge jm-badge-primary cursor-pointer hover:border-jm-primary-text"
                         >
-                          ⏳ EM ABERTO
+                          <span className="jm-dot" />
+                          Em aberto
                         </button>
                       )}
                       {inv.status === 'ATRASADO' && (
@@ -726,9 +723,10 @@ export default function FinancePage() {
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para marcar como pago"
-                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition cursor-pointer"
+                          className="jm-badge jm-badge-danger cursor-pointer hover:border-jm-danger-fg"
                         >
-                          ⚠ ATRASADO
+                          <span className="jm-dot" />
+                          Atrasado
                         </button>
                       )}
                       {inv.status === 'CANCELADO' && (
@@ -736,16 +734,17 @@ export default function FinancePage() {
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para reabrir a fatura"
-                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 transition cursor-pointer line-through"
+                          className="jm-badge jm-badge-neutral cursor-pointer line-through hover:border-jm-border-strong"
                         >
-                          CANCELADA
+                          Cancelada
                         </button>
                       )}
                       {inv.status === 'PAGO' && inv.paymentDate && (
-                        <span className="block mt-1 text-[10px] text-jm-muted">em {formatDate(inv.paymentDate, false)}</span>
+                        <span className="mt-1 block text-[11px] text-jm-muted">em {formatDate(inv.paymentDate, false)}</span>
                       )}
                     </td>
-                    <td className="jm-td text-right space-x-1 whitespace-nowrap">
+                    <td className="jm-td whitespace-nowrap text-right">
+                      <div className="inline-flex items-center gap-0.5">
                       {(inv.status === 'ABERTO' || inv.status === 'ATRASADO') && (() => {
                         const url = whatsappChargeUrl(inv);
                         return url ? (
@@ -753,39 +752,40 @@ export default function FinancePage() {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex text-jm-muted hover:text-emerald-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
+                            className="jm-icon-btn h-7 w-7 hover:text-jm-success-fg"
                             title="Enviar cobrança pelo WhatsApp"
                           >
-                            <MessageCircle className="w-3.5 h-3.5" />
+                            <MessageCircle className="h-3.5 w-3.5" />
                           </a>
                         ) : null;
                       })()}
                       <button
                         type="button"
                         onClick={() => handleEdit(inv)}
-                        className="text-jm-muted hover:text-jm-orange p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        className="jm-icon-btn h-7 w-7"
                         title="Editar Fatura"
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                       {inv.status !== 'CANCELADO' && inv.status !== 'PAGO' && (
                         <button
                           type="button"
                           onClick={() => handleCancelInvoice(inv)}
-                          className="text-jm-muted hover:text-amber-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                          className="jm-icon-btn h-7 w-7 hover:text-jm-warning-fg"
                           title="Cancelar Fatura"
                         >
-                          <Ban className="w-3.5 h-3.5" />
+                          <Ban className="h-3.5 w-3.5" />
                         </button>
                       )}
                       <button
                         type="button"
                         onClick={() => handleDelete(inv)}
-                        className="text-jm-muted hover:text-rose-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        className="jm-icon-btn h-7 w-7 hover:text-jm-danger-fg"
                         title="Excluir Fatura"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -800,42 +800,41 @@ export default function FinancePage() {
 
       {/* MODAL COBRANÇA RECORRENTE */}
       {billingEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="jm-card w-full max-w-lg overflow-hidden shadow-xl border border-jm-border animate-fadeIn">
-            <div className="flex items-center justify-between p-5 border-b border-jm-border bg-neutral-50/50 dark:bg-neutral-900/50">
-              <h3 className="text-sm font-semibold text-jm-text flex items-center gap-2">
-                <Repeat className="w-4 h-4 text-jm-orange" />
-                <span>Cobrança Recorrente — {billingEdit.name}</span>
+        <div className="jm-overlay">
+          <div className="jm-modal">
+            <div className="jm-modal-header">
+              <h3 className="jm-modal-title min-w-0 truncate">
+                Cobrança Recorrente — {billingEdit.name}
               </h3>
-              <button type="button" onClick={() => setBillingEdit(null)} className="text-jm-muted hover:text-jm-text p-1.5 rounded-lg transition">
-                <X className="w-4 h-4" />
+              <button type="button" onClick={() => setBillingEdit(null)} className="jm-icon-btn" aria-label="Fechar">
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4 text-xs">
+            <div className="jm-modal-body space-y-4">
               {billingError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div role="alert" className="jm-alert jm-alert-danger">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{billingError}</span>
                 </div>
               )}
 
-              <label className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-jm-border bg-neutral-50/50 dark:bg-neutral-900/40 cursor-pointer">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] border border-jm-border bg-jm-subtle px-3.5 py-3">
                 <span>
-                  <span className="block font-semibold text-jm-text">Gerar fatura automaticamente todo mês</span>
-                  <span className="block text-[11px] text-jm-muted">Só gera para clientes ativos.</span>
+                  <span className="block text-sm font-medium text-jm-fg">Gerar fatura automaticamente todo mês</span>
+                  <span className="block text-xs text-jm-muted">Só gera para clientes ativos.</span>
                 </span>
                 <input
                   type="checkbox"
                   checked={billingEdit.billing.enabled}
                   onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, enabled: e.target.checked } })}
-                  className="w-4 h-4 accent-jm-orange rounded"
+                  className="h-4 w-4 shrink-0"
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block font-medium text-xs text-jm-text mb-1.5">Valor mensal (R$)</label>
+                  <label className="jm-label">Valor mensal (R$)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -848,14 +847,14 @@ export default function FinancePage() {
                     <button
                       type="button"
                       onClick={() => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, amount: billingEdit.suggestedAmount } })}
-                      className="mt-1 text-[11px] font-semibold text-jm-orange hover:underline cursor-pointer"
+                      className="jm-link mt-1 cursor-pointer text-left text-xs"
                     >
                       Usar tabela do grupo {billingEdit.groupName}: {formatCurrency(billingEdit.suggestedAmount)}
                     </button>
                   )}
                 </div>
                 <div>
-                  <label className="block font-medium text-xs text-jm-text mb-1.5">Dia do vencimento</label>
+                  <label className="jm-label">Dia do vencimento</label>
                   <select
                     value={billingEdit.billing.dueDay}
                     onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, dueDay: parseInt(e.target.value, 10) } })}
@@ -869,18 +868,18 @@ export default function FinancePage() {
               </div>
 
               <div>
-                <label className="block font-medium text-xs text-jm-text mb-1.5">Descrição na fatura</label>
+                <label className="jm-label">Descrição na fatura</label>
                 <input
                   type="text"
                   value={billingEdit.billing.description}
                   onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, description: e.target.value } })}
                   className="jm-input"
                 />
-                <p className="mt-1 text-[11px] text-jm-muted">O mês de referência é adicionado automaticamente (ex.: “— 11/2026”).</p>
+                <p className="jm-help">O mês de referência é adicionado automaticamente (ex.: “— 11/2026”).</p>
               </div>
 
               <div>
-                <label className="block font-medium text-xs text-jm-text mb-1.5">Método de pagamento</label>
+                <label className="jm-label">Método de pagamento</label>
                 <select
                   value={billingEdit.billing.method}
                   onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, method: e.target.value } })}
@@ -891,21 +890,21 @@ export default function FinancePage() {
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setBillingEdit(null)} className="jm-btn jm-btn-secondary">
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => saveBilling(false)}
-                  disabled={billingSaving}
-                  className="jm-btn jm-btn-primary"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>{billingSaving ? 'Salvando...' : 'Salvar'}</span>
-                </button>
-              </div>
+            <div className="jm-modal-footer">
+              <button type="button" onClick={() => setBillingEdit(null)} className="jm-btn jm-btn-secondary">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => saveBilling(false)}
+                disabled={billingSaving}
+                className="jm-btn jm-btn-primary"
+              >
+                <Save className="h-3.5 w-3.5" />
+                <span>{billingSaving ? 'Salvando...' : 'Salvar'}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -913,146 +912,148 @@ export default function FinancePage() {
 
       {/* MODAL NOVA FATURA */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="jm-card w-full max-w-lg overflow-hidden shadow-xl border border-jm-border animate-fadeIn">
-            <div className="flex items-center justify-between p-5 border-b border-jm-border bg-neutral-50/50 dark:bg-neutral-900/50">
-              <h3 className="text-sm font-semibold text-jm-text flex items-center gap-2">
-                <Plus className="w-4 h-4 text-jm-orange" />
-                <span>{editingId ? 'Editar Fatura' : 'Emitir Nova Fatura / Cobrança'}</span>
+        <div className="jm-overlay">
+          <div className="jm-modal">
+            <div className="jm-modal-header">
+              <h3 className="jm-modal-title">
+                {editingId ? 'Editar Fatura' : 'Emitir Nova Fatura / Cobrança'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-jm-muted hover:text-jm-text p-1.5 rounded-lg transition"
+                className="jm-icon-btn"
+                aria-label="Fechar"
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
-              {formError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{formError}</span>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                    Nº da Fatura
-                  </label>
-                  <p className="w-full px-3 py-2 text-xs bg-neutral-100 dark:bg-neutral-900 border border-jm-border rounded-lg text-jm-muted font-mono">
-                    {editingId ? records.find((r) => r.id === editingId)?.invoiceNumber : 'Gerado automaticamente'}
-                  </p>
+            <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+              <div className="jm-modal-body space-y-4">
+                {formError && (
+                  <div role="alert" className="jm-alert jm-alert-danger">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="jm-label">
+                      Nº da Fatura
+                    </label>
+                    <p className="flex h-9 w-full items-center rounded-[4px] border border-jm-border bg-jm-subtle px-3 font-mono text-sm text-jm-muted">
+                      {editingId ? records.find((r) => r.id === editingId)?.invoiceNumber : 'Gerado automaticamente'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="jm-label">
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="jm-input"
+                    >
+                      <option value="ABERTO">Em Aberto</option>
+                      <option value="PAGO">Pago</option>
+                      {editingId && <option value="CANCELADO">Cancelado</option>}
+                    </select>
+                    <p className="jm-help">Faturas em aberto após o vencimento ficam “Atrasadas” automaticamente.</p>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                    Status
+                  <label className="jm-label">
+                    Cliente
                   </label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    value={formData.customerId}
+                    onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
                     className="jm-input"
                   >
-                    <option value="ABERTO">Em Aberto</option>
-                    <option value="PAGO">Pago</option>
-                    {editingId && <option value="CANCELADO">Cancelado</option>}
+                    <option value="">— Cliente não cadastrado (digitar nome) —</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
-                  <p className="mt-1 text-[11px] text-jm-muted">Faturas em aberto após o vencimento ficam “Atrasadas” automaticamente.</p>
+                  {!formData.customerId && (
+                    <input
+                      type="text"
+                      value={formData.customer}
+                      onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                      placeholder="Nome / Razão Social do cliente"
+                      className="jm-input mt-2"
+                    />
+                  )}
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Cliente
-                </label>
-                <select
-                  value={formData.customerId}
-                  onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  className="jm-input"
-                >
-                  <option value="">— Cliente não cadastrado (digitar nome) —</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                {!formData.customerId && (
+                <div>
+                  <label className="jm-label">
+                    Descrição do Serviço / Contrato
+                  </label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
-                    placeholder="Nome / Razão Social do cliente"
-                    className="mt-2 jm-input"
-                  />
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Descrição do Serviço / Contrato
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Ex: Mensalidade WhatsApp API Enterprise"
-                  className="jm-input"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                    Valor (R$)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
                     required
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    placeholder="Ex: 2450.00"
-                    className="jm-input font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                    Data de Vencimento
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Ex: Mensalidade WhatsApp API Enterprise"
                     className="jm-input"
                   />
                 </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="jm-label">
+                      Valor (R$)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      required
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                      placeholder="Ex: 2450.00"
+                      className="jm-input font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="jm-label">
+                      Data de Vencimento
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.dueDate}
+                      onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                      className="jm-input"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="jm-label">
+                    Método de Pagamento
+                  </label>
+                  <select
+                    value={formData.method}
+                    onChange={(e) => setFormData({ ...formData, method: e.target.value })}
+                    className="jm-input"
+                  >
+                    <option value="Boleto / Pix">Boleto / Pix</option>
+                    <option value="Pix Oficial">Pix Oficial</option>
+                    <option value="Boleto 30D">Boleto 30 Dias</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Transferência Bancária">Transferência Bancária</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-jm-text mb-1.5">
-                  Método de Pagamento
-                </label>
-                <select
-                  value={formData.method}
-                  onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                  className="jm-input"
-                >
-                  <option value="Boleto / Pix">Boleto / Pix</option>
-                  <option value="Pix Oficial">Pix Oficial</option>
-                  <option value="Boleto 30D">Boleto 30 Dias</option>
-                  <option value="Cartão de Crédito">Cartão de Crédito</option>
-                  <option value="Transferência Bancária">Transferência Bancária</option>
-                </select>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
+              <div className="jm-modal-footer">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -1065,7 +1066,7 @@ export default function FinancePage() {
                   disabled={saving}
                   className="jm-btn jm-btn-primary"
                 >
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="h-3.5 w-3.5" />
                   <span>{saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Emitir Fatura'}</span>
                 </button>
               </div>

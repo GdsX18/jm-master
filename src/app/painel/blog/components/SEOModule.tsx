@@ -113,7 +113,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
         ],
         score: 0,
         scoreLabel: 'Não Configurado',
-        scoreColor: 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800',
+        scoreColor: 'jm-badge-warning',
       };
     }
 
@@ -308,14 +308,14 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
     const score = Math.round(((goodCount * 1 + warningCount * 0.5) / checks.length) * 100);
 
     let scoreLabel = 'Excelente';
-    let scoreColor = 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800';
+    let scoreColor = 'jm-badge-success';
 
     if (score < 50) {
       scoreLabel = 'Necessita Melhorias';
-      scoreColor = 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800';
+      scoreColor = 'jm-badge-danger';
     } else if (score < 75) {
       scoreLabel = 'Aceitável / Bom';
-      scoreColor = 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800';
+      scoreColor = 'jm-badge-warning';
     }
 
     return {
@@ -349,69 +349,62 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
   const descProgress = Math.min(100, (descCharCount / 155) * 100);
 
   const getTitleBarColor = () => {
-    if (titleCharCount === 0) return 'bg-neutral-300 dark:bg-neutral-700';
-    if (titleCharCount < 40) return 'bg-amber-500';
-    if (titleCharCount <= 60) return 'bg-emerald-500';
-    return 'bg-rose-500';
+    if (titleCharCount === 0) return 'bg-jm-border-strong';
+    if (titleCharCount < 40) return 'bg-jm-warning-fg';
+    if (titleCharCount <= 60) return 'bg-jm-success-fg';
+    return 'bg-jm-danger-fg';
   };
 
   const getDescBarColor = () => {
-    if (descCharCount === 0) return 'bg-neutral-300 dark:bg-neutral-700';
-    if (descCharCount < 100) return 'bg-amber-500';
-    if (descCharCount <= 155) return 'bg-emerald-500';
-    return 'bg-rose-500';
+    if (descCharCount === 0) return 'bg-jm-border-strong';
+    if (descCharCount < 100) return 'bg-jm-warning-fg';
+    if (descCharCount <= 155) return 'bg-jm-success-fg';
+    return 'bg-jm-danger-fg';
   };
 
   return (
-    <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden transition-all">
+    <div className="jm-card overflow-hidden">
       {/* CABEÇALHO DO MÓDULO COM BADGE DE SCORE */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="p-5 flex items-center justify-between cursor-pointer select-none bg-neutral-50/50 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 transition border-b border-neutral-200 dark:border-neutral-800"
+        className={`flex cursor-pointer select-none flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 transition-colors duration-100 hover:bg-jm-hover md:px-5 ${isOpen ? 'border-b border-jm-border' : ''}`}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#E85D26]/10 text-[#E85D26] flex items-center justify-center font-black text-sm border border-[#E85D26]/20">
-            <Search className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 dark:text-white">
-                Otimização SEO
-              </h3>
-              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                Google Rank
-              </span>
-            </div>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
-              Análise de palavras-chave, metadados e preview real da SERP
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Search className="h-4 w-4 shrink-0 text-jm-muted" />
+          <div className="min-w-0">
+            <h3 className="jm-card-title">
+              Otimização SEO
+            </h3>
+            <p className="mt-0.5 text-xs text-jm-muted">
+              Palavras-chave, metadados e prévia da SERP
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {seo.focusKeyphrase && (
-            <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${analysis.scoreColor}`}>
-              <span className={`w-2 h-2 rounded-full ${analysis.score >= 75 ? 'bg-emerald-500' : analysis.score >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} />
-              <span>SEO Score: {analysis.score}/100 • {analysis.scoreLabel}</span>
+            <span className={`jm-badge ${analysis.scoreColor}`}>
+              <span className="jm-dot" />
+              <span className="tabular-nums">{analysis.score}/100</span>
+              <span className="hidden sm:inline">· {analysis.scoreLabel}</span>
             </span>
           )}
-          <button type="button" className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white">
-            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <button type="button" className="jm-icon-btn h-7 w-7" aria-label={isOpen ? 'Recolher' : 'Expandir'}>
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
       {/* CONTEÚDO EXPANSÍVEL DO MÓDULO */}
       {isOpen && (
-        <div className="p-5 space-y-6">
+        <div className="space-y-5 p-4 md:p-5">
           {/* 1. PALAVRA-CHAVE FOCO */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                <span>Palavra-chave Foco</span>
-                <span className="text-[#E85D26]">*</span>
+          <div>
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-2">
+              <label className="text-[13px] font-medium text-jm-fg2">
+                Palavra-chave foco <span className="text-jm-accent-text">*</span>
               </label>
-              <span className="text-[10px] text-neutral-400 font-medium">
+              <span className="text-[11px] text-jm-muted">
                 Termo que o público busca no Google
               </span>
             </div>
@@ -421,47 +414,47 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                 value={seo.focusKeyphrase}
                 onChange={(e) => updateSEO({ focusKeyphrase: e.target.value })}
                 placeholder="Ex: WhatsApp Business API Oficial, Chatbot de Atendimento..."
-                className="w-full pl-9 pr-4 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] transition font-medium"
+                className="jm-input pl-8 text-[13px]"
               />
-              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-3 pointer-events-none" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-jm-placeholder" />
             </div>
           </div>
 
           {/* 2. PALAVRAS-CHAVE ADICIONAIS / TAGS DE BUSCA (KEYWORDS) */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-neutral-400" />
-                <span>Palavras-chave Adicionais (Keywords)</span>
+          <div>
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-2">
+              <label className="flex items-center gap-1.5 text-[13px] font-medium text-jm-fg2">
+                <Tag className="h-3.5 w-3.5 text-jm-muted" />
+                <span>Palavras-chave adicionais</span>
               </label>
-              <span className="text-[10px] text-neutral-400 font-medium">Separadas por vírgula</span>
+              <span className="text-[11px] text-jm-muted">Separadas por vírgula</span>
             </div>
             <input
               type="text"
               value={typeof seo.keywords === 'string' ? seo.keywords : Array.isArray(seo.keywords) ? (seo.keywords as string[]).join(', ') : ''}
               onChange={(e) => updateSEO({ keywords: e.target.value })}
               placeholder="Ex: whatsapp api, atendimento automatico, meta business, vendas"
-              className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] transition font-medium"
+              className="jm-input text-[13px]"
             />
           </div>
 
           {/* 3. META TÍTULO (SEO TITLE) */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-                Meta Título (SEO Title)
+            <div className="flex flex-wrap items-center justify-between gap-x-2">
+              <label className="text-[13px] font-medium text-jm-fg2">
+                Meta título
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => updateSEO({ metaTitle: article.title, seoTitle: article.title })}
-                  className="text-[10px] font-bold text-[#E85D26] hover:underline flex items-center gap-0.5 cursor-pointer"
+                  className="jm-link flex cursor-pointer items-center gap-1 text-xs"
                   title="Copiar do Título Principal"
                 >
-                  <Copy className="w-3 h-3" />
-                  <span>Usar Título</span>
+                  <Copy className="h-3 w-3" />
+                  <span>Usar título</span>
                 </button>
-                <span className="text-[11px] font-mono font-semibold text-neutral-500 dark:text-neutral-400">
+                <span className="font-mono text-[11px] tabular-nums text-jm-muted">
                   {titleCharCount}/60
                 </span>
               </div>
@@ -471,38 +464,38 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
               value={seo.metaTitle}
               onChange={(e) => updateSEO({ metaTitle: e.target.value, seoTitle: e.target.value })}
               placeholder={article.title || 'Título exibido na página de resultados do Google'}
-              className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] transition font-medium"
+              className="jm-input text-[13px]"
             />
             {/* Barra de Progresso Visual */}
-            <div className="w-full h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-jm-hover">
               <div
-                className={`h-full transition-all duration-300 ${getTitleBarColor()}`}
+                className={`h-full transition-[width] duration-200 ${getTitleBarColor()}`}
                 style={{ width: `${titleProgress}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] text-neutral-400">
+            <div className="flex justify-between gap-2 text-[11px] text-jm-muted">
               <span>Ideal: 50 a 60 caracteres</span>
-              {titleCharCount > 60 && <span className="text-rose-500 font-bold">⚠️ Risco de truncamento</span>}
+              {titleCharCount > 60 && <span className="font-medium text-jm-danger-fg">Risco de truncamento</span>}
             </div>
           </div>
 
           {/* 4. META DESCRIÇÃO (META DESCRIPTION) */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-neutral-700 dark:text-neutral-300">
-                Meta Descrição (Snippet)
+            <div className="flex flex-wrap items-center justify-between gap-x-2">
+              <label className="text-[13px] font-medium text-jm-fg2">
+                Meta descrição
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => updateSEO({ metaDescription: article.excerpt, seoDescription: article.excerpt })}
-                  className="text-[10px] font-bold text-[#E85D26] hover:underline flex items-center gap-0.5 cursor-pointer"
+                  className="jm-link flex cursor-pointer items-center gap-1 text-xs"
                   title="Copiar do Resumo do Artigo"
                 >
-                  <Copy className="w-3 h-3" />
-                  <span>Usar Resumo</span>
+                  <Copy className="h-3 w-3" />
+                  <span>Usar resumo</span>
                 </button>
-                <span className="text-[11px] font-mono font-semibold text-neutral-500 dark:text-neutral-400">
+                <span className="font-mono text-[11px] tabular-nums text-jm-muted">
                   {descCharCount}/155
                 </span>
               </div>
@@ -515,93 +508,79 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                 article.excerpt ||
                 'Descrição atrativa que resume o artigo e convence o usuário a clicar no Google...'
               }
-              className="w-full px-3.5 py-2.5 text-xs bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26] resize-none transition font-medium"
+              className="jm-input resize-none text-[13px]"
             />
             {/* Barra de Progresso Visual */}
-            <div className="w-full h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-jm-hover">
               <div
-                className={`h-full transition-all duration-300 ${getDescBarColor()}`}
+                className={`h-full transition-[width] duration-200 ${getDescBarColor()}`}
                 style={{ width: `${descProgress}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] text-neutral-400">
+            <div className="flex justify-between gap-2 text-[11px] text-jm-muted">
               <span>Ideal: 120 a 155 caracteres</span>
-              {descCharCount > 155 && <span className="text-rose-500 font-bold">⚠️ Será cortada na SERP</span>}
+              {descCharCount > 155 && <span className="font-medium text-jm-danger-fg">Será cortada na SERP</span>}
             </div>
           </div>
 
           {/* 5. PRÉVIA EM TEMPO REAL (GOOGLE SNIPPET & OPEN GRAPH SOCIAL) */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+          <div className="space-y-3 border-t border-jm-border pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="jm-segmented">
                 <button
                   type="button"
                   onClick={() => setPreviewTab('google')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                    previewTab === 'google'
-                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
+                  className={`jm-segment ${previewTab === 'google' ? 'jm-segment-active' : ''}`}
                 >
-                  <Globe className="w-3.5 h-3.5" />
-                  <span>Google Snippet</span>
+                  <Globe className="h-3.5 w-3.5" />
+                  <span>Google</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setPreviewTab('social')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                    previewTab === 'social'
-                      ? 'bg-[#E85D26] text-white'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
-                  }`}
+                  className={`jm-segment ${previewTab === 'social' ? 'jm-segment-active' : ''}`}
                 >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Open Graph (WhatsApp / Redes)</span>
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>Redes / WhatsApp</span>
                 </button>
               </div>
 
               {previewTab === 'google' && (
-                <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+                <div className="jm-segmented">
                   <button
                     type="button"
                     onClick={() => setPreviewDevice('desktop')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
-                      previewDevice === 'desktop'
-                        ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-2xs'
-                        : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-white'
-                    }`}
+                    className={`jm-segment ${previewDevice === 'desktop' ? 'jm-segment-active' : ''}`}
+                    aria-label="Desktop"
                   >
-                    <Monitor className="w-3 h-3" />
-                    <span>Desktop</span>
+                    <Monitor className="h-3 w-3" />
+                    <span className="hidden sm:inline">Desktop</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPreviewDevice('mobile')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1 transition cursor-pointer ${
-                      previewDevice === 'mobile'
-                        ? 'bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white shadow-2xs'
-                        : 'text-neutral-500 hover:text-neutral-800 dark:hover:text-white'
-                    }`}
+                    className={`jm-segment ${previewDevice === 'mobile' ? 'jm-segment-active' : ''}`}
+                    aria-label="Mobile"
                   >
-                    <Smartphone className="w-3 h-3" />
-                    <span>Mobile</span>
+                    <Smartphone className="h-3 w-3" />
+                    <span className="hidden sm:inline">Mobile</span>
                   </button>
                 </div>
               )}
             </div>
 
-            {/* TAB GOOGLE */}
+            {/* TAB GOOGLE (cores imitam a página de resultados do Google) */}
             {previewTab === 'google' && (
               <div
-                className={`p-4 rounded-xl border transition-all ${
+                className={`rounded-[6px] border p-4 ${
                   previewDevice === 'mobile'
-                    ? 'bg-white dark:bg-[#1f1f1f] border-neutral-300 dark:border-neutral-700 shadow-md max-w-sm mx-auto'
-                    : 'bg-white dark:bg-[#202124] border-neutral-200 dark:border-neutral-800 shadow-xs'
+                    ? 'mx-auto max-w-sm border-neutral-300 bg-white dark:border-neutral-700 dark:bg-[#1f1f1f]'
+                    : 'border-jm-border bg-white dark:bg-[#202124]'
                 }`}
               >
                 {/* Header do Google (Favicon + Site Name + URL) */}
-                <div className="flex items-center gap-2.5 mb-1.5">
-                  <div className="w-6 h-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden border border-neutral-200 dark:border-neutral-700 shrink-0">
+                <div className="mb-1.5 flex items-center gap-2.5">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800">
                     <Image
                       src="/logos/Icone.png"
                       alt="JM Master"
@@ -611,22 +590,22 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                     />
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1 text-[12px] leading-tight text-[#202124] dark:text-[#dadce0] font-medium truncate">
+                    <div className="flex items-center gap-1 truncate text-[12px] font-medium leading-tight text-[#202124] dark:text-[#dadce0]">
                       <span>JM Master Group</span>
                     </div>
-                    <div className="text-[11px] leading-tight text-[#4d5156] dark:text-[#bdc1c6] truncate">
+                    <div className="truncate text-[11px] leading-tight text-[#4d5156] dark:text-[#bdc1c6]">
                       https://www.jmmaster.com.br › blog › {article.slug || 'slug-do-artigo'}
                     </div>
                   </div>
                 </div>
 
                 {/* Título Clicável Azul do Google */}
-                <h4 className="text-[17px] sm:text-[18px] leading-snug font-normal text-[#1a0dab] dark:text-[#8ab4f8] hover:underline cursor-pointer line-clamp-2 mb-1">
+                <h4 className="mb-1 line-clamp-2 cursor-pointer text-[17px] font-normal leading-snug text-[#1a0dab] hover:underline dark:text-[#8ab4f8] sm:text-[18px]">
                   {displayTitle || 'Título do Artigo Aparecerá Aqui no Google'}
                 </h4>
 
                 {/* Descrição Cinza do Google */}
-                <p className="text-[13px] leading-relaxed text-[#4d5156] dark:text-[#bdc1c6] line-clamp-2">
+                <p className="line-clamp-2 text-[13px] leading-relaxed text-[#4d5156] dark:text-[#bdc1c6]">
                   {displayDesc ||
                     'A meta descrição do artigo aparecerá aqui, atraindo cliques dos usuários na página de busca.'}
                 </p>
@@ -635,41 +614,41 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
 
             {/* TAB OPEN GRAPH SOCIAL PREVIEW */}
             {previewTab === 'social' && (
-              <div className="space-y-4">
-                <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 max-w-md mx-auto shadow-sm overflow-hidden">
+              <div className="space-y-3">
+                <div className="mx-auto max-w-md overflow-hidden rounded-[6px] border border-jm-border bg-jm-subtle">
                   {/* Card de Imagem OG */}
-                  <div className="relative w-full aspect-[1.91/1] bg-neutral-900 rounded-lg overflow-hidden border border-neutral-700/50 mb-3 flex items-center justify-center">
+                  <div className="relative flex aspect-[1.91/1] w-full items-center justify-center overflow-hidden border-b border-jm-border bg-jm-hover">
                     {seo.ogImage || article.coverImage ? (
                       <img
                         src={seo.ogImage || article.coverImage}
                         alt="Open Graph Preview"
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="text-neutral-500 text-xs font-bold flex items-center gap-1.5">
-                        <Share2 className="w-4 h-4" />
+                      <div className="flex items-center gap-1.5 text-xs text-jm-muted">
+                        <Share2 className="h-4 w-4" />
                         <span>Nenhuma imagem de capa selecionada</span>
                       </div>
                     )}
                   </div>
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block font-mono">
+                  <div className="space-y-1 p-3">
+                    <span className="block font-mono text-[10px] uppercase tracking-wider text-jm-muted">
                       JMMASTER.COM.BR
                     </span>
-                    <h5 className="text-sm font-bold text-neutral-900 dark:text-white line-clamp-2 leading-snug">
+                    <h5 className="line-clamp-2 text-sm font-semibold leading-snug text-jm-fg">
                       {seo.ogTitle || seo.metaTitle || article.title || 'Título do Artigo'}
                     </h5>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-2 leading-relaxed">
+                    <p className="line-clamp-2 text-xs leading-relaxed text-jm-muted">
                       {seo.ogDescription || seo.metaDescription || article.excerpt || 'Resumo do artigo para compartilhamento em redes sociais e mensageiros.'}
                     </p>
                   </div>
                 </div>
 
                 {/* Customizações Opcionais de OG */}
-                <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
-                      Personalizar Open Graph (Opcional)
+                <div className="space-y-3 rounded-[4px] border border-jm-border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[13px] font-medium text-jm-fg">
+                      Personalizar Open Graph <span className="font-normal text-jm-muted">(opcional)</span>
                     </span>
                     <button
                       type="button"
@@ -680,15 +659,15 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                           ogImage: article.coverImage,
                         });
                       }}
-                      className="text-[10px] font-bold text-[#E85D26] hover:underline cursor-pointer"
+                      className="jm-link cursor-pointer text-xs"
                     >
-                      Sincronizar com Artigo
+                      Sincronizar com artigo
                     </button>
                   </div>
 
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-2.5">
                     <div>
-                      <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
+                      <label className="jm-label text-xs">
                         Título Open Graph
                       </label>
                       <input
@@ -696,12 +675,12 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                         value={seo.ogTitle || ''}
                         onChange={(e) => updateSEO({ ogTitle: e.target.value })}
                         placeholder={article.title || 'Título nas redes'}
-                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                        className="jm-input h-8 text-xs"
                       />
                     </div>
 
                     <div>
-                      <label className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 block mb-1">
+                      <label className="jm-label text-xs">
                         Descrição Open Graph
                       </label>
                       <input
@@ -709,7 +688,7 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
                         value={seo.ogDescription || ''}
                         onChange={(e) => updateSEO({ ogDescription: e.target.value })}
                         placeholder={article.excerpt || 'Descrição nas redes'}
-                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                        className="jm-input h-8 text-xs"
                       />
                     </div>
                   </div>
@@ -719,124 +698,117 @@ export default function SEOModule({ article, onChange }: SEOModuleProps) {
           </div>
 
           {/* 6. ANÁLISE & CHECKLIST DE SEO EM TEMPO REAL (YOAST ENGINE) */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#E85D26]" />
-                <span className="text-xs font-black uppercase tracking-wider text-neutral-800 dark:text-neutral-200">
-                  Checklist de Otimização em Tempo Real
-                </span>
-              </div>
-              <span className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400">
-                {analysis.checks.filter((c) => c.status === 'good').length}/{analysis.checks.length} Aprovados
+          <div className="space-y-2.5 border-t border-jm-border pt-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="jm-section-title">
+                Checklist de otimização
+              </span>
+              <span className="text-xs tabular-nums text-jm-muted">
+                {analysis.checks.filter((c) => c.status === 'good').length}/{analysis.checks.length} aprovados
               </span>
             </div>
 
-            <div className="space-y-2">
-              {analysis.checks.map((check) => {
-                const isGood = check.status === 'good';
-                const isWarning = check.status === 'warning';
+            <div className="overflow-hidden rounded-[4px] border border-jm-border">
+              <div className="divide-y divide-jm-border">
+                {analysis.checks.map((check) => {
+                  const isGood = check.status === 'good';
+                  const isWarning = check.status === 'warning';
 
-                return (
-                  <div
-                    key={check.id}
-                    className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 transition-all ${
-                      isGood
-                        ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200'
-                        : isWarning
-                        ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200'
-                        : 'bg-rose-50/60 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200'
-                    }`}
-                  >
-                    <div className="shrink-0 mt-0.5">
-                      {isGood && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                      {isWarning && <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
-                      {!isGood && !isWarning && <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />}
+                  return (
+                    <div
+                      key={check.id}
+                      className="flex items-start gap-2.5 px-3 py-2.5 text-xs"
+                    >
+                      <div className="mt-px shrink-0">
+                        {isGood && <CheckCircle2 className="h-4 w-4 text-jm-success-fg" />}
+                        {isWarning && <AlertCircle className="h-4 w-4 text-jm-warning-fg" />}
+                        {!isGood && !isWarning && <XCircle className="h-4 w-4 text-jm-danger-fg" />}
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <p className="text-xs font-medium text-jm-fg">{check.label}</p>
+                        <p className="text-xs leading-relaxed text-jm-muted">{check.message}</p>
+                      </div>
                     </div>
-                    <div className="space-y-0.5 flex-1 min-w-0">
-                      <p className="font-bold text-[11px]">{check.label}</p>
-                      <p className="text-[11px] opacity-90 leading-relaxed font-normal">{check.message}</p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* 7. CONFIGURAÇÕES AVANÇADAS DE SEO (CANONICAL, NOINDEX & NOFOLLOW) */}
-          <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="border-t border-jm-border pt-3">
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-[11px] font-bold text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-white flex items-center justify-between w-full py-1 cursor-pointer"
+              className="flex w-full cursor-pointer items-center justify-between py-1 text-xs font-medium text-jm-muted hover:text-jm-fg"
             >
               <div className="flex items-center gap-1.5">
-                <Link2 className="w-3.5 h-3.5" />
-                <span>Configurações Avançadas de Indexação & Canonicals</span>
+                <Link2 className="h-3.5 w-3.5" />
+                <span>Indexação e URL canônica</span>
               </div>
-              {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </button>
 
             {showAdvanced && (
-              <div className="mt-3 p-3.5 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800 space-y-4 animate-fadeIn">
+              <div className="mt-3 space-y-3 rounded-[4px] border border-jm-border bg-jm-subtle p-3">
                 {/* CANONICAL URL */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-400">
-                    URL Canônica (Canonical URL)
+                <div>
+                  <label className="jm-label text-xs">
+                    URL canônica
                   </label>
                   <input
                     type="url"
                     value={seo.canonicalUrl || ''}
                     onChange={(e) => updateSEO({ canonicalUrl: e.target.value })}
                     placeholder={`https://www.jmmaster.com.br/blog/${article.slug || ''}`}
-                    className="w-full px-3 py-2 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input h-8 text-xs"
                   />
-                  <p className="text-[10px] text-neutral-400">
+                  <p className="jm-help">
                     Deixe em branco para usar automaticamente a URL padrão do artigo.
                   </p>
                 </div>
 
                 {/* NOINDEX TOGGLE */}
-                <div className="flex items-center justify-between pt-1">
-                  <div>
-                    <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
-                      <EyeOff className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>Ocultar dos Buscadores (noindex)</span>
+                <div className="flex items-center justify-between gap-3 border-t border-jm-border pt-3">
+                  <div className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-[13px] font-medium text-jm-fg">
+                      <EyeOff className="h-3.5 w-3.5 text-jm-muted" />
+                      <span>Ocultar dos buscadores (noindex)</span>
                     </span>
-                    <p className="text-[10px] text-neutral-400">
+                    <p className="mt-0.5 text-xs text-jm-muted">
                       Impede que o Google e outros motores indexem este artigo.
                     </p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex shrink-0 cursor-pointer items-center">
                     <input
                       type="checkbox"
                       checked={!!seo.noIndex}
                       onChange={(e) => updateSEO({ noIndex: e.target.checked })}
-                      className="sr-only peer"
+                      className="peer sr-only"
                     />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:bg-rose-600" />
+                    <div className="h-5 w-9 rounded-full bg-jm-border-strong transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:bg-jm-danger-fg peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-jm-ring" />
                   </label>
                 </div>
 
                 {/* NOFOLLOW TOGGLE */}
-                <div className="flex items-center justify-between pt-1 border-t border-neutral-200/60 dark:border-neutral-800/60">
-                  <div>
-                    <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
-                      <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>Não Seguir Links (nofollow)</span>
+                <div className="flex items-center justify-between gap-3 border-t border-jm-border pt-3">
+                  <div className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-[13px] font-medium text-jm-fg">
+                      <ShieldAlert className="h-3.5 w-3.5 text-jm-muted" />
+                      <span>Não seguir links (nofollow)</span>
                     </span>
-                    <p className="text-[10px] text-neutral-400">
+                    <p className="mt-0.5 text-xs text-jm-muted">
                       Instrui os robôs a não seguirem links presentes no artigo.
                     </p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex shrink-0 cursor-pointer items-center">
                     <input
                       type="checkbox"
                       checked={!!seo.noFollow}
                       onChange={(e) => updateSEO({ noFollow: e.target.checked })}
-                      className="sr-only peer"
+                      className="peer sr-only"
                     />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer dark:bg-neutral-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-neutral-600 peer-checked:bg-amber-600" />
+                    <div className="h-5 w-9 rounded-full bg-jm-border-strong transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform after:content-[''] peer-checked:bg-jm-warning-fg peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-jm-ring" />
                   </label>
                 </div>
               </div>

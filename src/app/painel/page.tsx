@@ -10,10 +10,11 @@ import {
   Building2,
   Package,
   ExternalLink,
-  ArrowRight,
+  ChevronRight,
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
+import { peekCache, setCache } from './lib/cache';
 
 interface DashboardMetrics {
   blogCount: number;
@@ -49,6 +50,7 @@ export default function DashboardPage() {
       if (!res.ok || !data.success) throw new Error(data.error || 'Erro ao carregar indicadores');
       setMetrics(data.metrics);
       setHealth(data.health || []);
+      setCache('/api/dashboard', data);
     } catch (e: any) {
       setError(e.message || 'Erro ao carregar indicadores');
     } finally {
@@ -72,223 +74,180 @@ export default function DashboardPage() {
     });
     setCurrentDate(formatted);
 
+    // Dados da última visita aparecem na hora; a requisição abaixo atualiza
+    const cached = peekCache<{ metrics: DashboardMetrics; health?: HealthCheck[] }>('/api/dashboard');
+    if (cached) {
+      setMetrics(cached.metrics);
+      setHealth(cached.health || []);
+      setLoading(false);
+    }
+
     loadRealData();
   }, []);
 
+  const statCell = 'group flex flex-col justify-between gap-1 p-4 outline-none transition-colors duration-100 hover:bg-jm-hover focus-visible:bg-jm-hover md:p-5';
+  const actionRow = 'flex items-center gap-3 px-4 py-3 outline-none transition-colors duration-100 hover:bg-jm-hover focus-visible:bg-jm-hover md:px-5';
+
   return (
-    <div className="mx-auto w-full max-w-[1280px] space-y-8 px-4 py-6 md:px-8 md:py-8">
-      
-      {/* CABEÇALHO DO DASHBOARD */}
-      <header className="flex flex-col gap-4 border-b border-jm-border pb-6 sm:flex-row sm:items-start sm:justify-between">
+    <div className="jm-page">
+
+      {/* CABEÇALHO */}
+      <header className="jm-page-header">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-jm-fg lg:text-3xl">
-            Painel Executivo
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-jm-muted md:text-base">
-            Visão geral em tempo real de publicações, clientes, produtos e conexões operacionais.
+          <h1 className="jm-page-title">Painel Executivo</h1>
+          <p className="jm-page-desc">
+            Visão geral de publicações, clientes, produtos e conexões operacionais.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex h-10 items-center gap-2 rounded-lg border border-jm-border bg-jm-surface px-3.5 text-sm font-medium text-jm-fg2">
-            <Calendar className="h-4 w-4 text-jm-muted" />
-            <span>Hoje, {currentDate}</span>
-          </div>
-          <button
-            onClick={loadRealData}
-            className="jm-btn jm-btn-primary"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex h-9 items-center gap-2 px-1 text-[13px] text-jm-muted">
+            <Calendar className="h-4 w-4" strokeWidth={1.75} />
+            <span>Hoje, <span className="tabular-nums text-jm-fg2">{currentDate}</span></span>
+          </span>
+          <button onClick={loadRealData} className="jm-btn jm-btn-secondary">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
             <span>{loading ? 'Atualizando...' : 'Atualizar'}</span>
           </button>
         </div>
       </header>
 
       {error && (
-        <div role="alert" className="flex items-start gap-3 rounded-xl border border-jm-danger-border bg-jm-danger-bg p-4 text-sm font-medium text-jm-danger-fg">
-          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+        <div role="alert" className="jm-alert jm-alert-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* BLOCO DE DESTAQUE: CRIADOR DE BLOG INTEGRADO */}
-      <section className="jm-card flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between md:p-6">
-        <div className="flex items-start gap-4">
-          <div className="jm-icon-chip jm-icon-chip-accent !h-10 !w-10">
-            <PenTool className="h-5 w-5" strokeWidth={1.75} />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold text-jm-fg">
-                Criador de Blog Oficial
-              </h2>
-              <span className="jm-badge jm-badge-primary">
-                Integrado
-              </span>
-            </div>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-jm-muted">
-              Escreva novos artigos com formatação rica, controle de fontes e imagens. Ao clicar em publicar, o artigo vai automaticamente para o site oficial em <code className="rounded-md border border-jm-border bg-jm-subtle px-1.5 py-0.5 font-mono text-xs text-jm-fg2">/blog</code>.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/painel/blog"
-          className="jm-btn jm-btn-accent shrink-0"
-        >
-          <span>Acessar Criador de Blog</span>
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </section>
-
-      {/* CARDS DE MÉTRICA REAIS */}
-      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* INDICADORES */}
+      <section className="jm-card overflow-hidden">
         <h2 className="sr-only">Indicadores</h2>
-        
-        {/* Card 1: Artigos Publicados no Blog */}
-        <Link href="/painel/blog" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
-          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-medium text-jm-muted">Artigos Publicados</p>
-              <div className="jm-icon-chip jm-icon-chip-accent">
-                <PenTool className="h-[18px] w-[18px]" strokeWidth={1.75} />
-              </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 [&>*]:border-jm-border [&>*:nth-child(odd)]:border-r [&>*:nth-child(-n+2)]:border-b lg:[&>*]:border-b-0 lg:[&>*]:border-r lg:[&>*:last-child]:border-r-0">
+          <Link href="/painel/blog" className={statCell}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="jm-stat-label">Artigos publicados</p>
+              <PenTool className="h-3.5 w-3.5 text-jm-muted" strokeWidth={1.75} />
             </div>
-            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{blogCount}</p>
-            <p className="mt-2 text-sm text-jm-muted">{metrics ? `${metrics.draftCount} rascunho(s)` : '—'}</p>
-          </div>
-        </Link>
+            <p className="jm-stat-value">{blogCount}</p>
+            <p className="truncate text-xs text-jm-muted">{metrics ? `${metrics.draftCount} rascunho(s)` : '—'}</p>
+          </Link>
 
-        {/* Card 2: Clientes Ativos */}
-        <Link href="/painel/customers" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
-          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-medium text-jm-muted">Clientes Cadastrados</p>
-              <div className="jm-icon-chip jm-icon-chip-primary">
-                <Users className="h-[18px] w-[18px]" strokeWidth={1.75} />
-              </div>
+          <Link href="/painel/customers" className={statCell}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="jm-stat-label">Clientes cadastrados</p>
+              <Users className="h-3.5 w-3.5 text-jm-muted" strokeWidth={1.75} />
             </div>
-            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{customerCount}</p>
-            <p className="mt-2 text-sm text-jm-muted">{metrics ? `${metrics.activeCustomerCount} ativo(s) · ${metrics.newLeads} lead(s) do site em 7 dias` : '—'}</p>
-          </div>
-        </Link>
+            <p className="jm-stat-value">{customerCount}</p>
+            <p className="text-xs text-jm-muted">{metrics ? `${metrics.activeCustomerCount} ativo(s) · ${metrics.newLeads} lead(s) do site em 7 dias` : '—'}</p>
+          </Link>
 
-        {/* Card 3: Grupos Corporativos */}
-        <Link href="/painel/customers" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
-          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-medium text-jm-muted">Grupos Corporativos</p>
-              <div className="jm-icon-chip jm-icon-chip-primary">
-                <Building2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
-              </div>
+          <Link href="/painel/customers" className={statCell}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="jm-stat-label">Grupos corporativos</p>
+              <Building2 className="h-3.5 w-3.5 text-jm-muted" strokeWidth={1.75} />
             </div>
-            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{groupCount}</p>
-            <p className="mt-2 text-sm text-jm-muted">Gestão de Grupos</p>
-          </div>
-        </Link>
+            <p className="jm-stat-value">{groupCount}</p>
+            <p className="truncate text-xs text-jm-muted">Gestão de grupos</p>
+          </Link>
 
-        {/* Card 4: Catálogo de Produtos */}
-        <Link href="/painel/products" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
-          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-medium text-jm-muted">Produtos no Catálogo</p>
-              <div className="jm-icon-chip jm-icon-chip-primary">
-                <Package className="h-[18px] w-[18px]" strokeWidth={1.75} />
-              </div>
+          <Link href="/painel/products" className={statCell}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="jm-stat-label">Produtos no catálogo</p>
+              <Package className="h-3.5 w-3.5 text-jm-muted" strokeWidth={1.75} />
             </div>
-            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{productCount}</p>
-            <p className="mt-2 text-sm text-jm-muted">{metrics ? `${metrics.openInvoices} fatura(s) em aberto` : '—'}</p>
-          </div>
-        </Link>
-
+            <p className="jm-stat-value">{productCount}</p>
+            <p className="truncate text-xs text-jm-muted">{metrics ? `${metrics.openInvoices} fatura(s) em aberto` : '—'}</p>
+          </Link>
+        </div>
       </section>
 
-      {/* BLOCO DE INTEGRAÇÃO EM TEMPO REAL COM O SITE */}
+      {/* ATALHO DO BLOG */}
+      <section className="jm-card flex flex-col gap-3 border-l-[3px] border-l-jm-accent-line px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between md:px-5">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold text-jm-fg">Criador de Blog</h2>
+            <span className="jm-badge jm-badge-neutral">Integrado</span>
+          </div>
+          <p className="mt-0.5 text-[13px] text-jm-muted">
+            Escreva artigos com formatação rica e imagens. Ao publicar, o artigo vai direto para o site em <code className="rounded-[3px] bg-jm-subtle px-1 py-px font-mono text-xs text-jm-fg2">/blog</code>.
+          </p>
+        </div>
+        <Link href="/painel/blog" className="jm-btn jm-btn-accent shrink-0 self-start sm:self-auto">
+          <span>Abrir criador de blog</span>
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </section>
+
       <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        
-        {/* Status das APIs & Serviços */}
+
+        {/* STATUS DAS CONEXÕES */}
         <div className="jm-card overflow-hidden">
           <div className="jm-card-header">
-            <h2 className="jm-card-title">Status das Conexões & APIs</h2>
+            <h2 className="jm-card-title">Conexões e APIs</h2>
             {health.length > 0 && (
               <span className={`jm-badge ${allHealthy ? 'jm-badge-success' : 'jm-badge-warning'}`}>
+                <span className="jm-dot" />
                 {allHealthy ? 'Operacional' : 'Atenção'}
               </span>
             )}
           </div>
-          <div className="divide-y divide-jm-border">
+          <div className="jm-list">
             {health.length === 0 && (
-              <p className="px-6 py-8 text-center text-sm text-jm-muted">{loading ? 'Verificando conexões...' : 'Sem dados de verificação.'}</p>
+              <p className="jm-empty py-8">{loading ? 'Verificando conexões...' : 'Sem dados de verificação.'}</p>
             )}
             {health.map((h) => (
-              <div key={h.label} className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
-                <span className="text-sm font-medium text-jm-fg">{h.label}</span>
-                <span className={`jm-badge ${h.ok ? 'jm-badge-success' : 'jm-badge-warning'}`}>
-                  {h.ok ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
-                  <span>{h.detail}</span>
+              <div key={h.label} className="jm-list-item">
+                <span className="flex min-w-0 items-center gap-2.5 text-sm text-jm-fg">
+                  {h.ok ? <CheckCircle2 className="h-4 w-4 shrink-0 text-jm-success-fg" strokeWidth={1.75} /> : <AlertTriangle className="h-4 w-4 shrink-0 text-jm-warning-fg" strokeWidth={1.75} />}
+                  <span className="truncate">{h.label}</span>
                 </span>
+                <span className={`shrink-0 text-right text-xs ${h.ok ? 'text-jm-muted' : 'font-medium text-jm-warning-fg'}`}>{h.detail}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Acesso Rápido às Funções */}
+        {/* AÇÕES RÁPIDAS */}
         <div className="jm-card overflow-hidden">
           <div className="jm-card-header">
-            <h2 className="jm-card-title">Ações Rápidas do Sistema</h2>
+            <h2 className="jm-card-title">Ações rápidas</h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 md:p-6">
-            <Link
-              href="/painel/blog"
-              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
-            >
-              <div className="jm-icon-chip jm-icon-chip-accent">
-                <PenTool className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          <div className="jm-list">
+            <Link href="/painel/blog" className={actionRow}>
+              <PenTool className="h-4 w-4 shrink-0 text-jm-muted" strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-jm-fg">Escrever artigo</p>
+                <p className="text-xs text-jm-muted">Criar e publicar no blog</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-jm-fg">Escrever Artigo</p>
-                <p className="mt-0.5 text-sm text-jm-muted">Criar e publicar no blog</p>
-              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-jm-placeholder" />
             </Link>
 
-            <Link
-              href="/painel/customers"
-              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
-            >
-              <div className="jm-icon-chip jm-icon-chip-primary">
-                <Users className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            <Link href="/painel/customers" className={actionRow}>
+              <Users className="h-4 w-4 shrink-0 text-jm-muted" strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-jm-fg">Cadastrar cliente</p>
+                <p className="text-xs text-jm-muted">Gerenciar empresas e grupos</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-jm-fg">Cadastrar Cliente</p>
-                <p className="mt-0.5 text-sm text-jm-muted">Gerenciar empresas e grupos</p>
-              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-jm-placeholder" />
             </Link>
 
-            <Link
-              href="/painel/products"
-              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
-            >
-              <div className="jm-icon-chip jm-icon-chip-primary">
-                <Package className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            <Link href="/painel/products" className={actionRow}>
+              <Package className="h-4 w-4 shrink-0 text-jm-muted" strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-jm-fg">Tabela de preços</p>
+                <p className="text-xs text-jm-muted">Configurar produtos e planos</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-jm-fg">Tabela de Preços</p>
-                <p className="mt-0.5 text-sm text-jm-muted">Configurar produtos e planos</p>
-              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-jm-placeholder" />
             </Link>
 
-            <Link
-              href="/blog"
-              target="_blank"
-              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
-            >
-              <div className="jm-icon-chip jm-icon-chip-neutral">
-                <ExternalLink className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            <Link href="/blog" target="_blank" className={actionRow}>
+              <ExternalLink className="h-4 w-4 shrink-0 text-jm-muted" strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-jm-fg">Abrir site oficial</p>
+                <p className="text-xs text-jm-muted">Ver blog no ar</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-jm-fg">Abrir Site Oficial</p>
-                <p className="mt-0.5 text-sm text-jm-muted">Ver blog no ar</p>
-              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-jm-placeholder" />
             </Link>
           </div>
         </div>
