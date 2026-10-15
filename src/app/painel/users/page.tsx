@@ -297,11 +297,11 @@ export default function UsersManagementPage() {
   };
 
   const roleStyles: Record<UserRole, string> = {
-    'Super administrador': 'bg-purple-500/10 border-purple-500/30 text-purple-600 dark:text-purple-400',
-    Administrador: 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400',
-    Supervisor: 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400',
-    Operador: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400',
-    'Criador de Blog': 'bg-orange-500/10 border-[#E85D26]/40 text-[#E85D26]',
+    'Super administrador': 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    Administrador: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+    Supervisor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    Operador: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    'Criador de Blog': 'bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300 border-orange-200 dark:border-orange-800',
   };
 
   const permissionsList = [
@@ -318,12 +318,12 @@ export default function UsersManagementPage() {
   ] as const;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#f8fafc] dark:bg-neutral-950 transition-colors duration-300 p-6 md:p-8 space-y-6 relative">
+    <div className="space-y-6 relative">
       
       {/* TOAST DE NOTIFICAÇÃO FLUTUANTE */}
       {toastMessage && (
-        <div className={`fixed top-6 right-6 z-[999999] px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-fadeIn text-xs font-bold ${
-          toastMessage.type === 'success' ? 'bg-emerald-600 text-white shadow-emerald-950/20' : 'bg-rose-600 text-white shadow-rose-950/20'
+        <div className={`fixed top-6 right-6 z-[999999] px-4 py-3 rounded-xl shadow-lg border border-jm-border flex items-center gap-2.5 animate-fadeIn text-xs font-semibold ${
+          toastMessage.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
         }`}>
           {toastMessage.type === 'success' ? (
             <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -335,13 +335,13 @@ export default function UsersManagementPage() {
       )}
 
       {/* CABEÇALHO DA PÁGINA */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-jm-border">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1d2d44] dark:text-neutral-100 flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-[#E85D26]" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-jm-text flex items-center gap-2.5">
+            <Users className="w-6 h-6 text-jm-orange" />
             <span>Usuários do Sistema</span>
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          <p className="text-xs text-jm-muted mt-1">
             Gerencie os acessos, senhas, classes de permissão e restrições dos operadores, redatores e administradores.
           </p>
         </div>
@@ -350,7 +350,7 @@ export default function UsersManagementPage() {
           <button
             type="button"
             onClick={fetchUsersFromApi}
-            className="px-3.5 py-2 text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+            className="jm-btn jm-btn-secondary"
             title="Atualizar lista de usuários"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -359,7 +359,7 @@ export default function UsersManagementPage() {
           <button
             type="button"
             onClick={handleStartNewUser}
-            className="px-4 py-2 bg-[#2b6cb0] hover:bg-[#235891] active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow transition cursor-pointer flex items-center gap-2"
+            className="jm-btn jm-btn-primary"
           >
             <UserPlus className="w-4 h-4" />
             <span>Adicionar Novo Usuário</span>
@@ -371,15 +371,15 @@ export default function UsersManagementPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-stretch">
         
         {/* PAINEL ESQUERDO: LISTA DE USUÁRIOS */}
-        <div className="lg:col-span-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm p-5 flex flex-col justify-between space-y-4 h-[75vh]">
+        <div className="lg:col-span-4 jm-card p-4 sm:p-5 flex flex-col justify-between space-y-4 h-[75vh]">
           
-          <div className="flex items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-850 shrink-0">
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-jm-border shrink-0">
             <input
               type="text"
               placeholder="Buscar usuário por nome ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-xl bg-neutral-50 dark:bg-neutral-950 text-xs focus:outline-none focus:ring-1 focus:ring-[#E85D26] dark:text-white transition"
+              className="jm-input text-xs"
             />
           </div>
 
@@ -392,29 +392,29 @@ export default function UsersManagementPage() {
                   <div
                     key={u.id}
                     onClick={() => selectUser(u)}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border cursor-pointer transition-all ${
+                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-[#2b6cb0] bg-[#2b6cb0]/5 dark:bg-[#2b6cb0]/15 shadow-sm'
-                        : 'border-neutral-200/70 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-850 bg-white dark:bg-neutral-900'
+                        ? 'border-jm-blue-600 bg-jm-blue-50/60 dark:bg-jm-blue-950/30 dark:border-jm-blue-500 shadow-xs'
+                        : 'border-jm-border hover:bg-neutral-50 dark:hover:bg-neutral-800/50 bg-jm-surface'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 flex items-center justify-center text-xs font-bold text-neutral-700 dark:text-neutral-200 shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-jm-blue-50 dark:bg-neutral-800 border border-jm-border flex items-center justify-center text-xs font-semibold text-jm-blue-900 dark:text-neutral-200 shrink-0">
                         {getInitials(u.name)}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-neutral-900 dark:text-neutral-100 leading-snug truncate max-w-[140px]">{u.name}</h4>
-                        <p className="text-[11px] text-neutral-500 truncate max-w-[140px]">{u.email}</p>
+                        <h4 className="text-xs font-semibold text-jm-text leading-snug truncate max-w-[140px]">{u.name}</h4>
+                        <p className="text-[11px] text-jm-muted truncate max-w-[140px]">{u.email}</p>
                       </div>
                     </div>
                     
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${roleStyles[u.role] || roleStyles['Operador']}`}>
+                      <span className={`text-[10px] font-medium uppercase px-2 py-0.5 rounded-full border ${roleStyles[u.role] || roleStyles['Operador']}`}>
                         {u.role}
                       </span>
                       {u.isBlocked && (
-                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 rounded-md">
+                        <span className="text-[9px] font-semibold uppercase px-1.5 py-0.5 bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 rounded border border-rose-200 dark:border-rose-800">
                           Bloqueado
                         </span>
                       )}
@@ -423,20 +423,20 @@ export default function UsersManagementPage() {
                 );
               })
             ) : (
-              <div className="py-12 text-center text-neutral-400 text-xs">
+              <div className="py-12 text-center text-jm-muted text-xs">
                 Nenhum usuário cadastrado.
               </div>
             )}
           </div>
 
-          <div className="pt-2 border-t border-neutral-100 dark:border-neutral-850 text-center text-[11px] text-neutral-500 shrink-0">
-            Total: <strong className="text-neutral-900 dark:text-white font-bold">{users.length}</strong> usuários cadastrados
+          <div className="pt-2 border-t border-jm-border text-center text-[11px] text-jm-muted shrink-0">
+            Total: <strong className="text-jm-text font-semibold">{users.length}</strong> usuários cadastrados
           </div>
 
         </div>
 
         {/* PAINEL DIREITO: DETALHES OU FORMULÁRIO DE CADASTRO */}
-        <div className="lg:col-span-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm p-6 flex flex-col justify-between h-[75vh]">
+        <div className="lg:col-span-8 jm-card p-5 sm:p-6 flex flex-col justify-between h-[75vh]">
           
           {selectedUser || isNewUser ? (
             <form onSubmit={handleSave} className="flex flex-col h-full justify-between">
@@ -445,19 +445,19 @@ export default function UsersManagementPage() {
               <div className="flex-1 overflow-y-auto space-y-6 pr-2 scrollbar-thin">
                 
                 {/* CABEÇALHO DO FORMULÁRIO & TOGGLE BLOQUEADO */}
-                <div className="flex justify-between items-center pb-3 border-b border-neutral-100 dark:border-neutral-850 shrink-0">
+                <div className="flex justify-between items-center pb-3 border-b border-jm-border shrink-0">
                   <div>
-                    <h3 className="text-base font-extrabold text-[#1d2d44] dark:text-neutral-100 uppercase tracking-wide">
+                    <h3 className="text-sm font-semibold text-jm-text">
                       {isNewUser ? 'Cadastrar Novo Usuário' : 'Detalhes do Usuário'}
                     </h3>
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-jm-muted">
                       {isNewUser ? 'Defina os dados de login, senha e escolha a classe de acesso.' : 'Edite dados, altere a senha ou ajuste permissões de acesso.'}
                     </p>
                   </div>
                   
                   {/* Toggle Bloqueado */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-neutral-600 dark:text-neutral-300">Bloqueado:</span>
+                    <span className="text-xs font-medium text-jm-text">Bloqueado:</span>
                     <button
                       type="button"
                       disabled={!isEditing}
@@ -477,8 +477,8 @@ export default function UsersManagementPage() {
 
                 {/* DADOS CADASTRAIS (CAMPOS) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-black text-neutral-400 dark:text-neutral-500 tracking-wider">
+                  <div>
+                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
                       Nome Completo *
                     </label>
                     <input
@@ -488,12 +488,12 @@ export default function UsersManagementPage() {
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                       placeholder="Ex: João da Silva"
-                      className="w-full px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:bg-neutral-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#E85D26] transition text-xs font-medium disabled:bg-neutral-50 disabled:dark:bg-neutral-900/40 disabled:text-neutral-500"
+                      className="jm-input text-xs"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-black text-neutral-400 dark:text-neutral-500 tracking-wider">
+                  <div>
+                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
                       E-mail (Login de Acesso) *
                     </label>
                     <input
@@ -503,19 +503,19 @@ export default function UsersManagementPage() {
                       value={formEmail}
                       onChange={(e) => setFormEmail(e.target.value)}
                       placeholder="usuario@jmmaster.com.br"
-                      className="w-full px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:bg-neutral-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#E85D26] transition text-xs font-medium disabled:bg-neutral-50 disabled:dark:bg-neutral-900/40 disabled:text-neutral-500"
+                      className="jm-input text-xs"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-black text-neutral-400 dark:text-neutral-500 tracking-wider">
+                  <div>
+                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
                       Classe de Acesso
                     </label>
                     <select
                       disabled={!isEditing}
                       value={formRole}
                       onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                      className="w-full px-4 py-2 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:bg-neutral-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#E85D26] transition text-xs font-bold disabled:bg-neutral-50 disabled:dark:bg-neutral-900/40 disabled:text-neutral-500 cursor-pointer"
+                      className="jm-input text-xs font-semibold"
                     >
                       <option value="Criador de Blog">Criador de Blog (Acesso Exclusivo ao Blog)</option>
                       <option value="Super administrador">Super administrador (Acesso Total)</option>
@@ -524,7 +524,7 @@ export default function UsersManagementPage() {
                       <option value="Operador">Operador (Atendimento & Disparos)</option>
                     </select>
                     {formRole === 'Criador de Blog' && (
-                      <p className="text-[11px] text-[#E85D26] font-medium mt-1 flex items-center gap-1.5">
+                      <p className="text-[11px] text-jm-orange font-medium mt-1.5 flex items-center gap-1.5">
                         <Info className="w-3.5 h-3.5 shrink-0" />
                         <span>Esta classe concede acesso somente ao Criador de Blog, bloqueando módulos confidenciais.</span>
                       </p>
@@ -532,27 +532,27 @@ export default function UsersManagementPage() {
                   </div>
 
                   {/* CAMPO DE SENHA FUNCIONAL */}
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-black text-neutral-400 dark:text-neutral-500 tracking-wider block">
+                  <div>
+                    <label className="block text-xs font-semibold text-jm-text mb-1.5">
                       Senha de Acesso {isNewUser && '*'}
                     </label>
-                    <div className="relative flex rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-white dark:bg-neutral-950">
+                    <div className="relative flex rounded-lg border border-jm-border overflow-hidden bg-jm-surface">
                       <input
                         type={showPassword ? 'text' : 'password'}
                         disabled={!isEditing}
                         value={formPassword}
                         onChange={(e) => setFormPassword(e.target.value)}
                         placeholder={isNewUser ? "Digite a senha do novo usuário..." : "Digite uma nova senha para alterar..."}
-                        className="flex-1 px-4 py-2 text-neutral-900 dark:text-white dark:bg-neutral-950 focus:outline-none text-xs disabled:bg-neutral-50 disabled:dark:bg-neutral-900/40 disabled:text-neutral-500 font-mono"
+                        className="flex-1 px-3 py-2 text-jm-text bg-transparent focus:outline-none text-xs disabled:opacity-60 font-mono"
                       />
                       
                       {isEditing && (
-                        <div className="flex items-center pr-2 gap-1.5 shrink-0 bg-white dark:bg-neutral-950">
+                        <div className="flex items-center pr-2 gap-1.5 shrink-0 bg-transparent">
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             title={showPassword ? "Ocultar Senha" : "Ver Senha"}
-                            className="p-1.5 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white rounded-md transition cursor-pointer"
+                            className="p-1.5 text-xs text-jm-muted hover:text-jm-text rounded-md transition cursor-pointer"
                           >
                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                           </button>
@@ -560,9 +560,9 @@ export default function UsersManagementPage() {
                             type="button"
                             onClick={handleGeneratePassword}
                             title="Gerar Senha Forte Aleatória"
-                            className="px-2.5 py-1 text-[10px] font-black uppercase bg-neutral-100 hover:bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-300 rounded-lg transition cursor-pointer flex items-center gap-1"
+                            className="jm-btn jm-btn-secondary jm-btn-sm"
                           >
-                            <Sparkles className="w-3 h-3 text-[#E85D26]" />
+                            <Sparkles className="w-3 h-3 text-jm-orange" />
                             <span>Gerar</span>
                           </button>
                         </div>
@@ -572,29 +572,29 @@ export default function UsersManagementPage() {
                 </div>
 
                 {/* GESTÃO DE PERMISSÕES */}
-                <div className="space-y-3 pt-2 border-t border-neutral-100 dark:border-neutral-850">
+                <div className="space-y-3 pt-3 border-t border-jm-border">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black text-[#1d2d44] dark:text-neutral-200 uppercase tracking-wide flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-[#2b6cb0]" />
+                    <h4 className="text-xs font-semibold text-jm-text flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-jm-blue-600" />
                       <span>Permissões Habilitadas</span>
                     </h4>
-                    <span className="text-[11px] text-neutral-400">
+                    <span className="text-[11px] text-jm-muted">
                       Defina os módulos liberados para este usuário
                     </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {permissionsList.map((p) => (
-                      <div key={p.key} className="flex items-start justify-between p-3 rounded-xl border border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40">
+                      <div key={p.key} className="flex items-start justify-between p-3 rounded-xl border border-jm-border bg-neutral-50/50 dark:bg-neutral-900/40">
                         <div className="space-y-0.5 pr-2">
-                          <p className="text-xs font-bold text-neutral-850 dark:text-neutral-200">{p.label}</p>
-                          <p className="text-[10px] text-neutral-450 dark:text-neutral-500 leading-snug">{p.desc}</p>
+                          <p className="text-xs font-semibold text-jm-text">{p.label}</p>
+                          <p className="text-[11px] text-jm-muted leading-snug">{p.desc}</p>
                         </div>
                         <button
                           type="button"
                           disabled={!isEditing}
                           onClick={() => handleTogglePermission(p.key as keyof Permissions, 'permission')}
                           className={`relative inline-flex h-4 w-8 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            formPermissions[p.key as keyof Permissions] ? 'bg-[#2b6cb0]' : 'bg-neutral-300 dark:bg-neutral-700'
+                            formPermissions[p.key as keyof Permissions] ? 'bg-jm-blue-700' : 'bg-neutral-300 dark:bg-neutral-700'
                           } ${!isEditing && 'opacity-65 cursor-not-allowed'}`}
                         >
                           <span
@@ -609,29 +609,26 @@ export default function UsersManagementPage() {
                 </div>
 
                 {/* GESTÃO DE PROIBIÇÕES */}
-                <div className="space-y-3 pt-4 border-t border-neutral-100 dark:border-neutral-850">
-                  <h4 className="text-xs font-black text-rose-700 dark:text-rose-400 uppercase tracking-wide flex items-center gap-1.5">
+                <div className="space-y-3 pt-3 border-t border-jm-border">
+                  <h4 className="text-xs font-semibold text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
                     <ShieldAlert className="w-4 h-4 text-rose-600" />
                     <span>Proibições Explícitas</span>
                   </h4>
                   
                   {/* Banner de Aviso de Proibições */}
-                  <div className="bg-rose-50 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/40 rounded-xl p-3.5 flex items-center justify-between shadow-xs relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500" />
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
-                      <p className="text-xs font-bold text-rose-800 dark:text-rose-400">
-                        Atenção: As proibições têm prioridade sobre as permissões!
-                      </p>
-                    </div>
+                  <div className="bg-rose-50 border border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/40 rounded-xl p-3 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                    <p className="text-xs font-medium text-rose-800 dark:text-rose-300">
+                      Atenção: As proibições têm prioridade sobre as permissões!
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {permissionsList.map((p) => (
-                      <div key={p.key} className="flex items-start justify-between p-3 rounded-xl border border-neutral-105 dark:border-neutral-800 bg-rose-50/15 dark:bg-rose-950/5">
+                      <div key={p.key} className="flex items-start justify-between p-3 rounded-xl border border-jm-border bg-neutral-50/50 dark:bg-neutral-900/40">
                         <div className="space-y-0.5 pr-2">
-                          <p className="text-xs font-bold text-neutral-850 dark:text-neutral-200">{p.label}</p>
-                          <p className="text-[10px] text-neutral-450 dark:text-neutral-500 leading-snug">{p.desc}</p>
+                          <p className="text-xs font-semibold text-jm-text">{p.label}</p>
+                          <p className="text-[11px] text-jm-muted leading-snug">{p.desc}</p>
                         </div>
                         <button
                           type="button"
@@ -655,12 +652,12 @@ export default function UsersManagementPage() {
               </div>
 
               {/* BOTÕES DE AÇÃO NA BASE */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-neutral-150 dark:border-neutral-800 shrink-0">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-jm-border shrink-0">
                 <div className="flex items-center gap-2">
                   <button
                     type="submit"
                     disabled={isSaving}
-                    className="px-5 py-2.5 bg-[#2b6cb0] hover:bg-[#235891] disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                    className="jm-btn jm-btn-primary"
                   >
                     {isSaving ? (
                       <>
@@ -675,7 +672,7 @@ export default function UsersManagementPage() {
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="px-5 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-750 dark:text-neutral-300 font-bold text-xs uppercase tracking-wider rounded-xl transition cursor-pointer"
+                      className="jm-btn jm-btn-secondary"
                     >
                       Cancelar
                     </button>
@@ -686,7 +683,7 @@ export default function UsersManagementPage() {
                   <button
                     type="button"
                     onClick={() => confirmDelete(selectedUser.id)}
-                    className="px-4 py-2.5 bg-rose-50/50 hover:bg-rose-100/60 dark:hover:bg-rose-950/20 text-rose-600 border border-rose-200 dark:border-rose-900 rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
+                    className="jm-btn jm-btn-secondary text-rose-600 hover:border-rose-300 dark:hover:border-rose-800"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Excluir Usuário</span>
@@ -696,7 +693,7 @@ export default function UsersManagementPage() {
 
             </form>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-neutral-400 text-xs">
+            <div className="flex-1 flex flex-col items-center justify-center text-jm-muted text-xs">
               Selecione um usuário na lista ou crie um novo para gerenciar.
             </div>
           )}
@@ -707,23 +704,23 @@ export default function UsersManagementPage() {
 
       {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO COM CREATEPORTAL */}
       {showDeleteConfirm && isMounted && createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-neutral-950/80 p-4 backdrop-blur-md animate-fadeIn">
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl w-full max-w-md p-6 shadow-2xl border border-neutral-100 dark:border-neutral-800 flex flex-col gap-4">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-fadeIn">
+          <div className="jm-card rounded-2xl w-full max-w-md p-6 shadow-xl border border-jm-border flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center justify-center text-lg shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100 uppercase tracking-wider">
+                <h3 className="text-sm font-semibold text-jm-text">
                   Confirmar Exclusão
                 </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                <p className="text-xs text-jm-muted mt-0.5">
                   Esta ação removerá o usuário e seus privilégios permanentemente.
                 </p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
+            <p className="text-xs text-jm-muted leading-relaxed">
               Tem certeza que deseja excluir o usuário selecionado?
             </p>
 
@@ -731,14 +728,14 @@ export default function UsersManagementPage() {
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:hover:bg-neutral-750 dark:text-neutral-300 font-bold text-xs uppercase rounded-xl transition cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase rounded-xl shadow transition active:scale-95 cursor-pointer"
+                className="jm-btn bg-rose-600 hover:bg-rose-700 text-white"
               >
                 Sim, Excluir
               </button>

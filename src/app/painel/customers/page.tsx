@@ -783,10 +783,10 @@ export default function CustomersDashboardPage() {
       {/* ─── Modal: Cadastrar Novo Grupo ─────────────────────────── */}
       {showCreateGroupModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm" onClick={() => setShowCreateGroupModal(false)} />
-          <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-sm">
-            <h3 className="text-xl font-bold mb-2">Cadastrar Novo Grupo</h3>
-            <p className="text-sm text-neutral-500 mb-6">Insira o nome do grupo corporativo que deseja criar.</p>
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowCreateGroupModal(false)} />
+          <div className="relative jm-card shadow-xl p-6 sm:p-8 w-full max-w-sm">
+            <h3 className="text-lg font-semibold text-jm-fg mb-1">Cadastrar Novo Grupo</h3>
+            <p className="text-sm text-jm-muted mb-5">Insira o nome do grupo corporativo que deseja criar.</p>
             <input
               type="text"
               autoFocus
@@ -796,19 +796,19 @@ export default function CustomersDashboardPage() {
                 if (e.key === 'Enter') handleCreateGroup();
               }}
               placeholder="Ex: Grupo JMMaster"
-              className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-lg text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange focus:border-transparent dark:bg-neutral-950 dark:border-neutral-800 dark:text-white transition mb-6"
+              className="jm-input mb-5"
             />
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowCreateGroupModal(false)}
-                className="px-4 py-2 text-sm font-bold text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white transition"
+                className="jm-btn jm-btn-secondary jm-btn-sm"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleCreateGroup}
                 disabled={creatingGroup || !newGroupName.trim()}
-                className="px-4 py-2 bg-master-orange hover:bg-orange-600 disabled:opacity-50 text-white text-sm font-bold rounded-lg transition"
+                className="jm-btn jm-btn-primary jm-btn-sm"
               >
                 {creatingGroup ? 'Salvando...' : 'Salvar Grupo'}
               </button>
@@ -817,28 +817,28 @@ export default function CustomersDashboardPage() {
         </div>
       )}
 
-    <div className="min-h-screen bg-neutral-100 text-neutral-900 dark:bg-neutral-950 dark:text-white p-6 sm:p-10 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-jm-bg text-jm-fg p-6 sm:p-8 font-sans transition-colors duration-300">
       <div className="max-w-6xl mx-auto space-y-8">
 
         
         {/* Cabecalho Principal */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-jm-border">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Clientes JM Master</h1>
-            <p className="text-neutral-500 dark:text-master-textMuted mt-1">Gestão de carteira operacional, contatos e precificação customizada.</p>
+            <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-jm-fg">Clientes JM Master</h1>
+            <p className="text-sm text-jm-muted mt-1">Gestão de carteira operacional, contatos e precificação customizada.</p>
           </div>
           {view === 'list' ? (
             mainTab === 'clientes' ? (
               <button
                 onClick={handleOpenCreate}
-                className="px-5 py-3 bg-master-orange hover:bg-orange-600 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-orange-950/20 flex items-center gap-2 self-start sm:self-center"
+                className="jm-btn jm-btn-primary self-start sm:self-center"
               >
                 <span>+ Novo Cliente</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowCreateGroupModal(true)}
-                className="px-5 py-3 bg-master-orange hover:bg-orange-600 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-orange-950/20 flex items-center gap-2 self-start sm:self-center"
+                className="jm-btn jm-btn-primary self-start sm:self-center"
               >
                 <span>+ Cadastrar Grupo</span>
               </button>
@@ -846,7 +846,7 @@ export default function CustomersDashboardPage() {
           ) : (
             <button
               onClick={() => requestLeave(() => { markClean(); setView('list'); setEditingId(null); })}
-              className="px-5 py-3 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-white font-bold text-sm rounded-xl transition flex items-center gap-2 self-start sm:self-center"
+              className="jm-btn jm-btn-secondary self-start sm:self-center"
             >
               <span>Voltar para Lista</span>
             </button>
@@ -855,36 +855,28 @@ export default function CustomersDashboardPage() {
 
         {/* Navegação entre Clientes e Grupos (Apenas na visualização de lista) */}
         {view === 'list' && (
-          <div className="flex space-x-2 bg-neutral-200/60 dark:bg-neutral-900/60 p-1.5 rounded-xl w-fit border border-neutral-300/40 dark:border-neutral-800/40">
+          <div className="jm-tabs">
             <button
               onClick={() => { setMainTab('clientes'); setMessage(null); }}
-              className={`px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
-                mainTab === 'clientes'
-                  ? 'bg-white dark:bg-neutral-800 text-master-blue dark:text-white shadow-sm'
-                  : 'text-neutral-500 hover:text-neutral-800 dark:text-master-textMuted dark:hover:text-white'
-              }`}
+              className={`jm-tab ${mainTab === 'clientes' ? 'jm-tab-active' : ''}`}
             >
-              <span>👥</span> Clientes ({totalCustomers})
+              Clientes ({totalCustomers})
             </button>
             <button
               onClick={() => { setMainTab('grupos'); setMessage(null); }}
-              className={`px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
-                mainTab === 'grupos'
-                  ? 'bg-white dark:bg-neutral-800 text-master-blue dark:text-white shadow-sm'
-                  : 'text-neutral-500 hover:text-neutral-800 dark:text-master-textMuted dark:hover:text-white'
-              }`}
+              className={`jm-tab ${mainTab === 'grupos' ? 'jm-tab-active' : ''}`}
             >
-              <span>🏢</span> Grupos ({groupsList.length})
+              Grupos ({groupsList.length})
             </button>
           </div>
         )}
 
         {/* Notificacoes */}
         {message && (
-          <div className={`p-4 rounded-lg text-sm font-semibold border ${
+          <div className={`p-4 rounded-xl text-sm font-semibold border ${
             message.type === 'success' 
-              ? 'bg-emerald-100 text-emerald-800 border-emerald-350 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800' 
-              : 'bg-rose-100 text-rose-800 border-rose-350 dark:bg-rose-950/50 dark:text-rose-400 dark:border-rose-800'
+              ? 'border-jm-success-border bg-jm-success-bg text-jm-success-fg' 
+              : 'border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg'
           }`}>
             {message.text}
           </div>
@@ -897,18 +889,18 @@ export default function CustomersDashboardPage() {
             <div className="space-y-8">
               
               {/* MINI DASHBOARD */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-md transition duration-300">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">Clientes Cadastrados</p>
-                  <h3 className="text-3xl font-extrabold mt-2 text-master-blue dark:text-white">{totalCustomers}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="jm-card p-5 md:p-6 shadow-xs">
+                  <p className="text-sm font-medium text-jm-muted">Clientes Cadastrados</p>
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-fg mt-2">{totalCustomers}</p>
                 </div>
-                <div className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-md transition duration-300">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">Pré-Pago</p>
-                  <h3 className="text-3xl font-extrabold mt-2 text-orange-600">{totalPrePaid}</h3>
+                <div className="jm-card p-5 md:p-6 shadow-xs">
+                  <p className="text-sm font-medium text-jm-muted">Pré-Pago</p>
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-accent-text mt-2">{totalPrePaid}</p>
                 </div>
-                <div className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-md transition duration-300">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">Pós-Pago</p>
-                  <h3 className="text-3xl font-extrabold mt-2 text-emerald-600">{totalPostPaid}</h3>
+                <div className="jm-card p-5 md:p-6 shadow-xs">
+                  <p className="text-sm font-medium text-jm-muted">Pós-Pago</p>
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-primary-text mt-2">{totalPostPaid}</p>
                 </div>
               </div>
 
@@ -919,76 +911,76 @@ export default function CustomersDashboardPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Pesquise por Nome do Cliente ou Documento..."
-                  className="w-full max-w-md px-4 py-3 bg-white border border-neutral-200 rounded-xl text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange dark:bg-neutral-900 dark:border-neutral-800 dark:text-white transition"
+                  className="jm-input max-w-md"
                 />
               </div>
 
               {/* TABELA DE CLIENTES */}
-              <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-xl transition duration-300">
+              <div className="jm-table-wrap">
                 {loadingList ? (
-                  <div className="p-10 text-center font-bold text-neutral-500">Carregando carteira de clientes...</div>
+                  <div className="p-10 text-center font-medium text-sm text-jm-muted">Carregando carteira de clientes...</div>
                 ) : filteredCustomers.length === 0 ? (
-                  <div className="p-10 text-center text-neutral-500 font-medium">Nenhum cliente cadastrado.</div>
+                  <div className="p-10 text-center text-jm-muted text-sm font-medium">Nenhum cliente cadastrado.</div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="jm-table">
                       <thead>
-                        <tr className="bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800 text-xs font-extrabold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">
-                          <th className="py-4 px-6">Cliente</th>
-                          <th className="py-4 px-6">CPF / CNPJ</th>
-                          <th className="py-4 px-6">Tipo</th>
-                          <th className="py-4 px-6">Grupo Corporativo</th>
-                          <th className="py-4 px-6">Cidade/UF</th>
-                          <th className="py-4 px-6 text-center">Ações</th>
+                        <tr>
+                          <th className="jm-th">Cliente</th>
+                          <th className="jm-th">CPF / CNPJ</th>
+                          <th className="jm-th">Tipo</th>
+                          <th className="jm-th">Grupo Corporativo</th>
+                          <th className="jm-th">Cidade/UF</th>
+                          <th className="jm-th text-center">Ações</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 text-sm font-semibold">
+                      <tbody className="divide-y divide-jm-border">
                         {filteredCustomers.map((cust) => (
-                          <tr key={cust.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/35 transition">
-                            <td className="py-4 px-6">
-                              <span className="block text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                          <tr key={cust.id} className="jm-tr">
+                            <td className="jm-td">
+                              <span className="block text-sm font-semibold text-jm-fg flex items-center gap-2">
                                 {cust.name}
-                                <span className={`w-2.5 h-2.5 rounded-full ${cust.isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} title={cust.isActive ? 'Ativo' : 'Inativo'}></span>
+                                <span className={`w-2 h-2 rounded-full ${cust.isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} title={cust.isActive ? 'Ativo' : 'Inativo'}></span>
                               </span>
                               <div className="flex gap-2 items-center mt-1">
-                                {cust.code && <span className="text-xs text-neutral-400 font-medium font-mono">{cust.code}</span>}
-                                <span className={`text-xxs font-extrabold px-1.5 py-0.5 rounded ${cust.isActive ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-450'}`}>
+                                {cust.code && <span className="text-xs text-jm-muted font-mono">{cust.code}</span>}
+                                <span className={`jm-badge ${cust.isActive ? 'jm-badge-success' : 'jm-badge-danger'} !px-1.5 text-[10px]`}>
                                   {cust.isActive ? 'Ativo' : 'Inativo'}
                                 </span>
                               </div>
                             </td>
-                            <td className="py-4 px-6 text-neutral-600 dark:text-neutral-300">{cust.document.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}</td>
-                            <td className="py-4 px-6">
-                              <span className={`inline-block px-3 py-1 text-xs font-extrabold uppercase rounded-full ${
+                            <td className="jm-td text-jm-fg2">{cust.document.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}</td>
+                            <td className="jm-td">
+                              <span className={`jm-badge ${
                                 cust.type === 'POS_PAGO' 
-                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-900' 
-                                  : 'bg-orange-100 text-orange-850 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-250 dark:border-orange-900'
+                                  ? 'jm-badge-primary' 
+                                  : 'jm-badge-accent'
                               }`}>
                                 {cust.type === 'POS_PAGO' ? 'Pós-Pago' : 'Pré-Pago'}
                               </span>
                             </td>
-                            <td className="py-4 px-6">
+                            <td className="jm-td">
                               {cust.groups && cust.groups.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {cust.groups.map(g => (
-                                    <span key={g.id} className="text-xs bg-neutral-200 dark:bg-neutral-800 px-2 py-0.5 rounded-md font-bold text-neutral-800 dark:text-neutral-200">{g.name}</span>
+                                    <span key={g.id} className="jm-badge jm-badge-neutral">{g.name}</span>
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-neutral-400 dark:text-neutral-500 italic font-medium">Nenhum</span>
+                                <span className="text-jm-muted italic text-xs">Nenhum</span>
                               )}
                             </td>
-                            <td className="py-4 px-6 text-neutral-600 dark:text-neutral-400">{cust.city}/{cust.state}</td>
-                            <td className="py-4 px-6 text-center space-x-2">
+                            <td className="jm-td text-jm-fg2">{cust.city}/{cust.state}</td>
+                            <td className="jm-td text-center space-x-2">
                               <button
                                 onClick={() => handleStartEdit(cust)}
-                                className="px-3 py-1.5 bg-sky-100 hover:bg-sky-200 text-sky-800 text-xs font-bold rounded-lg dark:bg-sky-950/40 dark:text-sky-400 dark:hover:bg-sky-950/60 border border-sky-250 dark:border-sky-900 transition"
+                                className="jm-btn jm-btn-secondary jm-btn-sm"
                               >
                                 Alterar
                               </button>
                               <button
                                 onClick={() => handleDelete(cust.id, cust.name)}
-                                className="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold rounded-lg dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-950/60 border border-rose-250 dark:border-rose-900 transition"
+                                className="jm-btn jm-btn-danger jm-btn-sm"
                               >
                                 Excluir
                               </button>
@@ -1007,16 +999,16 @@ export default function CustomersDashboardPage() {
             <div className="space-y-8">
               
               {/* MINI DASHBOARD GRUPOS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-md transition duration-300">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">Grupos Registrados</p>
-                  <h3 className="text-3xl font-extrabold mt-2 text-master-blue dark:text-white">{groupsList.length}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="jm-card p-5 md:p-6 shadow-xs">
+                  <p className="text-sm font-medium text-jm-muted">Grupos Registrados</p>
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-fg mt-2">{groupsList.length}</p>
                 </div>
-                <div className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-md transition duration-300">
-                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-master-textMuted">Empresas Integrantes</p>
-                  <h3 className="text-3xl font-extrabold mt-2 text-master-orange">
+                <div className="jm-card p-5 md:p-6 shadow-xs">
+                  <p className="text-sm font-medium text-jm-muted">Empresas Integrantes</p>
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-primary-text mt-2">
                     {customers.filter(c => c.groupId || (c.groupIds && c.groupIds.length > 0)).length}
-                  </h3>
+                  </p>
                 </div>
               </div>
 
@@ -1027,56 +1019,58 @@ export default function CustomersDashboardPage() {
                   value={groupSearch}
                   onChange={(e) => setGroupSearch(e.target.value)}
                   placeholder="Pesquise por Nome do Grupo ou Empresas Vinculadas..."
-                  className="w-full max-w-md px-4 py-3 bg-white border border-neutral-200 rounded-xl text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange dark:bg-neutral-900 dark:border-neutral-800 dark:text-white transition"
+                  className="jm-input max-w-md"
                 />
               </div>
 
               {/* LISTAGEM DE GRUPOS E SUAS EMPRESAS */}
               {loadingList ? (
-                <div className="p-10 text-center font-bold text-neutral-500">Carregando grupos corporativos...</div>
+                <div className="p-10 text-center font-medium text-sm text-jm-muted">Carregando grupos corporativos...</div>
               ) : filteredGroups.length === 0 ? (
-                <div className="p-10 text-center text-neutral-500 font-medium bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl">
+                <div className="p-10 text-center text-sm text-jm-muted font-medium jm-card">
                   Nenhum grupo corporativo cadastrado. Clique no botão "+ Cadastrar Grupo" acima para criar o primeiro.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-5">
                   {filteredGroups.map((grp) => (
                     <div 
                       key={grp.id} 
-                      className="p-6 bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-lg space-y-4 transition duration-300"
+                      className="jm-card p-5 md:p-6 space-y-4"
                     >
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-neutral-200 dark:border-neutral-850 pb-3">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-jm-border pb-4">
                         <div className="flex items-center gap-3">
-                          <span className="text-2xl">🏢</span>
+                          <div className="jm-icon-chip jm-icon-chip-primary">
+                            <span className="text-base">🏢</span>
+                          </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-lg font-bold text-master-blue dark:text-white uppercase tracking-wide">{grp.name}</h3>
-                              <span className={`text-xxs font-extrabold px-2 py-0.5 rounded-full ${grp.isActive ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-450' : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-450'}`}>
+                              <h3 className="text-base font-semibold text-jm-fg">{grp.name}</h3>
+                              <span className={`jm-badge ${grp.isActive ? 'jm-badge-success' : 'jm-badge-danger'} !px-1.5 text-[10px]`}>
                                 {grp.isActive ? 'Grupo Ativo' : 'Grupo Inativo'}
                               </span>
                             </div>
-                            <span className="text-xs text-neutral-400 font-mono">ID: {grp.id}</span>
+                            <span className="text-xs text-jm-muted font-mono">ID: {grp.id}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleToggleGroupStatus(grp.id, grp.name)}
-                            className={`px-3 py-1.5 text-xxs font-bold rounded-lg border transition cursor-pointer ${
+                            className={`jm-btn jm-btn-sm ${
                               grp.isActive 
-                                ? 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900' 
-                                : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
+                                ? 'jm-btn-danger' 
+                                : 'jm-btn-primary'
                             }`}
                           >
                             {grp.isActive ? 'Inativar Grupo' : 'Ativar Grupo'}
                           </button>
                           <button
                             onClick={() => handleDeleteGroup(grp.id, grp.name)}
-                            className="px-3 py-1.5 text-xxs font-bold rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
+                            className="jm-btn jm-btn-secondary jm-btn-sm text-jm-danger-fg hover:bg-jm-danger-bg hover:text-jm-danger-fg"
                             title="Excluir Grupo"
                           >
                             Excluir
                           </button>
-                          <span className="px-3 py-1 bg-neutral-100 text-neutral-600 dark:bg-neutral-850 dark:text-neutral-300 text-xs font-bold rounded-full">
+                          <span className="jm-badge jm-badge-neutral h-8 !px-2.5 text-xs font-semibold">
                             {(grp.customers || []).length} {(grp.customers || []).length === 1 ? 'empresa' : 'empresas'}
                           </span>
                         </div>
@@ -1084,57 +1078,57 @@ export default function CustomersDashboardPage() {
 
                       {/* Lista de Empresas sob o Grupo */}
                       {(!grp.customers || grp.customers.length === 0) ? (
-                        <div className="py-4 text-xs text-neutral-400 text-center font-medium">
+                        <div className="py-4 text-xs text-jm-muted text-center font-medium">
                           Nenhuma empresa vinculada a este grupo ainda.
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
-                          <table className="w-full text-left text-xs font-semibold">
+                          <table className="jm-table">
                             <thead>
-                              <tr className="text-neutral-450 uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800 pb-2">
-                                <th className="py-2 px-2">Razão Social / Filial</th>
-                                <th className="py-2 px-2">CPF / CNPJ</th>
-                                <th className="py-2 px-2">Consumo</th>
-                                <th className="py-2 px-2">Cidade/UF</th>
-                                <th className="py-2 px-2 text-center">Ações</th>
+                              <tr>
+                                <th className="jm-th">Razão Social / Filial</th>
+                                <th className="jm-th">CPF / CNPJ</th>
+                                <th className="jm-th">Consumo</th>
+                                <th className="jm-th">Cidade/UF</th>
+                                <th className="jm-th text-center">Ações</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-850">
+                            <tbody className="divide-y divide-jm-border">
                               {grp.customers.map((c: any) => (
-                                <tr key={c.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/40 transition">
-                                  <td className="py-3 px-2 text-sm font-bold text-neutral-800 dark:text-neutral-200">
-                                    <span className="flex items-center gap-2">
+                                <tr key={c.id} className="jm-tr">
+                                  <td className="jm-td">
+                                    <span className="flex items-center gap-2 font-medium text-jm-fg">
                                       {c.name}
                                       <span className={`w-2 h-2 rounded-full ${c.isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} title={c.isActive ? 'Ativo' : 'Inativo'}></span>
                                     </span>
                                     <div className="flex items-center gap-2 mt-0.5">
-                                      {c.code && <span className="text-xxs font-normal font-mono text-neutral-400">{c.code}</span>}
-                                      <span className={`text-xxs font-extrabold px-1 rounded ${c.isActive ? 'bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-rose-100/70 text-rose-800 dark:bg-rose-950/30 dark:text-rose-455'}`}>
+                                      {c.code && <span className="text-xs font-mono text-jm-muted">{c.code}</span>}
+                                      <span className={`jm-badge ${c.isActive ? 'jm-badge-success' : 'jm-badge-danger'} !px-1.5 text-[10px]`}>
                                         {c.isActive ? 'Ativo' : 'Inativo'}
                                       </span>
                                     </div>
                                   </td>
-                                  <td className="py-3 px-2 text-neutral-600 dark:text-neutral-400">{c.document.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}</td>
-                                  <td className="py-3 px-2">
-                                    <span className={`inline-block px-2 py-0.5 text-xxs font-extrabold uppercase rounded ${
+                                  <td className="jm-td text-jm-fg2">{c.document.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5").replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")}</td>
+                                  <td className="jm-td">
+                                    <span className={`jm-badge ${
                                       c.type === 'POS_PAGO'
-                                        ? 'bg-emerald-100/70 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/50'
-                                        : 'bg-orange-100/70 text-orange-850 dark:bg-orange-950/30 dark:text-orange-400 border border-orange-200/50 dark:border-orange-900/50'
+                                        ? 'jm-badge-primary'
+                                        : 'jm-badge-accent'
                                     }`}>
                                       {c.type === 'POS_PAGO' ? 'Pós-Pago' : 'Pré-Pago'}
                                     </span>
                                   </td>
-                                  <td className="py-3 px-2 text-neutral-600 dark:text-neutral-400">{c.city}/{c.state}</td>
-                                  <td className="py-3 px-2 text-center space-x-1">
+                                  <td className="jm-td text-jm-fg2">{c.city}/{c.state}</td>
+                                  <td className="jm-td text-center space-x-1">
                                     <button
                                       onClick={() => handleStartEdit(c)}
-                                      className="px-2 py-1 bg-sky-55 text-sky-800 text-xxs font-bold rounded hover:bg-sky-100 dark:bg-sky-950/20 dark:text-sky-400 transition"
+                                      className="jm-btn jm-btn-secondary jm-btn-sm"
                                     >
                                       Editar
                                     </button>
                                     <button
                                       onClick={() => handleDelete(c.id, c.name)}
-                                      className="px-2 py-1 bg-rose-55 text-rose-800 text-xxs font-bold rounded hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-400 transition"
+                                      className="jm-btn jm-btn-danger jm-btn-sm"
                                     >
                                       Remover
                                     </button>

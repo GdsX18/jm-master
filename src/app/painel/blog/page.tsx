@@ -505,11 +505,11 @@ export default function BlogDashboardPage() {
       {/* 2. MODO PRÉVIA TELA CHEIA */}
       {viewMode === 'preview' && currentArticle && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xs">
+          <div className="jm-card p-4 flex items-center justify-between">
             <button
               type="button"
               onClick={handleBackToList}
-              className="px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+              className="jm-btn jm-btn-secondary"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Voltar à Lista</span>
@@ -517,13 +517,13 @@ export default function BlogDashboardPage() {
             <button
               type="button"
               onClick={() => setViewMode('editor')}
-              className="px-4 py-2 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+              className="jm-btn jm-btn-primary"
             >
               <Edit className="w-3.5 h-3.5" />
               <span>Editar Artigo</span>
             </button>
           </div>
-          <div className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-white dark:bg-neutral-900 p-6 sm:p-10 shadow-xs">
+          <div className="jm-card p-6 sm:p-10 overflow-hidden">
             <LivePreview article={currentArticle} />
           </div>
         </div>
@@ -533,25 +533,25 @@ export default function BlogDashboardPage() {
       {viewMode === 'editor' && currentArticle && (
         <div className="space-y-6">
           {/* HEADER DO EDITOR */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xs transition-colors duration-300">
+          <div className="jm-card p-4 sm:p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={handleBackToList}
-                className="p-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                className="jm-btn jm-btn-secondary"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Voltar</span>
               </button>
 
               <div>
-                <h2 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-white truncate max-w-xs sm:max-w-md md:max-w-lg">
+                <h2 className="text-sm sm:text-base font-semibold text-jm-text truncate max-w-xs sm:max-w-md md:max-w-lg">
                   {currentArticle.title || 'Novo Artigo'}
                 </h2>
-                <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+                <div className="flex items-center gap-2 text-[11px] text-jm-muted">
                   <span className="capitalize">{currentArticle.status === 'published' ? 'Publicado' : currentArticle.status === 'scheduled' ? 'Agendado' : 'Rascunho'}</span>
                   {isDirty ? (
-                    <span className="text-amber-500 font-bold">• Alterações não salvas</span>
+                    <span className="text-amber-500 font-semibold">• Alterações não salvas</span>
                   ) : (
                     lastSavedTime && <span>• Salvo no servidor às {lastSavedTime}</span>
                   )}
@@ -562,14 +562,14 @@ export default function BlogDashboardPage() {
             {/* SELETOR DE SUB-MODO & BOTÕES DE SALVAMENTO */}
             <div className="flex flex-wrap items-center gap-2">
               {/* Abas de Visualização do Workspace */}
-              <div className="flex items-center bg-neutral-100 dark:bg-neutral-950 p-1 rounded-xl border border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg border border-jm-border">
                 <button
                   type="button"
                   onClick={() => setEditorSubMode('editor_meta')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
                     editorSubMode === 'editor_meta'
-                      ? 'bg-[#E85D26] text-white shadow-xs'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      ? 'bg-jm-orange text-white shadow-xs'
+                      : 'text-jm-muted hover:text-jm-text'
                   }`}
                 >
                   <FileEdit className="w-3.5 h-3.5" />
@@ -578,10 +578,10 @@ export default function BlogDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setEditorSubMode('split')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
                     editorSubMode === 'split'
-                      ? 'bg-[#E85D26] text-white shadow-xs'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      ? 'bg-jm-orange text-white shadow-xs'
+                      : 'text-jm-muted hover:text-jm-text'
                   }`}
                 >
                   <Columns className="w-3.5 h-3.5" />
@@ -590,10 +590,10 @@ export default function BlogDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setEditorSubMode('preview_only')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
                     editorSubMode === 'preview_only'
-                      ? 'bg-[#E85D26] text-white shadow-xs'
-                      : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                      ? 'bg-jm-orange text-white shadow-xs'
+                      : 'text-jm-muted hover:text-jm-text'
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -606,7 +606,7 @@ export default function BlogDashboardPage() {
                 type="button"
                 disabled={isSaving}
                 onClick={handleSaveDraft}
-                className="px-3 sm:px-4 py-2 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                className="jm-btn jm-btn-secondary"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{isSaving ? 'Salvando...' : 'Salvar Rascunho'}</span>
@@ -616,7 +616,7 @@ export default function BlogDashboardPage() {
                 type="button"
                 disabled={isSaving}
                 onClick={handleSchedule}
-                className="px-3 sm:px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                className="jm-btn bg-sky-600 hover:bg-sky-700 text-white"
               >
                 <Calendar className="w-3.5 h-3.5" />
                 <span>{isSaving ? 'Agendando...' : 'Agendar'}</span>
@@ -626,7 +626,7 @@ export default function BlogDashboardPage() {
                 type="button"
                 disabled={isSaving}
                 onClick={handlePublish}
-                className="px-4 sm:px-5 py-2 bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-lg shadow-orange-950/20 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                className="jm-btn jm-btn-primary"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{isSaving ? 'Publicando...' : 'Publicar no Site'}</span>

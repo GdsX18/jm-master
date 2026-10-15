@@ -44,10 +44,10 @@ export function useToastState() {
 // ─── COMPONENTE: ToastContainer ─────────────────────────────────────────────
 
 const toastConfig: Record<ToastType, { border: string; icon: string; iconColor: string; barColor: string }> = {
-  success: { border: 'border-l-4 border-green-500', icon: '✓', iconColor: 'text-green-400', barColor: 'bg-green-500' },
-  error:   { border: 'border-l-4 border-red-500',   icon: '✕', iconColor: 'text-red-400',   barColor: 'bg-red-500'   },
-  warning: { border: 'border-l-4 border-amber-500', icon: '⚠', iconColor: 'text-amber-400', barColor: 'bg-amber-500' },
-  info:    { border: 'border-l-4 border-sky-500',   icon: 'ℹ', iconColor: 'text-sky-400',   barColor: 'bg-sky-500'   },
+  success: { border: 'border-emerald-200 dark:border-emerald-800/60', icon: '✓', iconColor: 'text-emerald-600 dark:text-emerald-400', barColor: 'bg-emerald-500' },
+  error:   { border: 'border-rose-200 dark:border-rose-800/60',   icon: '✕', iconColor: 'text-rose-600 dark:text-rose-400',   barColor: 'bg-rose-500'   },
+  warning: { border: 'border-amber-200 dark:border-amber-800/60', icon: '⚠', iconColor: 'text-amber-600 dark:text-amber-400', barColor: 'bg-amber-500' },
+  info:    { border: 'border-sky-200 dark:border-sky-800/60',   icon: 'ℹ', iconColor: 'text-sky-600 dark:text-sky-400',   barColor: 'bg-sky-500'   },
 };
 
 export function ToastContainer({
@@ -66,22 +66,22 @@ export function ToastContainer({
             key={t.id}
             className={`
               pointer-events-auto flex items-start gap-3 min-w-[320px] max-w-[440px]
-              bg-neutral-900 ${cfg.border} rounded-xl shadow-2xl px-4 py-3
+              jm-card ${cfg.border} rounded-xl shadow-lg px-4 py-3
             `}
             style={{ animation: 'jm-slide-in 0.3s ease-out forwards' }}
           >
-            <span className={`text-lg font-bold mt-0.5 flex-shrink-0 ${cfg.iconColor}`}>
+            <span className={`text-base font-bold mt-0.5 flex-shrink-0 ${cfg.iconColor}`}>
               {cfg.icon}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white leading-snug">{t.title}</p>
+              <p className="text-sm font-semibold text-jm-text leading-snug">{t.title}</p>
               {t.message && (
-                <p className="text-xs text-neutral-400 mt-0.5 leading-snug">{t.message}</p>
+                <p className="text-xs text-jm-muted mt-0.5 leading-snug">{t.message}</p>
               )}
             </div>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-neutral-500 hover:text-white transition text-xl leading-none flex-shrink-0 mt-0.5 ml-1 cursor-pointer"
+              className="text-jm-muted hover:text-jm-text transition text-lg leading-none flex-shrink-0 mt-0.5 ml-1 cursor-pointer"
               aria-label="Fechar"
             >
               ×
@@ -126,9 +126,9 @@ export function useConfirm() {
 // ─── COMPONENTE: ConfirmModal ────────────────────────────────────────────────
 
 const variantCfg = {
-  danger:  { icon: '🗑️', confirmBtn: 'bg-red-600 hover:bg-red-700 text-white', iconBg: 'bg-red-950/60 text-red-400 border border-red-900/50' },
-  warning: { icon: '⚠️', confirmBtn: 'bg-amber-500 hover:bg-amber-600 text-black font-bold', iconBg: 'bg-amber-950/60 text-amber-400 border border-amber-900/50' },
-  default: { icon: '❓', confirmBtn: 'bg-[#E85D26] hover:bg-orange-600 text-white', iconBg: 'bg-orange-950/60 text-orange-400 border border-orange-900/50' },
+  danger:  { icon: '🗑️', confirmBtn: 'bg-rose-600 hover:bg-rose-700 text-white', iconBg: 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800' },
+  warning: { icon: '⚠️', confirmBtn: 'bg-amber-600 hover:bg-amber-700 text-white', iconBg: 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800' },
+  default: { icon: '❓', confirmBtn: 'jm-btn-primary', iconBg: 'bg-orange-50 text-jm-orange dark:bg-orange-950/40 dark:text-orange-400 border border-orange-200 dark:border-orange-800' },
 };
 
 export function ConfirmModal({
@@ -164,44 +164,43 @@ export function ConfirmModal({
           to   { opacity: 1; transform: translateX(0); }
         }
         @keyframes jm-scale-in {
-          from { opacity: 0; transform: scale(0.88); }
+          from { opacity: 0; transform: scale(0.95); }
           to   { opacity: 1; transform: scale(1); }
         }
       `}</style>
       <div
-        className="fixed inset-0 z-[9998] flex items-center justify-center"
-        style={{ backgroundColor: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(6px)' }}
+        className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
         onClick={onCancel}
       >
         <div
-          className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+          className="jm-card border border-jm-border rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
           onClick={e => e.stopPropagation()}
-          style={{ animation: 'jm-scale-in 0.22s ease-out' }}
+          style={{ animation: 'jm-scale-in 0.2s ease-out' }}
         >
           {/* Header */}
           <div className="px-6 pt-6 pb-4 flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-full ${v.iconBg} flex items-center justify-center text-2xl flex-shrink-0`}>
+            <div className={`w-10 h-10 rounded-xl ${v.iconBg} flex items-center justify-center text-lg flex-shrink-0`}>
               {v.icon}
             </div>
             <div className="flex-1">
-              <h3 className="text-base font-bold text-white">{options.title}</h3>
-              <p className="text-sm text-neutral-400 mt-1 leading-relaxed">{options.message}</p>
+              <h3 className="text-sm font-semibold text-jm-text">{options.title}</h3>
+              <p className="text-xs text-jm-muted mt-1 leading-relaxed">{options.message}</p>
             </div>
           </div>
 
-          <div className="border-t border-neutral-800 mx-6" />
+          <div className="border-t border-jm-border mx-6" />
 
           {/* Actions */}
-          <div className="px-6 py-4 flex gap-3 justify-end">
+          <div className="px-6 py-4 flex gap-2.5 justify-end">
             <button
               onClick={onCancel}
-              className="px-5 py-2 rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white transition text-sm font-medium cursor-pointer"
+              className="jm-btn jm-btn-secondary"
             >
               {options.cancelLabel ?? 'Cancelar'}
             </button>
             <button
               onClick={onConfirm}
-              className={`px-5 py-2 rounded-lg transition text-sm font-semibold cursor-pointer ${v.confirmBtn}`}
+              className={`jm-btn ${v.confirmBtn}`}
             >
               {options.confirmLabel ?? 'Confirmar'}
             </button>

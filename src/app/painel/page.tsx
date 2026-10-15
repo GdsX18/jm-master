@@ -9,10 +9,8 @@ import {
   Users,
   Building2,
   Package,
-  Zap,
   ExternalLink,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
@@ -78,174 +76,154 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="p-6 md:p-8 space-y-8 bg-[#f8fafc] dark:bg-neutral-950 transition-colors duration-300 min-h-screen">
+    <div className="mx-auto w-full max-w-[1280px] space-y-8 px-4 py-6 md:px-8 md:py-8">
       
       {/* CABEÇALHO DO DASHBOARD */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+      <header className="flex flex-col gap-4 border-b border-jm-border pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1d2d44] dark:text-neutral-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-jm-fg lg:text-3xl">
             Painel Executivo
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          <p className="mt-1 max-w-2xl text-sm text-jm-muted md:text-base">
             Visão geral em tempo real de publicações, clientes, produtos e conexões operacionais.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-bold transition-colors duration-300">
-            <Calendar className="w-4 h-4 text-[#E85D26]" />
-            <span>HOJE / {currentDate}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex h-10 items-center gap-2 rounded-lg border border-jm-border bg-jm-surface px-3.5 text-sm font-medium text-jm-fg2">
+            <Calendar className="h-4 w-4 text-jm-muted" />
+            <span>Hoje, {currentDate}</span>
           </div>
           <button
             onClick={loadRealData}
-            className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-md shadow-orange-950/20 cursor-pointer"
+            className="jm-btn jm-btn-primary"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             <span>{loading ? 'Atualizando...' : 'Atualizar'}</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {error && (
-        <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
+        <div role="alert" className="flex items-start gap-3 rounded-xl border border-jm-danger-border bg-jm-danger-bg p-4 text-sm font-medium text-jm-danger-fg">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {/* BLOCO DE DESTAQUE: CRIADOR DE BLOG INTEGRADO */}
-      <div className="bg-gradient-to-r from-orange-600/15 via-orange-500/10 to-transparent border border-orange-500/30 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <PenTool className="w-5 h-5 text-[#E85D26]" />
-            <h2 className="text-lg font-bold text-neutral-900 dark:text-white">
-              Criador de Blog Oficial
-            </h2>
-            <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase bg-[#E85D26] text-white rounded-md">
-              INTEGRADO
-            </span>
+      <section className="jm-card flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between md:p-6">
+        <div className="flex items-start gap-4">
+          <div className="jm-icon-chip jm-icon-chip-accent !h-10 !w-10">
+            <PenTool className="h-5 w-5" strokeWidth={1.75} />
           </div>
-          <p className="text-xs text-neutral-600 dark:text-neutral-300 max-w-2xl leading-relaxed">
-            Escreva novos artigos com formatação rica, controle de fontes e imagens. Ao clicar em publicar, o artigo vai automaticamente para o site oficial em <code className="bg-orange-500/10 px-1.5 py-0.5 rounded text-[#E85D26] font-mono">/blog</code>.
-          </p>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold text-jm-fg">
+                Criador de Blog Oficial
+              </h2>
+              <span className="jm-badge jm-badge-primary">
+                Integrado
+              </span>
+            </div>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-jm-muted">
+              Escreva novos artigos com formatação rica, controle de fontes e imagens. Ao clicar em publicar, o artigo vai automaticamente para o site oficial em <code className="rounded-md border border-jm-border bg-jm-subtle px-1.5 py-0.5 font-mono text-xs text-jm-fg2">/blog</code>.
+            </p>
+          </div>
         </div>
         <Link
           href="/painel/blog"
-          className="px-5 py-2.5 bg-[#E85D26] hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-md shadow-orange-950/20 shrink-0 flex items-center gap-1.5"
+          className="jm-btn jm-btn-accent shrink-0"
         >
           <span>Acessar Criador de Blog</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="h-4 w-4" />
         </Link>
-      </div>
+      </section>
 
       {/* CARDS DE MÉTRICA REAIS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <h2 className="sr-only">Indicadores</h2>
         
         {/* Card 1: Artigos Publicados no Blog */}
-        <Link href="/painel/blog" className="block group">
-          <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden shadow-xs transition-all group-hover:border-orange-500/50">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E85D26]" />
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Artigos Publicados</p>
-                <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{blogCount}</h3>
-                <span className="text-[11px] text-[#E85D26] font-semibold mt-1 block">{metrics ? `${metrics.draftCount} rascunho(s)` : '—'}</span>
-              </div>
-              <div className="bg-orange-500/10 p-2.5 rounded-xl text-[#E85D26]">
-                <PenTool className="w-5 h-5" />
+        <Link href="/painel/blog" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
+          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-jm-muted">Artigos Publicados</p>
+              <div className="jm-icon-chip jm-icon-chip-accent">
+                <PenTool className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
             </div>
+            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{blogCount}</p>
+            <p className="mt-2 text-sm text-jm-muted">{metrics ? `${metrics.draftCount} rascunho(s)` : '—'}</p>
           </div>
         </Link>
 
         {/* Card 2: Clientes Ativos */}
-        <Link href="/painel/customers" className="block group">
-          <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden shadow-xs transition-all group-hover:border-emerald-500/50">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Clientes Cadastrados</p>
-                <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{customerCount}</h3>
-                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">{metrics ? `${metrics.activeCustomerCount} ativo(s) · ${metrics.newLeads} lead(s) do site em 7 dias` : '—'}</span>
-              </div>
-              <div className="bg-emerald-500/10 p-2.5 rounded-xl text-emerald-600 dark:text-emerald-400">
-                <Users className="w-5 h-5" />
+        <Link href="/painel/customers" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
+          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-jm-muted">Clientes Cadastrados</p>
+              <div className="jm-icon-chip jm-icon-chip-primary">
+                <Users className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
             </div>
+            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{customerCount}</p>
+            <p className="mt-2 text-sm text-jm-muted">{metrics ? `${metrics.activeCustomerCount} ativo(s) · ${metrics.newLeads} lead(s) do site em 7 dias` : '—'}</p>
           </div>
         </Link>
 
         {/* Card 3: Grupos Corporativos */}
-        <Link href="/painel/customers" className="block group">
-          <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden shadow-xs transition-all group-hover:border-amber-500/50">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-amber-500" />
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Grupos Corporativos</p>
-                <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{groupCount}</h3>
-                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1 block">Gestão de Grupos</span>
-              </div>
-              <div className="bg-amber-500/10 p-2.5 rounded-xl text-amber-600 dark:text-amber-400">
-                <Building2 className="w-5 h-5" />
+        <Link href="/painel/customers" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
+          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-jm-muted">Grupos Corporativos</p>
+              <div className="jm-icon-chip jm-icon-chip-primary">
+                <Building2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
             </div>
+            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{groupCount}</p>
+            <p className="mt-2 text-sm text-jm-muted">Gestão de Grupos</p>
           </div>
         </Link>
 
         {/* Card 4: Catálogo de Produtos */}
-        <Link href="/painel/products" className="block group">
-          <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 relative overflow-hidden shadow-xs transition-all group-hover:border-sky-500/50">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-sky-500" />
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Produtos no Catálogo</p>
-                <h3 className="text-3xl font-extrabold mt-2 text-neutral-900 dark:text-white">{productCount}</h3>
-                <span className="text-[11px] text-sky-600 dark:text-sky-400 font-semibold mt-1 block">{metrics ? `${metrics.openInvoices} fatura(s) em aberto` : '—'}</span>
-              </div>
-              <div className="bg-sky-500/10 p-2.5 rounded-xl text-sky-600 dark:text-sky-400">
-                <Package className="w-5 h-5" />
+        <Link href="/painel/products" className="group block rounded-xl outline-none focus-visible:ring-4 focus-visible:ring-jm-ring">
+          <div className="jm-card h-full p-5 transition group-hover:border-jm-border-strong group-hover:shadow-sm md:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-jm-muted">Produtos no Catálogo</p>
+              <div className="jm-icon-chip jm-icon-chip-primary">
+                <Package className="h-[18px] w-[18px]" strokeWidth={1.75} />
               </div>
             </div>
+            <p className="mt-3 text-4xl font-semibold tracking-tight tabular-nums text-jm-fg">{productCount}</p>
+            <p className="mt-2 text-sm text-jm-muted">{metrics ? `${metrics.openInvoices} fatura(s) em aberto` : '—'}</p>
           </div>
         </Link>
 
-      </div>
+      </section>
 
       {/* BLOCO DE INTEGRAÇÃO EM TEMPO REAL COM O SITE */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         
         {/* Status das APIs & Serviços */}
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Status das Conexões & APIs</h3>
-            </div>
+        <div className="jm-card overflow-hidden">
+          <div className="jm-card-header">
+            <h2 className="jm-card-title">Status das Conexões & APIs</h2>
             {health.length > 0 && (
-              <span
-                className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
-                  allHealthy
-                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                }`}
-              >
-                {allHealthy ? 'OPERACIONAL' : 'ATENÇÃO'}
+              <span className={`jm-badge ${allHealthy ? 'jm-badge-success' : 'jm-badge-warning'}`}>
+                {allHealthy ? 'Operacional' : 'Atenção'}
               </span>
             )}
           </div>
-
-          <div className="space-y-3 text-xs">
+          <div className="divide-y divide-jm-border">
             {health.length === 0 && (
-              <p className="text-neutral-500">{loading ? 'Verificando conexões...' : 'Sem dados de verificação.'}</p>
+              <p className="px-6 py-8 text-center text-sm text-jm-muted">{loading ? 'Verificando conexões...' : 'Sem dados de verificação.'}</p>
             )}
             {health.map((h) => (
-              <div
-                key={h.label}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800"
-              >
-                <span className="font-semibold text-neutral-700 dark:text-neutral-300">{h.label}</span>
-                <span className={`font-bold flex items-center gap-1.5 text-right ${h.ok ? 'text-emerald-500' : 'text-amber-500'}`}>
-                  {h.ok ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
+              <div key={h.label} className="flex items-center justify-between gap-4 px-5 py-4 md:px-6">
+                <span className="text-sm font-medium text-jm-fg">{h.label}</span>
+                <span className={`jm-badge ${h.ok ? 'jm-badge-success' : 'jm-badge-warning'}`}>
+                  {h.ok ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
                   <span>{h.detail}</span>
                 </span>
               </div>
@@ -254,55 +232,68 @@ export default function DashboardPage() {
         </div>
 
         {/* Acesso Rápido às Funções */}
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#E85D26]" />
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Ações Rápidas do Sistema</h3>
-            </div>
+        <div className="jm-card overflow-hidden">
+          <div className="jm-card-header">
+            <h2 className="jm-card-title">Ações Rápidas do Sistema</h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 md:p-6">
             <Link
               href="/painel/blog"
-              className="p-4 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-neutral-900 dark:text-white transition font-bold flex flex-col gap-1.5"
+              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
             >
-              <PenTool className="w-5 h-5 text-[#E85D26]" />
-              <span>Escrever Artigo</span>
-              <span className="text-[10px] text-neutral-500 font-normal">Criar e publicar no blog</span>
+              <div className="jm-icon-chip jm-icon-chip-accent">
+                <PenTool className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-jm-fg">Escrever Artigo</p>
+                <p className="mt-0.5 text-sm text-jm-muted">Criar e publicar no blog</p>
+              </div>
             </Link>
 
             <Link
               href="/painel/customers"
-              className="p-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-neutral-900 dark:text-white transition font-bold flex flex-col gap-1.5"
+              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
             >
-              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              <span>Cadastrar Cliente</span>
-              <span className="text-[10px] text-neutral-500 font-normal">Gerenciar empresas e grupos</span>
+              <div className="jm-icon-chip jm-icon-chip-primary">
+                <Users className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-jm-fg">Cadastrar Cliente</p>
+                <p className="mt-0.5 text-sm text-jm-muted">Gerenciar empresas e grupos</p>
+              </div>
             </Link>
 
             <Link
               href="/painel/products"
-              className="p-4 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/20 text-neutral-900 dark:text-white transition font-bold flex flex-col gap-1.5"
+              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
             >
-              <Package className="w-5 h-5 text-sky-600 dark:text-sky-400" />
-              <span>Tabela de Preços</span>
-              <span className="text-[10px] text-neutral-500 font-normal">Configurar produtos e planos</span>
+              <div className="jm-icon-chip jm-icon-chip-primary">
+                <Package className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-jm-fg">Tabela de Preços</p>
+                <p className="mt-0.5 text-sm text-jm-muted">Configurar produtos e planos</p>
+              </div>
             </Link>
 
             <Link
               href="/blog"
               target="_blank"
-              className="p-4 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-neutral-900 dark:text-white transition font-bold flex flex-col gap-1.5"
+              className="group flex flex-col gap-3 rounded-lg border border-jm-border bg-jm-surface p-4 outline-none transition hover:border-jm-border-strong hover:bg-jm-subtle focus-visible:ring-4 focus-visible:ring-jm-ring"
             >
-              <ExternalLink className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <span>Abrir Site Oficial</span>
-              <span className="text-[10px] text-neutral-500 font-normal">Ver blog no ar</span>
+              <div className="jm-icon-chip jm-icon-chip-neutral">
+                <ExternalLink className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-jm-fg">Abrir Site Oficial</p>
+                <p className="mt-0.5 text-sm text-jm-muted">Ver blog no ar</p>
+              </div>
             </Link>
           </div>
         </div>
 
-      </div>
+      </section>
 
     </div>
   );

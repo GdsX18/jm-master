@@ -118,9 +118,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pageContent =
     currentUser && !canAccess(pathname) ? (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center gap-3 p-8">
-        <ShieldOff className="w-10 h-10 text-rose-500" />
-        <h2 className="text-lg font-bold">Acesso não permitido</h2>
-        <p className="text-sm text-neutral-500 max-w-sm">
+        <ShieldOff className="w-10 h-10 text-jm-danger-fg" strokeWidth={1.75} />
+        <h2 className="text-lg font-semibold text-jm-fg">Acesso não permitido</h2>
+        <p className="text-sm text-jm-muted max-w-sm">
           Seu perfil não tem permissão para este módulo. Fale com um administrador se precisar de acesso.
         </p>
       </div>
@@ -139,7 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   if (!isMounted) {
-    return <div className="min-h-screen bg-neutral-950 text-white" />;
+    return <div className="min-h-screen bg-[#0B0F17]" />;
   }
 
   const isDark = theme === 'dark';
@@ -147,19 +147,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   /* 1. LAYOUT DE MENU SUPERIOR */
   if (menuLayout === 'top') {
     return (
-      <div className={`min-h-screen w-full flex flex-col font-sans ${isDark ? 'dark bg-neutral-950 text-white' : 'bg-neutral-100 text-neutral-900'} transition-colors duration-300`}>
+      <div className={`min-h-screen w-full flex flex-col font-sans jm-panel bg-jm-bg text-jm-fg ${isDark ? 'dark' : ''} transition-colors duration-300`}>
         
         {/* HEADER / NAVBAR SUPERIOR FIXA */}
-        <header className={`w-full h-16 sticky top-0 border-b flex items-center justify-between px-4 sm:px-6 transition-colors duration-300 z-50 shrink-0 gap-3 ${isDark ? 'bg-neutral-900/95 border-neutral-800 backdrop-blur-md' : 'bg-white/95 border-neutral-200 backdrop-blur-md'}`}>
+        <header className="sticky top-0 z-50 flex h-16 w-full shrink-0 items-center justify-between gap-3 border-b border-jm-border bg-jm-surface px-4 sm:px-6">
           
           {/* Logo (Esquerda) */}
           <div className="flex items-center shrink-0">
-            <Link href="/painel" className="relative w-28 sm:w-32 h-8 block">
+            <Link href="/painel" className="relative block h-8 w-32">
               <Image 
                 src="/images/logo_jm.png" 
                 alt="JM Master Group"
                 fill
-                className="object-contain"
+                className="object-contain object-left"
                 priority
                 unoptimized
               />
@@ -176,15 +176,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Link
                     key={item.path}
                     href={item.path}
-                    className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
-                      isActive 
-                        ? 'bg-[#E85D26] text-white shadow-md shadow-orange-950/20' 
-                        : isDark 
-                          ? 'text-neutral-400 hover:bg-neutral-800 hover:text-white' 
-                          : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={`jm-nav-link !w-auto h-9 px-3 whitespace-nowrap shrink-0 ${isActive ? 'jm-nav-link-active' : ''}`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
+                    <Icon className="w-4 h-4" strokeWidth={1.75} />
                     <span>{item.shortName}</span>
                   </Link>
                 );
@@ -200,16 +195,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/blog"
               target="_blank"
               title="Ver Blog Oficial"
-              className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-[#E85D26] bg-orange-500/10 hover:bg-orange-500/20 rounded-xl border border-orange-500/30 transition"
+              className="hidden lg:flex items-center gap-1.5 jm-btn jm-btn-secondary jm-btn-sm"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span>Ver Site</span>
             </Link>
 
             {/* Perfil */}
-            <div className={`hidden 2xl:flex items-center gap-1.5 py-1 px-2.5 rounded-xl border transition-colors ${isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-200' : 'bg-neutral-50 border-neutral-200 text-neutral-800'}`}>
-              <span className="text-xs font-bold">{currentUser?.name?.split(' ')[0] || ''}</span>
-              <span className="px-1.5 py-0.2 text-[8px] font-extrabold uppercase bg-orange-600/10 text-[#E85D26] rounded border border-orange-500/25">
+            <div className="hidden 2xl:flex items-center gap-2 px-3 h-9 rounded-lg border border-jm-border bg-jm-subtle text-jm-fg text-xs font-medium">
+              <span className="font-semibold">{currentUser?.name?.split(' ')[0] || ''}</span>
+              <span className="jm-badge jm-badge-accent !px-1.5 text-[10px] uppercase">
                 {currentUser?.role || ''}
               </span>
             </div>
@@ -218,35 +213,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               onClick={toggleLayout}
               title="Mudar para Menu Lateral"
-              className={`p-2 sm:px-2.5 sm:py-1.5 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${isDark ? 'text-neutral-400 hover:bg-neutral-800 hover:text-white border-neutral-800' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 border-neutral-200'}`}
+              className="jm-btn jm-btn-secondary jm-btn-sm"
             >
-              <Sidebar className="w-3.5 h-3.5" />
-              <span className="hidden xl:inline text-[11px]">Menu Lateral</span>
+              <Sidebar className="w-3.5 h-3.5" strokeWidth={1.75} />
+              <span className="hidden xl:inline text-xs">Menu Lateral</span>
             </button>
 
             {/* Alternador de Tema */}
             <button
               onClick={toggleTheme}
               title={`Tema Atual: ${isDark ? 'Escuro' : 'Claro'}. Clique para alternar.`}
-              className={`p-2 sm:px-2.5 sm:py-1.5 text-xs font-bold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${isDark ? 'text-neutral-300 bg-neutral-800 hover:bg-neutral-700 border-neutral-700' : 'text-neutral-700 bg-neutral-100 hover:bg-neutral-200 border-neutral-300'}`}
+              className="jm-btn jm-btn-secondary jm-btn-sm"
             >
-              {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-neutral-600" />}
-              <span className="hidden xl:inline text-[11px]">{isDark ? 'Escuro' : 'Claro'}</span>
+              {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" strokeWidth={1.75} /> : <Moon className="w-3.5 h-3.5 text-jm-muted" strokeWidth={1.75} />}
+              <span className="hidden xl:inline text-xs">{isDark ? 'Escuro' : 'Claro'}</span>
             </button>
 
             {/* Sair */}
             <button
               onClick={handleLogout}
               title="Sair do Sistema"
-              className="p-2 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-xl border border-rose-200 dark:border-rose-900 transition cursor-pointer"
+              className="jm-icon-btn text-jm-danger-fg hover:bg-jm-danger-bg"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" strokeWidth={1.75} />
             </button>
           </div>
         </header>
 
         {/* ÁREA DE CONTEÚDO PRINCIPAL (Scroll Livre) */}
-        <main className="flex-1 w-full min-h-0">
+        <main className="flex-1 w-full min-h-0 bg-jm-bg">
           {pageContent}
         </main>
         
@@ -256,37 +251,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   /* 2. LAYOUT DE MENU LATERAL (PADRÃO) */
   return (
-    <div className={`min-h-screen w-full flex font-sans ${isDark ? 'dark bg-neutral-950 text-white' : 'bg-neutral-100 text-neutral-900'} transition-colors duration-300`}>
+    <div className={`min-h-screen w-full flex font-sans jm-panel bg-jm-bg text-jm-fg ${isDark ? 'dark' : ''} transition-colors duration-300`}>
       
       {/* SIDEBAR LATERAL FIXA */}
-      <aside className={`w-64 sticky top-0 h-screen border-r flex flex-col justify-between transition-colors duration-300 shrink-0 overflow-y-auto ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-white border-neutral-200'}`}>
+      <aside className="w-[272px] sticky top-0 h-screen border-r border-jm-border bg-jm-surface flex flex-col justify-between transition-colors duration-300 shrink-0 overflow-y-auto">
         <div>
           {/* Logo JM Master Group */}
-          <div className={`p-6 border-b flex justify-center ${isDark ? 'border-neutral-800' : 'border-neutral-200'}`}>
-            <Link href="/painel" className="relative w-40 h-12 block">
+          <div className="px-6 pt-6 pb-5 flex items-center justify-start">
+            <Link href="/painel" className="relative block h-9 w-36">
               <Image 
                 src="/images/logo_jm.png" 
                 alt="JM Master Group"
                 fill
-                className="object-contain"
+                className="object-contain object-left"
                 priority
                 unoptimized
               />
             </Link>
           </div>
 
-          {/* Perfil do Usuário Logado */}
-          <div className={`p-5 text-center border-b ${isDark ? 'border-neutral-800' : 'border-neutral-200'}`}>
-            <div className={`py-3 px-4 rounded-xl border transition-colors duration-300 ${isDark ? 'bg-neutral-950 border-neutral-800 text-neutral-200' : 'bg-neutral-100 border-neutral-200 text-neutral-800'}`}>
-              <p className="text-sm font-semibold tracking-wide">{currentUser?.name || ''}</p>
-              <span className="inline-block mt-1.5 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest bg-orange-600/10 text-[#E85D26] rounded-full border border-orange-500/25">
-                {currentUser?.role || ''}
-              </span>
-            </div>
-          </div>
-
           {/* Itens do Menu */}
-          <nav className="p-4 space-y-1.5">
+          <nav className="px-4 space-y-0.5">
             {menuItems.map((item) => {
               const isActive = pathname === item.path;
               const Icon = item.icon;
@@ -294,15 +279,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Link
                   key={item.path}
                   href={item.path}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
-                    isActive 
-                      ? 'bg-[#E85D26] text-white shadow-lg shadow-orange-950/20' 
-                      : isDark
-                        ? 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
-                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`jm-nav-link ${isActive ? 'jm-nav-link-active' : ''}`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className="w-5 h-5 shrink-0" strokeWidth={1.75} />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -310,51 +290,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
 
-        {/* Botões de Ação na Base (Tema, Layout, Ver Blog & Sair) */}
-        <div className={`p-4 border-t space-y-2 ${isDark ? 'border-neutral-800' : 'border-neutral-200'}`}>
+        {/* Botões de Ação na Base (Tema, Layout, Ver Blog, Sair & Perfil) */}
+        <div className="p-4 border-t border-jm-border space-y-1">
           
           {/* Link Ver Blog Oficial */}
           <Link
             href="/blog"
             target="_blank"
-            className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-[#E85D26] bg-orange-500/10 hover:bg-orange-500/20 rounded-xl border border-orange-500/25 transition-all"
+            className="jm-nav-link"
           >
+            <ExternalLink className="w-5 h-5 shrink-0" strokeWidth={1.75} />
             <span>Ver Blog Oficial</span>
-            <ExternalLink className="w-3.5 h-3.5" />
           </Link>
 
           {/* Alternador de Layout */}
           <button
             onClick={toggleLayout}
-            className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${isDark ? 'text-neutral-400 hover:bg-neutral-800 hover:text-white' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'}`}
+            className="jm-nav-link"
           >
+            <LayoutGrid className="w-5 h-5 shrink-0" strokeWidth={1.75} />
             <span>Menu Superior</span>
-            <LayoutGrid className="w-3.5 h-3.5" />
           </button>
 
           {/* Alternador de Tema */}
           <button
             onClick={toggleTheme}
             title={`Tema Atual: ${isDark ? 'Escuro' : 'Claro'}. Clique para alternar.`}
-            className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${isDark ? 'text-neutral-200 bg-neutral-800/80 hover:bg-neutral-800 border-neutral-700' : 'text-neutral-800 bg-neutral-200/80 hover:bg-neutral-200 border-neutral-300'}`}
+            className="jm-nav-link"
           >
+            {isDark ? <Sun className="w-5 h-5 shrink-0 text-amber-400" strokeWidth={1.75} /> : <Moon className="w-5 h-5 shrink-0" strokeWidth={1.75} />}
             <span>{isDark ? 'Tema: Escuro' : 'Tema: Claro'}</span>
-            {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-neutral-600" />}
           </button>
 
           {/* Sair */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-500 dark:hover:bg-rose-950/20 dark:hover:text-rose-400 rounded-xl transition-all cursor-pointer"
+            className="jm-nav-link text-jm-danger-fg hover:bg-jm-danger-bg hover:text-jm-danger-fg"
           >
+            <LogOut className="w-5 h-5 shrink-0" strokeWidth={1.75} />
             <span>Sair do Sistema</span>
-            <LogOut className="w-3.5 h-3.5" />
           </button>
+
+          {/* Card de Perfil Ancorado no Rodapé */}
+          <div className="mt-3 flex items-center gap-3 rounded-xl border border-jm-border bg-jm-surface p-3 shadow-xs">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-jm-primary-border bg-jm-primary-soft text-sm font-semibold text-jm-primary-text" aria-hidden="true">
+              {(currentUser?.name || '?').trim().charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-jm-fg">{currentUser?.name || ''}</p>
+              <span className="jm-badge jm-badge-accent mt-0.5 !px-1.5 text-[10px] uppercase tracking-wide">{currentUser?.role || ''}</span>
+            </div>
+          </div>
         </div>
       </aside>
 
       {/* ÁREA DE CONTEÚDO PRINCIPAL (Scroll Livre em toda a tela) */}
-      <main className="flex-1 min-w-0 min-h-screen">
+      <main className="flex-1 min-w-0 min-h-screen bg-jm-bg">
         {pageContent}
       </main>
 

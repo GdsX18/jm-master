@@ -345,3 +345,189 @@ html.lenis body {
 .dark .article-figure figcaption {
   color: #94a3b8;
 }
+
+
+/* =====================================================================
+   PAINEL ADMIN: Design tokens (estilo Untitled UI, marca JM Master)
+   Escopo: .jm-panel. Não afeta o site público.
+   ===================================================================== */
+
+/* Escalas de marca (estáticas, iguais nos dois temas) */
+@theme {
+  --color-jm-blue-50:  #EEF3FB;
+  --color-jm-blue-100: #D9E4F5;
+  --color-jm-blue-200: #B3C9EB;
+  --color-jm-blue-300: #7FA3DB;
+  --color-jm-blue-400: #4C7CC8;
+  --color-jm-blue-500: #2B5FAF;
+  --color-jm-blue-600: #174A93;
+  --color-jm-blue-700: #0E3A7A;
+  --color-jm-blue-800: #082B61; /* AZUL OFICIAL */
+  --color-jm-blue-900: #061F46;
+
+  --color-jm-orange-50:  #FFF4ED;
+  --color-jm-orange-100: #FFE6D5;
+  --color-jm-orange-200: #FFD0B0;
+  --color-jm-orange-300: #FDAA78;
+  --color-jm-orange-400: #F5803F;
+  --color-jm-orange-500: #E85D26; /* LARANJA OFICIAL (logo, ícones, gráficos) */
+  --color-jm-orange-600: #CC4310; /* fundo de botão sólido (texto branco passa AA) */
+  --color-jm-orange-700: #A8360C; /* texto laranja sobre fundo claro (passa AA) */
+  --color-jm-orange-800: #8A2D0C;
+}
+
+/* Tokens semânticos: TEMA CLARO */
+.jm-panel {
+  --jm-bg:            #FCFCFD;
+  --jm-surface:       #FFFFFF;
+  --jm-subtle:        #F9FAFB;  /* hover de linha, cabeçalho de tabela */
+  --jm-border:        #E4E7EC;  /* borda padrão 1px */
+  --jm-border-strong: #D0D5DD;  /* inputs, botões secundários */
+  --jm-fg:            #101828;
+  --jm-fg2:           #344054;
+  --jm-muted:         #667085;
+  --jm-placeholder:   #98A2B3;
+
+  --jm-primary:         #0E3A7A;
+  --jm-primary-hover:   #082B61;
+  --jm-primary-fg:      #FFFFFF;
+  --jm-primary-soft:    #EEF3FB;
+  --jm-primary-border:  #B3C9EB;
+  --jm-primary-text:    #082B61;
+
+  --jm-accent:          #CC4310;
+  --jm-accent-hover:    #B33A0C;
+  --jm-accent-soft:     #FFF4ED;
+  --jm-accent-border:   #FFD0B0;
+  --jm-accent-text:     #A8360C;
+
+  --jm-success-bg: #ECFDF3; --jm-success-border: #ABEFC6; --jm-success-fg: #067647;
+  --jm-warning-bg: #FFFAEB; --jm-warning-border: #FEDF89; --jm-warning-fg: #B54708;
+  --jm-danger-bg:  #FEF3F2; --jm-danger-border:  #FECDCA; --jm-danger-fg:  #B42318;
+
+  --jm-ring: rgb(23 74 147 / 0.22);
+}
+
+/* Tokens semânticos: TEMA ESCURO (azul-petróleo, sem preto puro, bordas sutis) */
+.dark .jm-panel,
+.jm-panel.dark {
+  --jm-bg:            #0B0F17;
+  --jm-surface:       #111723;
+  --jm-subtle:        #161D2B;
+  --jm-border:        #232C3B;
+  --jm-border-strong: #2F3A4D;
+  --jm-fg:            #F5F7FA;
+  --jm-fg2:           #CBD2DC;
+  --jm-muted:         #8C97A8;
+  --jm-placeholder:   #667085;
+
+  --jm-primary:         #2B5FAF;
+  --jm-primary-hover:   #3A6DBD;
+  --jm-primary-fg:      #FFFFFF;
+  --jm-primary-soft:    rgb(76 124 200 / 0.16);
+  --jm-primary-border:  rgb(76 124 200 / 0.35);
+  --jm-primary-text:    #A9C4EE;
+
+  --jm-accent:          #CC4310;
+  --jm-accent-hover:    #E85D26;
+  --jm-accent-soft:     rgb(232 93 38 / 0.14);
+  --jm-accent-border:   rgb(232 93 38 / 0.32);
+  --jm-accent-text:     #FF9A66;
+
+  --jm-success-bg: rgb(71 205 137 / 0.12);  --jm-success-border: rgb(71 205 137 / 0.28);  --jm-success-fg: #47CD89;
+  --jm-warning-bg: rgb(253 176 34 / 0.12);  --jm-warning-border: rgb(253 176 34 / 0.28);  --jm-warning-fg: #FDB022;
+  --jm-danger-bg:  rgb(249 112 102 / 0.12); --jm-danger-border:  rgb(249 112 102 / 0.28); --jm-danger-fg:  #F97066;
+
+  --jm-ring: rgb(76 124 200 / 0.40);
+}
+
+/* Expõe os tokens como utilitários Tailwind (bg-jm-surface, text-jm-muted...) */
+@theme inline {
+  --color-jm-bg: var(--jm-bg);
+  --color-jm-surface: var(--jm-surface);
+  --color-jm-subtle: var(--jm-subtle);
+  --color-jm-border: var(--jm-border);
+  --color-jm-border-strong: var(--jm-border-strong);
+  --color-jm-fg: var(--jm-fg);
+  --color-jm-fg2: var(--jm-fg2);
+  --color-jm-muted: var(--jm-muted);
+  --color-jm-placeholder: var(--jm-placeholder);
+
+  --color-jm-primary: var(--jm-primary);
+  --color-jm-primary-hover: var(--jm-primary-hover);
+  --color-jm-primary-fg: var(--jm-primary-fg);
+  --color-jm-primary-soft: var(--jm-primary-soft);
+  --color-jm-primary-border: var(--jm-primary-border);
+  --color-jm-primary-text: var(--jm-primary-text);
+
+  --color-jm-accent: var(--jm-accent);
+  --color-jm-accent-hover: var(--jm-accent-hover);
+  --color-jm-accent-soft: var(--jm-accent-soft);
+  --color-jm-accent-border: var(--jm-accent-border);
+  --color-jm-accent-text: var(--jm-accent-text);
+
+  --color-jm-success-bg: var(--jm-success-bg);
+  --color-jm-success-border: var(--jm-success-border);
+  --color-jm-success-fg: var(--jm-success-fg);
+  --color-jm-warning-bg: var(--jm-warning-bg);
+  --color-jm-warning-border: var(--jm-warning-border);
+  --color-jm-warning-fg: var(--jm-warning-fg);
+  --color-jm-danger-bg: var(--jm-danger-bg);
+  --color-jm-danger-border: var(--jm-danger-border);
+  --color-jm-danger-fg: var(--jm-danger-fg);
+
+  --color-jm-ring: var(--jm-ring);
+}
+
+@layer components {
+  .jm-card        { @apply rounded-xl border border-jm-border bg-jm-surface shadow-xs; }
+  .jm-card-header { @apply flex items-center justify-between gap-3 border-b border-jm-border px-5 py-4 md:px-6; }
+  .jm-card-title  { @apply text-base font-semibold text-jm-fg; }
+
+  /* Botões */
+  .jm-btn { @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold whitespace-nowrap transition-colors duration-150 cursor-pointer outline-none focus-visible:ring-4 focus-visible:ring-jm-ring disabled:cursor-not-allowed disabled:opacity-50; }
+  .jm-btn-sm        { @apply h-9 px-3; }
+  .jm-btn-primary   { @apply bg-jm-primary text-jm-primary-fg shadow-xs hover:bg-jm-primary-hover; }
+  .jm-btn-accent    { @apply bg-jm-accent text-white shadow-xs hover:bg-jm-accent-hover; }
+  .jm-btn-secondary { @apply border border-jm-border-strong bg-jm-surface text-jm-fg2 shadow-xs hover:bg-jm-subtle hover:text-jm-fg; }
+  .jm-btn-ghost     { @apply text-jm-fg2 hover:bg-jm-subtle hover:text-jm-fg; }
+  .jm-btn-danger    { @apply border border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg hover:opacity-90; }
+  .jm-icon-btn      { @apply inline-flex h-9 w-9 items-center justify-center rounded-lg text-jm-muted transition-colors cursor-pointer outline-none hover:bg-jm-subtle hover:text-jm-fg focus-visible:ring-4 focus-visible:ring-jm-ring; }
+
+  /* Navegação */
+  .jm-nav-link        { @apply flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-semibold text-jm-fg2 transition-colors cursor-pointer outline-none hover:bg-jm-subtle hover:text-jm-fg focus-visible:ring-4 focus-visible:ring-jm-ring; }
+  .jm-nav-link-active { @apply bg-jm-primary-soft text-jm-primary-text hover:bg-jm-primary-soft hover:text-jm-primary-text; }
+
+  /* Formulário */
+  .jm-label { @apply mb-1.5 block text-sm font-medium text-jm-fg2; }
+  .jm-input { @apply h-10 w-full rounded-lg border border-jm-border-strong bg-jm-surface px-3.5 text-sm text-jm-fg shadow-xs outline-none transition placeholder:text-jm-placeholder focus:border-jm-primary-border focus:ring-4 focus:ring-jm-ring; }
+  textarea.jm-input { @apply h-auto py-2.5; }
+
+  /* Badges (somente com dado/estado real) */
+  .jm-badge         { @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
+  .jm-badge-neutral { @apply border-jm-border bg-jm-subtle text-jm-fg2; }
+  .jm-badge-primary { @apply border-jm-primary-border bg-jm-primary-soft text-jm-primary-text; }
+  .jm-badge-accent  { @apply border-jm-accent-border bg-jm-accent-soft text-jm-accent-text; }
+  .jm-badge-success { @apply border-jm-success-border bg-jm-success-bg text-jm-success-fg; }
+  .jm-badge-warning { @apply border-jm-warning-border bg-jm-warning-bg text-jm-warning-fg; }
+  .jm-badge-danger  { @apply border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg; }
+
+  /* Caixa de ícone (função: agrupar domínio por cor) */
+  .jm-icon-chip         { @apply grid h-9 w-9 shrink-0 place-items-center rounded-lg border; }
+  .jm-icon-chip-primary { @apply border-jm-primary-border bg-jm-primary-soft text-jm-primary-text; }
+  .jm-icon-chip-accent  { @apply border-jm-accent-border bg-jm-accent-soft text-jm-accent-text; }
+  .jm-icon-chip-neutral { @apply border-jm-border bg-jm-subtle text-jm-fg2; }
+
+  /* Abas sublinhadas (estilo "Overview / Table / List view") */
+  .jm-tabs       { @apply flex gap-5 border-b border-jm-border; }
+  .jm-tab        { @apply -mb-px border-b-2 border-transparent pb-3 text-sm font-semibold text-jm-muted transition-colors cursor-pointer hover:text-jm-fg; }
+  .jm-tab-active { @apply border-jm-primary text-jm-primary-text; }
+
+  /* Tabela */
+  .jm-table-wrap { @apply overflow-hidden rounded-xl border border-jm-border bg-jm-surface shadow-xs; }
+  .jm-table      { @apply w-full border-collapse text-left text-sm; }
+  .jm-th         { @apply h-11 whitespace-nowrap border-b border-jm-border bg-jm-subtle px-4 text-xs font-medium text-jm-muted first:pl-6 last:pr-6; }
+  .jm-td         { @apply border-b border-jm-border px-4 py-4 text-sm text-jm-muted first:pl-6 last:pr-6; }
+  .jm-tr         { @apply transition-colors hover:bg-jm-subtle; }
+  .jm-table tbody tr:last-child td { border-bottom-width: 0; }
+}

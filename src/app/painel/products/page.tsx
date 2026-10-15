@@ -307,51 +307,43 @@ export default function ProductsPage() {
   );
 
   return (
-    <div className="p-6 sm:p-8 md:p-10 space-y-8 bg-neutral-100 text-neutral-900 dark:bg-neutral-950 dark:text-white min-h-screen transition-colors duration-300">
+    <div className="p-6 sm:p-8 space-y-8 bg-jm-bg text-jm-fg min-h-screen transition-colors duration-300">
       
       {/* Cabeçalho da Página */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-jm-border">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Cadastro e Tabela de Produtos</h1>
-          <p className="text-sm text-neutral-500 dark:text-master-textMuted mt-1">
+          <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-jm-fg">Cadastro e Tabela de Produtos</h1>
+          <p className="text-sm text-jm-muted mt-1">
             Defina e gerencie os valores comerciais ou adicione novos produtos ao catálogo.
           </p>
         </div>
       </div>
 
       {/* Controle de Abas */}
-      <div className="flex space-x-2 bg-neutral-200/60 dark:bg-neutral-900/60 p-1.5 rounded-xl w-fit border border-neutral-300/40 dark:border-neutral-800/40">
+      <div className="jm-tabs">
         <button
           onClick={() => { setMainTab('precos'); setMessage(null); }}
-          className={`px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
-            mainTab === 'precos'
-              ? 'bg-white dark:bg-neutral-800 text-master-blue dark:text-white shadow-sm'
-              : 'text-neutral-500 hover:text-neutral-800 dark:text-master-textMuted dark:hover:text-white'
-          }`}
+          className={`jm-tab ${mainTab === 'precos' ? 'jm-tab-active' : ''}`}
         >
-          <span>💲</span> Tabela de Preços
+          Tabela de Preços
         </button>
         <button
           onClick={() => { setMainTab('catalogo'); setMessage(null); }}
-          className={`px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
-            mainTab === 'catalogo'
-              ? 'bg-white dark:bg-neutral-800 text-master-blue dark:text-white shadow-sm'
-              : 'text-neutral-500 hover:text-neutral-800 dark:text-master-textMuted dark:hover:text-white'
-          }`}
+          className={`jm-tab ${mainTab === 'catalogo' ? 'jm-tab-active' : ''}`}
         >
-          <span>📦</span> Catálogo de Produtos
+          Catálogo de Produtos
         </button>
       </div>
 
       {mainTab === 'precos' ? (
         /* ABA 1: TABELA DE PREÇOS (Atual) */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* COLUNA ESQUERDA: LISTA DE GRUPOS CORPORATIVOS */}
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 shadow-xl space-y-6 transition duration-300">
+        <div className="jm-card p-5 md:p-6 shadow-xs space-y-4">
           <div>
-            <h3 className="text-lg font-bold text-neutral-800 dark:text-white">Grupos Corporativos</h3>
-            <p className="text-xs text-neutral-500 dark:text-master-textMuted mt-1">Selecione um grupo para configurar os preços dos produtos.</p>
+            <h3 className="text-base font-semibold text-jm-fg">Grupos Corporativos</h3>
+            <p className="text-xs text-jm-muted mt-1">Selecione um grupo para configurar os preços dos produtos.</p>
           </div>
 
           {/* Campo de pesquisa de grupos */}
@@ -361,16 +353,16 @@ export default function ProductsPage() {
               value={groupSearch}
               onChange={(e) => setGroupSearch(e.target.value)}
               placeholder="Pesquisar grupo corporativo..."
-              className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange dark:bg-neutral-950 dark:border-neutral-800 dark:text-white transition"
+              className="jm-input text-xs"
             />
           </div>
 
           {/* Lista de Grupos */}
-          <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
+          <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
             {loadingList ? (
-              <div className="text-center py-8 text-neutral-500 text-sm font-bold animate-pulse">Carregando grupos corporativos...</div>
+              <div className="text-center py-8 text-jm-muted text-sm font-medium animate-pulse">Carregando grupos corporativos...</div>
             ) : filteredGroups.length === 0 ? (
-              <div className="text-center py-8 text-neutral-400 text-xs italic">Nenhum grupo corporativo cadastrado.</div>
+              <div className="text-center py-8 text-jm-muted text-xs italic">Nenhum grupo corporativo cadastrado.</div>
             ) : (
               filteredGroups.map((group) => {
                 const isSelected = selectedGroup?.id === group.id;
@@ -378,25 +370,25 @@ export default function ProductsPage() {
                   <button
                     key={group.id}
                     onClick={() => handleSelectGroup(group)}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${
+                    className={`w-full flex items-center justify-between p-3 rounded-lg border text-left transition-colors cursor-pointer ${
                       isSelected
-                        ? 'bg-master-orange border-master-orange text-white shadow-lg shadow-orange-950/20 scale-[1.01]'
-                        : 'bg-neutral-50 hover:bg-neutral-100 border-neutral-200 text-neutral-900 dark:bg-neutral-950/50 dark:hover:bg-neutral-800/40 dark:border-neutral-800 dark:text-white'
+                        ? 'bg-jm-primary-soft border-jm-primary-border text-jm-primary-text'
+                        : 'bg-jm-surface hover:bg-jm-subtle border-jm-border text-jm-fg'
                     }`}
                   >
                     <div>
-                      <span className="block font-bold text-sm">{group.name}</span>
-                      <span className={`inline-block mt-1 px-2 py-0.5 text-[9px] font-extrabold uppercase rounded-full ${
+                      <span className="block font-semibold text-sm">{group.name}</span>
+                      <span className={`inline-block mt-1 px-2 py-0.5 text-[9px] font-medium rounded ${
                         isSelected 
-                          ? 'bg-orange-800/40 text-white border border-orange-500/25' 
+                          ? 'bg-jm-primary text-jm-primary-fg' 
                           : group.isActive 
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-500/10'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-450 border border-rose-500/10'
+                            ? 'jm-badge-success'
+                            : 'jm-badge-danger'
                       }`}>
                         {group.isActive ? 'Ativo' : 'Inativo'}
                       </span>
                     </div>
-                    <span className="text-lg">{isSelected ? '➡️' : '🏢'}</span>
+                    <span className="text-sm text-jm-muted">{isSelected ? '→' : '🏢'}</span>
                   </button>
                 );
               })
@@ -407,19 +399,19 @@ export default function ProductsPage() {
         {/* COLUNA DIREITA: FORMULÁRIO DE PREÇOS */}
         <div className="lg:col-span-2">
           {selectedGroup ? (
-            <form onSubmit={handleSavePrices} className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl transition-colors duration-300">
+            <form onSubmit={handleSavePrices} className="jm-card p-5 md:p-6 space-y-6 shadow-xs">
               
               {/* Cabeçalho do Formulário */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-neutral-200 dark:border-neutral-800 pb-4 gap-4 transition-colors">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-jm-border pb-4 gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-master-blue dark:text-white flex items-center gap-2">
-                    Tabela Comercial: <span className="text-master-orange">{selectedGroup.name}</span>
+                  <h2 className="text-base font-semibold text-jm-fg flex items-center gap-2">
+                    Tabela Comercial: <span className="text-jm-primary-text font-bold">{selectedGroup.name}</span>
                   </h2>
-                  <p className="text-xs text-neutral-500 dark:text-master-textMuted mt-1">
-                    Os itens com <span className="text-master-orange font-bold">*</span> são de preenchimento obrigatório pelo administrador.
+                  <p className="text-xs text-jm-muted mt-1">
+                    Os itens com <span className="text-jm-accent-text font-bold">*</span> são de preenchimento obrigatório pelo administrador.
                   </p>
                 </div>
-                <div className="bg-orange-600/10 text-master-orange border border-orange-500/20 px-3 py-1 rounded-lg text-xs font-bold font-mono">
+                <div className="jm-badge jm-badge-neutral font-mono text-xs">
                   Grupo ID: {selectedGroup.id.substring(0, 8)}...
                 </div>
               </div>
@@ -428,8 +420,8 @@ export default function ProductsPage() {
               {message && (
                 <div className={`p-4 rounded-xl text-sm font-semibold border ${
                   message.type === 'success'
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900'
-                    : 'bg-rose-50 text-rose-800 border-rose-250 dark:bg-rose-950/20 dark:text-rose-450 dark:border-rose-900'
+                    ? 'border-jm-success-border bg-jm-success-bg text-jm-success-fg'
+                    : 'border-jm-danger-border bg-jm-danger-bg text-jm-danger-fg'
                 }`}>
                   {message.text}
                 </div>
@@ -437,22 +429,22 @@ export default function ProductsPage() {
 
               {/* Listagem de Produtos com inputs de valores */}
               {loadingPrices ? (
-                <div className="p-16 text-center font-bold text-neutral-500 animate-pulse">Buscando tabela de valores...</div>
+                <div className="p-16 text-center font-medium text-sm text-jm-muted animate-pulse">Buscando tabela de valores...</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-h-[480px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[480px] overflow-y-auto pr-1">
                   {products.map((product) => {
                     const priceValue = productPrices[product.id] ?? 0;
                     return (
                       <div
                         key={product.id}
-                        className="p-4 bg-neutral-50 border border-neutral-200 dark:bg-neutral-950 dark:border-neutral-800 rounded-xl flex items-center justify-between hover:border-neutral-300 dark:hover:border-neutral-700 transition"
+                        className="p-3.5 rounded-lg border border-jm-border bg-jm-surface hover:border-jm-border-strong flex items-center justify-between transition-colors"
                       >
-                        <div className="space-y-1 pr-2">
-                          <span className="text-sm font-bold text-neutral-800 dark:text-white flex items-center">
+                        <div className="space-y-0.5 pr-2">
+                          <span className="text-sm font-semibold text-jm-fg flex items-center">
                             {product.name}
-                            {product.isRequired && <span className="text-master-orange ml-1 font-bold">*</span>}
+                            {product.isRequired && <span className="text-jm-accent-text ml-1 font-bold">*</span>}
                           </span>
-                          <span className="text-xxs text-neutral-400 dark:text-neutral-500 block uppercase tracking-wide">
+                          <span className="text-[10px] text-jm-muted block uppercase tracking-wide">
                             {product.isRequired ? 'Obrigatório' : 'Opcional'}
                           </span>
                         </div>
@@ -461,7 +453,7 @@ export default function ProductsPage() {
                             type="text"
                             value={formatBRL(priceValue)}
                             onChange={(e) => handlePriceChangeRaw(product.id, e.target.value)}
-                            className="w-36 px-3 py-2.5 bg-white border border-neutral-200 rounded-lg text-neutral-900 text-right font-mono text-sm focus:outline-none focus:ring-2 focus:ring-master-orange dark:bg-neutral-900 dark:border-neutral-800 dark:text-white transition"
+                            className="w-32 jm-input text-right font-mono text-xs !h-9"
                           />
                         </div>
                       </div>
@@ -471,11 +463,11 @@ export default function ProductsPage() {
               )}
 
               {/* Botões de Ação */}
-              <div className="flex justify-end border-t border-neutral-200 dark:border-neutral-800 pt-6 transition-colors">
+              <div className="flex justify-end border-t border-jm-border pt-4">
                 <button
                   type="submit"
                   disabled={loadingPrices || loadingSave}
-                  className="px-8 py-3.5 bg-master-orange hover:bg-orange-600 disabled:bg-orange-850 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl transition shadow-lg shadow-orange-950/20"
+                  className="jm-btn jm-btn-primary"
                 >
                   {loadingSave ? 'Salvando Valores...' : 'Salvar Tabela de Preços'}
                 </button>
@@ -483,10 +475,10 @@ export default function ProductsPage() {
 
             </form>
           ) : (
-            <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-16 shadow-xl flex flex-col items-center justify-center text-center h-full min-h-[400px] transition duration-300">
-              <span className="text-5xl mb-4">🏢</span>
-              <h3 className="text-lg font-bold text-neutral-800 dark:text-white">Nenhum Grupo Selecionado</h3>
-              <p className="text-sm text-neutral-500 dark:text-master-textMuted mt-1 max-w-sm">
+            <div className="jm-card p-12 flex flex-col items-center justify-center text-center h-full min-h-[360px]">
+              <span className="text-4xl mb-3">🏢</span>
+              <h3 className="text-base font-semibold text-jm-fg">Nenhum Grupo Selecionado</h3>
+              <p className="text-xs text-jm-muted mt-1 max-w-sm">
                 Selecione um grupo corporativo na lista à esquerda para carregar e configurar os preços dos produtos contratados.
               </p>
             </div>
@@ -507,23 +499,23 @@ export default function ProductsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* COLUNA ESQUERDA: CADASTRAR NOVO PRODUTO */}
             <div className="lg:col-span-1">
-              <form onSubmit={handleCreateProduct} className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-6 shadow-xl space-y-6 transition duration-300">
+              <form onSubmit={handleCreateProduct} className="jm-card p-5 md:p-6 space-y-5 shadow-xs">
                 <div>
-                  <h3 className="text-lg font-bold text-neutral-800 dark:text-white">Cadastrar Novo Produto</h3>
-                  <p className="text-xs text-neutral-500 dark:text-master-textMuted mt-1">Adicione novos serviços ou produtos ao catálogo comercial do CRM.</p>
+                  <h3 className="text-base font-semibold text-jm-fg">Cadastrar Novo Produto</h3>
+                  <p className="text-xs text-jm-muted mt-1">Adicione novos serviços ou produtos ao catálogo comercial do CRM.</p>
                 </div>
                 
                 <div className="space-y-1">
-                  <label className="text-xs uppercase font-bold text-neutral-600 dark:text-master-textLight">Nome do Produto *</label>
+                  <label className="jm-label text-xs">Nome do Produto *</label>
                   <input
                     type="text"
                     value={newProductName}
                     onChange={(e) => setNewProductName(e.target.value)}
                     placeholder="Ex: Assinatura Mensal"
-                    className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-lg text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange focus:border-transparent dark:bg-neutral-950 dark:border-neutral-800 dark:text-white transition"
+                    className="jm-input text-sm"
                     required
                   />
                 </div>
@@ -534,20 +526,20 @@ export default function ProductsPage() {
                     id="isRequired"
                     checked={newProductIsRequired}
                     onChange={(e) => setNewProductIsRequired(e.target.checked)}
-                    className="w-4 h-4 text-master-orange rounded border-neutral-300 focus:ring-master-orange dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-950"
+                    className="w-4 h-4 rounded border-jm-border-strong text-jm-primary focus:ring-jm-ring cursor-pointer"
                   />
-                  <label htmlFor="isRequired" className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 cursor-pointer">
+                  <label htmlFor="isRequired" className="text-sm font-medium text-jm-fg cursor-pointer">
                     Produto Obrigatório?
                   </label>
                 </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                <p className="text-xs text-jm-muted">
                   Produtos obrigatórios exigem que o administrador informe um preço (mesmo que R$ 0,00) ao salvar a tabela de um grupo.
                 </p>
 
                 <button
                   type="submit"
                   disabled={creatingProduct || !newProductName.trim()}
-                  className="w-full px-4 py-3 bg-master-orange hover:bg-orange-600 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-lg shadow-orange-950/20"
+                  className="jm-btn jm-btn-primary w-full"
                 >
                   {creatingProduct ? 'Cadastrando...' : '+ Cadastrar Produto'}
                 </button>
@@ -556,55 +548,55 @@ export default function ProductsPage() {
 
             {/* COLUNA DIREITA: LISTA DE PRODUTOS */}
             <div className="lg:col-span-2">
-              <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-xl overflow-hidden transition duration-300">
-                <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <h3 className="text-lg font-bold text-neutral-800 dark:text-white">Produtos Cadastrados ({products.length})</h3>
+              <div className="jm-table-wrap">
+                <div className="p-4 sm:p-5 border-b border-jm-border flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <h3 className="text-base font-semibold text-jm-fg">Produtos Cadastrados ({products.length})</h3>
                   <input
                     type="text"
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     placeholder="Buscar produto..."
-                    className="w-full max-w-xs px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange dark:bg-neutral-950 dark:border-neutral-800 dark:text-white transition"
+                    className="jm-input max-w-xs text-xs !h-9"
                   />
                 </div>
                 
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-                  <table className="w-full text-left text-sm font-semibold">
+                  <table className="jm-table">
                     <thead>
-                      <tr className="bg-neutral-50 dark:bg-neutral-950 text-neutral-500 dark:text-neutral-400 uppercase tracking-wider text-xs border-b border-neutral-200 dark:border-neutral-800">
-                        <th className="py-3 px-6">Produto</th>
-                        <th className="py-3 px-6">Tipo</th>
-                        <th className="py-3 px-6 text-center">Ações</th>
+                      <tr>
+                        <th className="jm-th">Produto</th>
+                        <th className="jm-th">Tipo</th>
+                        <th className="jm-th text-center">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-100 dark:divide-neutral-850">
+                    <tbody className="divide-y divide-jm-border">
                       {products
                         .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
                         .map((product) => (
-                          <tr key={product.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/40 transition">
-                            <td className="py-4 px-6 font-bold text-neutral-800 dark:text-white">
+                          <tr key={product.id} className="jm-tr">
+                            <td className="jm-td font-medium text-jm-fg">
                               {product.name}
                             </td>
-                            <td className="py-4 px-6">
-                              <span className={`inline-block px-2 py-1 text-[10px] font-extrabold uppercase rounded-full ${
+                            <td className="jm-td">
+                              <span className={`jm-badge ${
                                 product.isRequired
-                                  ? 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-450 dark:border-rose-900'
-                                  : 'bg-neutral-100 text-neutral-600 border border-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:border-neutral-700'
+                                  ? 'jm-badge-accent'
+                                  : 'jm-badge-neutral'
                               }`}>
                                 {product.isRequired ? 'Obrigatório' : 'Opcional'}
                               </span>
                             </td>
-                            <td className="py-4 px-6 text-center space-x-2">
+                            <td className="jm-td text-center space-x-2">
                               <button
                                 onClick={() => handleOpenEdit(product)}
-                                className="px-3 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-bold rounded-lg border border-sky-200 dark:bg-sky-950/30 dark:text-sky-450 dark:hover:bg-sky-950/50 dark:border-sky-900 transition"
+                                className="jm-btn jm-btn-secondary jm-btn-sm"
                               >
                                 Editar
                               </button>
                               <button
                                 onClick={() => handleDeleteProduct(product)}
                                 disabled={deletingProductId === product.id}
-                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg border border-rose-200 dark:bg-rose-950/30 dark:text-rose-450 dark:hover:bg-rose-950/50 dark:border-rose-900 transition disabled:opacity-50"
+                                className="jm-btn jm-btn-danger jm-btn-sm disabled:opacity-50"
                               >
                                 {deletingProductId === product.id ? 'Excluindo...' : 'Excluir'}
                               </button>
@@ -614,7 +606,7 @@ export default function ProductsPage() {
                       }
                       {products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
                         <tr>
-                          <td colSpan={3} className="py-8 text-center text-neutral-500 font-medium">Nenhum produto encontrado.</td>
+                          <td colSpan={3} className="py-8 text-center text-sm text-jm-muted font-medium">Nenhum produto encontrado.</td>
                         </tr>
                       )}
                     </tbody>
@@ -628,28 +620,28 @@ export default function ProductsPage() {
 
       {/* MODAL DE EDIÇÃO DE PRODUTO */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
-          <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-neutral-200 dark:border-neutral-800 animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-opacity">
+          <div className="jm-card shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-jm-border flex justify-between items-center">
               <div>
-                <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Editar Produto</h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Altere o nome ou o tipo do produto.</p>
+                <h3 className="text-base font-semibold text-jm-fg">Editar Produto</h3>
+                <p className="text-xs text-jm-muted mt-0.5">Altere o nome ou o tipo do produto.</p>
               </div>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition"
+                className="jm-icon-btn !h-8 !w-8"
               >
                 ✕
               </button>
             </div>
-            <form onSubmit={handleUpdateProduct} className="p-6 space-y-5">
+            <form onSubmit={handleUpdateProduct} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-xs uppercase font-bold text-neutral-600 dark:text-master-textLight">Nome do Produto *</label>
+                <label className="jm-label text-xs">Nome do Produto *</label>
                 <input
                   type="text"
                   value={editProductName}
                   onChange={(e) => setEditProductName(e.target.value)}
-                  className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-lg text-neutral-900 focus:outline-none focus:ring-2 focus:ring-master-orange focus:border-transparent dark:bg-neutral-950 dark:border-neutral-800 dark:text-white transition"
+                  className="jm-input text-sm"
                   required
                 />
               </div>
@@ -660,25 +652,25 @@ export default function ProductsPage() {
                   id="editIsRequired"
                   checked={editProductIsRequired}
                   onChange={(e) => setEditProductIsRequired(e.target.checked)}
-                  className="w-4 h-4 text-master-orange rounded border-neutral-300 focus:ring-master-orange dark:border-neutral-700 dark:bg-neutral-900 dark:ring-offset-neutral-950"
+                  className="w-4 h-4 rounded border-jm-border-strong text-jm-primary focus:ring-jm-ring cursor-pointer"
                 />
-                <label htmlFor="editIsRequired" className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 cursor-pointer">
+                <label htmlFor="editIsRequired" className="text-sm font-medium text-jm-fg cursor-pointer">
                   Produto Obrigatório?
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
+              <div className="flex gap-3 pt-4 border-t border-jm-border justify-end">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="flex-1 px-4 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-white font-bold rounded-xl transition"
+                  className="jm-btn jm-btn-secondary jm-btn-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={savingEdit || !editProductName.trim()}
-                  className="flex-1 px-4 py-3 bg-master-orange hover:bg-orange-600 disabled:opacity-50 text-white font-bold rounded-xl transition shadow-lg shadow-orange-950/20"
+                  className="jm-btn jm-btn-primary jm-btn-sm"
                 >
                   {savingEdit ? 'Salvando...' : 'Salvar Alterações'}
                 </button>

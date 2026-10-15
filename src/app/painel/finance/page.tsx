@@ -373,177 +373,173 @@ export default function FinancePage() {
   });
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 space-y-6 bg-neutral-100 text-neutral-900 dark:bg-neutral-950 dark:text-white min-h-screen transition-colors duration-300">
+    <div className="p-4 sm:p-6 md:p-8 space-y-8 bg-jm-bg text-jm-fg min-h-screen transition-colors duration-300">
       
       {/* HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-jm-border">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2.5">
-            <DollarSign className="w-7 h-7 text-[#E85D26]" />
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-jm-fg flex items-center gap-2.5">
+            <DollarSign className="w-6 h-6 text-jm-primary-text" strokeWidth={1.75} />
             <span>Gestão Financeira & Faturamento</span>
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          <p className="text-sm text-jm-muted mt-1">
             Emissão e acompanhamento de faturas, recebimentos e inadimplência por cliente.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={generateNow}
             disabled={generating}
             title="Gera agora as faturas recorrentes do mês (também roda automaticamente todo dia)"
-            className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+            className="jm-btn jm-btn-secondary jm-btn-sm"
           >
-            <Zap className={`w-4 h-4 text-[#E85D26] ${generating ? 'animate-pulse' : ''}`} />
-            <span>{generating ? 'GERANDO...' : 'GERAR FATURAS DO MÊS'}</span>
+            <Zap className={`w-3.5 h-3.5 text-jm-primary-text ${generating ? 'animate-pulse' : ''}`} />
+            <span>{generating ? 'Gerando...' : 'Gerar Faturas'}</span>
           </button>
           <button
             type="button"
             onClick={exportCsv}
             disabled={filteredRecords.length === 0}
-            className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] font-bold text-xs sm:text-sm px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+            className="jm-btn jm-btn-secondary jm-btn-sm"
           >
-            <Download className="w-4 h-4" />
-            <span>EXPORTAR CSV</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>Exportar CSV</span>
           </button>
           <button
             type="button"
             onClick={handleOpenModal}
-            className="bg-[#E85D26] hover:bg-orange-600 active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 cursor-pointer"
+            className="jm-btn jm-btn-primary jm-btn-sm"
           >
-            <Plus className="w-4 h-4" />
-            <span>NOVA FATURA</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nova Fatura</span>
           </button>
         </div>
       </div>
 
       {loadError && (
-        <div className="flex items-center gap-2 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-bold">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div role="alert" className="flex items-start gap-3 rounded-xl border border-jm-danger-border bg-jm-danger-bg p-4 text-sm font-medium text-jm-danger-fg">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{loadError}</span>
         </div>
       )}
 
       {notice && (
-        <div className="flex items-center justify-between gap-2 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+        <div className="flex items-center justify-between gap-2 p-4 rounded-xl border border-jm-success-border bg-jm-success-bg text-jm-success-fg text-sm font-medium">
           <span>{notice}</span>
-          <button type="button" onClick={() => setNotice('')} className="cursor-pointer"><X className="w-4 h-4" /></button>
+          <button type="button" onClick={() => setNotice('')} className="cursor-pointer text-jm-success-fg hover:opacity-75"><X className="w-4 h-4" /></button>
         </div>
       )}
 
       {/* CARDS DE RESUMO FINANCEIRO (MÉTRICAS REAIS) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-5 relative overflow-hidden shadow-xs">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-          <p className="text-[11px] uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Receita Recebida</p>
-          <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-emerald-600 dark:text-emerald-400">
+        <div className="jm-card p-5 md:p-6 shadow-xs">
+          <p className="text-sm font-medium text-jm-muted">Receita Recebida</p>
+          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-success-fg mt-2">
             {formatCurrency(metrics.receitaRecebida)}
-          </h3>
-          <span className="text-[10px] text-emerald-500 font-semibold mt-1 block">Faturas liquidadas</span>
+          </p>
+          <span className="text-xs text-jm-muted font-medium mt-1 block">Faturas liquidadas</span>
         </div>
 
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-5 relative overflow-hidden shadow-xs">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-sky-500" />
-          <p className="text-[11px] uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">A Receber (No Prazo)</p>
-          <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-sky-600 dark:text-sky-400">
+        <div className="jm-card p-5 md:p-6 shadow-xs">
+          <p className="text-sm font-medium text-jm-muted">A Receber (No Prazo)</p>
+          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-primary-text mt-2">
             {formatCurrency(metrics.aReceber)}
-          </h3>
-          <span className="text-[10px] text-neutral-400 font-semibold mt-1 block">{metrics.openCount} fatura(s) no prazo</span>
+          </p>
+          <span className="text-xs text-jm-muted font-medium mt-1 block">{metrics.openCount} fatura(s) no prazo</span>
         </div>
 
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-5 relative overflow-hidden shadow-xs">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500" />
-          <p className="text-[11px] uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Inadimplência</p>
-          <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-rose-600 dark:text-rose-400">
+        <div className="jm-card p-5 md:p-6 shadow-xs">
+          <p className="text-sm font-medium text-jm-muted">Inadimplência</p>
+          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-danger-fg mt-2">
             {formatCurrency(metrics.inadimplencia)}
-          </h3>
-          <span className="text-[10px] text-rose-500 font-semibold mt-1 block">{metrics.overdueCount} fatura(s) vencida(s)</span>
+          </p>
+          <span className="text-xs text-jm-muted font-medium mt-1 block">{metrics.overdueCount} fatura(s) vencida(s)</span>
         </div>
 
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl p-5 relative overflow-hidden shadow-xs">
-          <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E85D26]" />
-          <p className="text-[11px] uppercase font-extrabold tracking-wider text-neutral-500 dark:text-neutral-400">Total Faturado</p>
-          <h3 className="text-2xl sm:text-3xl font-extrabold mt-1 text-[#E85D26]">
+        <div className="jm-card p-5 md:p-6 shadow-xs">
+          <p className="text-sm font-medium text-jm-muted">Total Faturado</p>
+          <p className="text-3xl font-semibold tracking-tight tabular-nums text-jm-fg mt-2">
             {formatCurrency(metrics.totalFaturado)}
-          </h3>
-          <span className="text-[10px] text-orange-500 font-semibold mt-1 block">{metrics.totalCount - metrics.canceledCount} cobrança(s) válida(s)</span>
+          </p>
+          <span className="text-xs text-jm-muted font-medium mt-1 block">{metrics.totalCount - metrics.canceledCount} cobrança(s) válida(s)</span>
         </div>
 
       </div>
 
       {/* ABAS */}
-      <div className="flex items-center gap-2">
+      <div className="jm-tabs">
         <button
           type="button"
           onClick={() => setTab('faturas')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${tab === 'faturas' ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-500'}`}
+          className={`jm-tab flex items-center gap-1.5 ${tab === 'faturas' ? 'jm-tab-active' : ''}`}
         >
-          <Receipt className="w-3.5 h-3.5" />
+          <Receipt className="w-4 h-4" />
           Faturas
         </button>
         <button
           type="button"
           onClick={() => setTab('recorrentes')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${tab === 'recorrentes' ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-500'}`}
+          className={`jm-tab flex items-center gap-1.5 ${tab === 'recorrentes' ? 'jm-tab-active' : ''}`}
         >
-          <Repeat className="w-3.5 h-3.5" />
+          <Repeat className="w-4 h-4" />
           Cobrança Recorrente ({recurring.filter((c) => c.billing.enabled).length})
         </button>
       </div>
 
       {tab === 'recorrentes' && (
-        <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden">
-          <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+        <div className="jm-table-wrap">
+          <div className="p-4 sm:p-5 border-b border-jm-border bg-jm-subtle text-xs text-jm-muted leading-relaxed">
             Configure a mensalidade de cada cliente. Todo dia o sistema gera automaticamente a fatura do mês de quem tem a cobrança ativa
             (uma por cliente por mês, sem duplicar), marca como atrasada após o vencimento e registra no CRM.
           </div>
           {recurringLoading ? (
-            <div className="py-12 text-center text-xs text-neutral-400 font-semibold animate-pulse">Carregando clientes...</div>
+            <div className="py-12 text-center text-xs text-jm-muted font-medium animate-pulse">Carregando clientes...</div>
           ) : recurring.length === 0 ? (
-            <div className="py-12 text-center text-xs text-neutral-500">Nenhum cliente cadastrado. Cadastre clientes em “Cadastro de Clientes”.</div>
+            <div className="py-12 text-center text-xs text-jm-muted">Nenhum cliente cadastrado. Cadastre clientes em “Cadastro de Clientes”.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="jm-table">
                 <thead>
-                  <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/60 text-[11px] font-extrabold uppercase text-neutral-500 dark:text-neutral-400">
-                    <th className="p-4">Cliente</th>
-                    <th className="p-4">Mensalidade</th>
-                    <th className="p-4">Vencimento</th>
-                    <th className="p-4">Método</th>
-                    <th className="p-4">Cobrança Automática</th>
-                    <th className="p-4 text-right">Ações</th>
+                  <tr>
+                    <th className="jm-th">Cliente</th>
+                    <th className="jm-th">Mensalidade</th>
+                    <th className="jm-th">Vencimento</th>
+                    <th className="jm-th">Método</th>
+                    <th className="jm-th">Cobrança Automática</th>
+                    <th className="jm-th text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs">
+                <tbody className="divide-y divide-jm-border">
                   {recurring.map((c) => (
-                    <tr key={c.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/50 transition">
-                      <td className="p-4 font-bold text-neutral-900 dark:text-white">
+                    <tr key={c.id} className="jm-tr">
+                      <td className="jm-td font-semibold text-jm-fg">
                         {c.name}
-                        {!c.isActive && <span className="ml-2 text-[10px] font-bold text-neutral-400">(inativo)</span>}
-                        {c.groupName && <span className="block text-[10px] font-normal text-neutral-500">Grupo: {c.groupName}</span>}
+                        {!c.isActive && <span className="ml-2 text-[10px] text-jm-muted font-normal">(inativo)</span>}
+                        {c.groupName && <span className="block text-xs font-normal text-jm-muted">Grupo: {c.groupName}</span>}
                       </td>
-                      <td className="p-4 font-extrabold">{c.billing.amount > 0 ? formatCurrency(c.billing.amount) : '-'}</td>
-                      <td className="p-4 text-neutral-500">Todo dia {c.billing.dueDay}</td>
-                      <td className="p-4 text-neutral-600 dark:text-neutral-300">{c.billing.method}</td>
-                      <td className="p-4">
+                      <td className="jm-td font-semibold text-jm-fg">{c.billing.amount > 0 ? formatCurrency(c.billing.amount) : '-'}</td>
+                      <td className="jm-td text-jm-muted">Todo dia {c.billing.dueDay}</td>
+                      <td className="jm-td text-jm-fg2">{c.billing.method}</td>
+                      <td className="jm-td">
                         {c.billing.enabled && c.isActive ? (
-                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">ATIVA</span>
+                          <span className="jm-badge jm-badge-success">Ativa</span>
                         ) : c.billing.enabled ? (
-                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">PAUSADA (cliente inativo)</span>
+                          <span className="jm-badge jm-badge-warning">Pausada (cliente inativo)</span>
                         ) : (
-                          <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-neutral-500/10 text-neutral-500 border border-neutral-500/20">DESLIGADA</span>
+                          <span className="jm-badge jm-badge-neutral">Desligada</span>
                         )}
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="jm-td text-right">
                         <button
                           type="button"
                           onClick={() => {
                             setBillingError('');
                             setBillingEdit(c);
                           }}
-                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg border border-neutral-200 dark:border-neutral-800 hover:border-[#E85D26] hover:text-[#E85D26] transition cursor-pointer"
+                          className="jm-btn jm-btn-secondary jm-btn-sm"
                         >
                           Configurar
                         </button>
@@ -559,29 +555,29 @@ export default function FinancePage() {
 
       {/* TABELA DE FATURAS RECENTES */}
       {tab === 'faturas' && (
-      <div className="bg-white border border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden">
+      <div className="jm-card overflow-hidden">
         
         {/* FILTROS DA TABELA */}
-        <div className="p-4 sm:p-5 border-b border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-neutral-50/50 dark:bg-neutral-950/40">
+        <div className="p-4 sm:p-5 border-b border-jm-border flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-neutral-50/50 dark:bg-neutral-900/40">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-2.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-jm-muted absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por cliente, ID ou descrição..."
-              className="w-full pl-9 pr-4 py-1.5 text-xs bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-[#E85D26]"
+              className="jm-input pl-9 text-xs"
             />
           </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
             <button
               type="button"
               onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 statusFilter === 'all'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
-                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-jm-blue-900 text-white dark:bg-white dark:text-neutral-900 shadow-xs'
+                  : 'text-jm-muted hover:text-jm-text hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               Todas ({records.length})
@@ -589,10 +585,10 @@ export default function FinancePage() {
             <button
               type="button"
               onClick={() => setStatusFilter('PAGO')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 statusFilter === 'PAGO'
-                  ? 'bg-emerald-600 text-white'
-                  : 'text-neutral-500 hover:text-emerald-600'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-jm-muted hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
               }`}
             >
               Pagas
@@ -600,10 +596,10 @@ export default function FinancePage() {
             <button
               type="button"
               onClick={() => setStatusFilter('ABERTO')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 statusFilter === 'ABERTO'
-                  ? 'bg-sky-600 text-white'
-                  : 'text-neutral-500 hover:text-sky-600'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'text-jm-muted hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/30'
               }`}
             >
               Em Aberto
@@ -611,10 +607,10 @@ export default function FinancePage() {
             <button
               type="button"
               onClick={() => setStatusFilter('ATRASADO')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 statusFilter === 'ATRASADO'
-                  ? 'bg-rose-600 text-white'
-                  : 'text-neutral-500 hover:text-rose-600'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'text-jm-muted hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30'
               }`}
             >
               Atrasadas
@@ -622,10 +618,10 @@ export default function FinancePage() {
             <button
               type="button"
               onClick={() => setStatusFilter('CANCELADO')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 statusFilter === 'CANCELADO'
-                  ? 'bg-neutral-600 text-white'
-                  : 'text-neutral-500 hover:text-neutral-700'
+                  ? 'bg-neutral-700 text-white shadow-xs'
+                  : 'text-jm-muted hover:text-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
               Canceladas
@@ -634,83 +630,83 @@ export default function FinancePage() {
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-xs text-neutral-400 font-semibold animate-pulse">
+          <div className="py-12 text-center text-xs text-jm-muted font-medium animate-pulse">
             Carregando registros financeiros do banco...
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <div className="w-14 h-14 mx-auto rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-[#E85D26]">
-              <Receipt className="w-7 h-7" />
+            <div className="w-12 h-12 mx-auto rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 flex items-center justify-center text-jm-orange">
+              <Receipt className="w-6 h-6" />
             </div>
             {records.length > 0 ? (
               <>
-                <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-200">Nenhuma fatura encontrada</h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
+                <h3 className="text-sm font-semibold text-jm-text">Nenhuma fatura encontrada</h3>
+                <p className="text-xs text-jm-muted max-w-sm mx-auto">
                   Nenhum resultado para a busca ou o filtro selecionado.
                 </p>
               </>
             ) : (
               <>
-                <h3 className="text-base font-extrabold text-neutral-800 dark:text-neutral-200">Nenhuma fatura cadastrada</h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
+                <h3 className="text-sm font-semibold text-jm-text">Nenhuma fatura cadastrada</h3>
+                <p className="text-xs text-jm-muted max-w-sm mx-auto">
                   Utilize o botão acima para emitir a primeira fatura ou cobrança do sistema.
                 </p>
                 <button
                   type="button"
                   onClick={handleOpenModal}
-                  className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
+                  className="mt-2 jm-btn jm-btn-primary"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>Emitir Primeira Fatura</span>
                 </button>
               </>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="jm-table-wrap border-0 rounded-none">
+            <table className="jm-table">
               <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/60 text-[11px] font-extrabold uppercase text-neutral-500 dark:text-neutral-400">
-                  <th className="p-4">Identificador</th>
-                  <th className="p-4">Cliente / Razão Social</th>
-                  <th className="p-4">Valor</th>
-                  <th className="p-4">Vencimento</th>
-                  <th className="p-4">Método</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-right">Ações</th>
+                <tr className="jm-tr">
+                  <th className="jm-th">Identificador</th>
+                  <th className="jm-th">Cliente / Razão Social</th>
+                  <th className="jm-th">Valor</th>
+                  <th className="jm-th">Vencimento</th>
+                  <th className="jm-th">Método</th>
+                  <th className="jm-th">Status</th>
+                  <th className="jm-th text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs">
+              <tbody className="divide-y divide-jm-border text-xs">
                 {filteredRecords.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-850/50 transition group">
-                    <td className="p-4 font-mono font-bold text-[#E85D26]">
+                  <tr key={inv.id} className="jm-tr group">
+                    <td className="jm-td font-mono font-bold text-jm-orange">
                       {inv.invoiceNumber}
                       {inv.recurring && (
                         <span className="ml-1.5 inline-flex align-middle" title="Gerada automaticamente (cobrança recorrente)">
-                          <Repeat className="w-3 h-3 text-neutral-400" />
+                          <Repeat className="w-3 h-3 text-jm-muted" />
                         </span>
                       )}
                     </td>
-                    <td className="p-4 font-bold text-neutral-900 dark:text-white">
-                      <span className="block">{inv.customerName}</span>
-                      <span className="block text-[10px] font-normal text-neutral-500">{inv.description}</span>
+                    <td className="jm-td">
+                      <span className="block font-semibold text-jm-text">{inv.customerName}</span>
+                      <span className="block text-[11px] text-jm-muted">{inv.description}</span>
                     </td>
-                    <td className="p-4 font-extrabold text-neutral-800 dark:text-neutral-100">
+                    <td className="jm-td font-semibold text-jm-text">
                       {formatCurrency(inv.amount)}
                     </td>
-                    <td className="p-4 text-neutral-500 dark:text-neutral-400">
+                    <td className="jm-td text-jm-muted">
                       {formatDate(inv.dueDate)}
                     </td>
-                    <td className="p-4 text-neutral-600 dark:text-neutral-300">
+                    <td className="jm-td text-jm-text">
                       {inv.method}
                     </td>
-                    <td className="p-4">
+                    <td className="jm-td">
                       {inv.status === 'PAGO' && (
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para alternar status"
-                          className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition cursor-pointer"
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
                         >
                           ✓ PAGO
                         </button>
@@ -720,7 +716,7 @@ export default function FinancePage() {
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para marcar como pago"
-                          className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 hover:bg-sky-500/20 transition cursor-pointer"
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition cursor-pointer"
                         >
                           ⏳ EM ABERTO
                         </button>
@@ -730,7 +726,7 @@ export default function FinancePage() {
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para marcar como pago"
-                          className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition cursor-pointer"
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800 hover:bg-rose-100 transition cursor-pointer"
                         >
                           ⚠ ATRASADO
                         </button>
@@ -740,16 +736,16 @@ export default function FinancePage() {
                           type="button"
                           onClick={() => handleToggleStatus(inv)}
                           title="Clique para reabrir a fatura"
-                          className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-neutral-500/10 text-neutral-500 border border-neutral-500/20 hover:bg-neutral-500/20 transition cursor-pointer line-through"
+                          className="px-2 py-0.5 text-[11px] font-medium rounded-full bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 transition cursor-pointer line-through"
                         >
                           CANCELADA
                         </button>
                       )}
                       {inv.status === 'PAGO' && inv.paymentDate && (
-                        <span className="block mt-1 text-[10px] text-neutral-400">em {formatDate(inv.paymentDate, false)}</span>
+                        <span className="block mt-1 text-[10px] text-jm-muted">em {formatDate(inv.paymentDate, false)}</span>
                       )}
                     </td>
-                    <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                    <td className="jm-td text-right space-x-1 whitespace-nowrap">
                       {(inv.status === 'ABERTO' || inv.status === 'ATRASADO') && (() => {
                         const url = whatsappChargeUrl(inv);
                         return url ? (
@@ -757,7 +753,7 @@ export default function FinancePage() {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex text-neutral-400 hover:text-emerald-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
+                            className="inline-flex text-jm-muted hover:text-emerald-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
                             title="Enviar cobrança pelo WhatsApp"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
@@ -767,7 +763,7 @@ export default function FinancePage() {
                       <button
                         type="button"
                         onClick={() => handleEdit(inv)}
-                        className="text-neutral-400 hover:text-[#E85D26] p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        className="text-jm-muted hover:text-jm-orange p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
                         title="Editar Fatura"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -776,7 +772,7 @@ export default function FinancePage() {
                         <button
                           type="button"
                           onClick={() => handleCancelInvoice(inv)}
-                          className="text-neutral-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                          className="text-jm-muted hover:text-amber-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
                           title="Cancelar Fatura"
                         >
                           <Ban className="w-3.5 h-3.5" />
@@ -785,7 +781,7 @@ export default function FinancePage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(inv)}
-                        className="text-neutral-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
+                        className="text-jm-muted hover:text-rose-600 p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition cursor-pointer"
                         title="Excluir Fatura"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -804,66 +800,66 @@ export default function FinancePage() {
 
       {/* MODAL COBRANÇA RECORRENTE */}
       {billingEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/50">
-              <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white flex items-center gap-2">
-                <Repeat className="w-4 h-4 text-[#E85D26]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="jm-card w-full max-w-lg overflow-hidden shadow-xl border border-jm-border animate-fadeIn">
+            <div className="flex items-center justify-between p-5 border-b border-jm-border bg-neutral-50/50 dark:bg-neutral-900/50">
+              <h3 className="text-sm font-semibold text-jm-text flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-jm-orange" />
                 <span>Cobrança Recorrente — {billingEdit.name}</span>
               </h3>
-              <button type="button" onClick={() => setBillingEdit(null)} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white p-1 rounded-lg">
+              <button type="button" onClick={() => setBillingEdit(null)} className="text-jm-muted hover:text-jm-text p-1.5 rounded-lg transition">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="p-5 space-y-4 text-xs">
               {billingError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{billingError}</span>
                 </div>
               )}
 
-              <label className="flex items-center justify-between gap-3 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 cursor-pointer">
+              <label className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-jm-border bg-neutral-50/50 dark:bg-neutral-900/40 cursor-pointer">
                 <span>
-                  <span className="block font-bold text-neutral-800 dark:text-neutral-200">Gerar fatura automaticamente todo mês</span>
-                  <span className="block text-[10px] text-neutral-500">Só gera para clientes ativos.</span>
+                  <span className="block font-semibold text-jm-text">Gerar fatura automaticamente todo mês</span>
+                  <span className="block text-[11px] text-jm-muted">Só gera para clientes ativos.</span>
                 </span>
                 <input
                   type="checkbox"
                   checked={billingEdit.billing.enabled}
                   onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, enabled: e.target.checked } })}
-                  className="w-4 h-4 accent-[#E85D26]"
+                  className="w-4 h-4 accent-jm-orange rounded"
                 />
               </label>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Valor mensal (R$)</label>
+                  <label className="block font-medium text-xs text-jm-text mb-1.5">Valor mensal (R$)</label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
                     value={billingEdit.billing.amount || ''}
                     onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, amount: parseFloat(e.target.value) || 0 } })}
-                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-mono focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input font-mono"
                   />
                   {billingEdit.suggestedAmount > 0 && (
                     <button
                       type="button"
                       onClick={() => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, amount: billingEdit.suggestedAmount } })}
-                      className="mt-1 text-[10px] font-bold text-[#E85D26] hover:underline cursor-pointer"
+                      className="mt-1 text-[11px] font-semibold text-jm-orange hover:underline cursor-pointer"
                     >
                       Usar tabela do grupo {billingEdit.groupName}: {formatCurrency(billingEdit.suggestedAmount)}
                     </button>
                   )}
                 </div>
                 <div>
-                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Dia do vencimento</label>
+                  <label className="block font-medium text-xs text-jm-text mb-1.5">Dia do vencimento</label>
                   <select
                     value={billingEdit.billing.dueDay}
                     onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, dueDay: parseInt(e.target.value, 10) } })}
-                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input"
                   >
                     {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                       <option key={d} value={d}>Dia {d}</option>
@@ -873,22 +869,22 @@ export default function FinancePage() {
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Descrição na fatura</label>
+                <label className="block font-medium text-xs text-jm-text mb-1.5">Descrição na fatura</label>
                 <input
                   type="text"
                   value={billingEdit.billing.description}
                   onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, description: e.target.value } })}
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
-                <p className="mt-1 text-[10px] text-neutral-400">O mês de referência é adicionado automaticamente (ex.: “— 11/2026”).</p>
+                <p className="mt-1 text-[11px] text-jm-muted">O mês de referência é adicionado automaticamente (ex.: “— 11/2026”).</p>
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">Método de pagamento</label>
+                <label className="block font-medium text-xs text-jm-text mb-1.5">Método de pagamento</label>
                 <select
                   value={billingEdit.billing.method}
                   onChange={(e) => setBillingEdit({ ...billingEdit, billing: { ...billingEdit.billing, method: e.target.value } })}
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 >
                   {PAYMENT_METHODS.map((m) => (
                     <option key={m} value={m}>{m}</option>
@@ -897,14 +893,14 @@ export default function FinancePage() {
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setBillingEdit(null)} className="px-4 py-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition font-bold">
+                <button type="button" onClick={() => setBillingEdit(null)} className="jm-btn jm-btn-secondary">
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={() => saveBilling(false)}
                   disabled={billingSaving}
-                  className="px-5 py-2.5 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl font-bold transition shadow-md shadow-orange-900/20 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  className="jm-btn jm-btn-primary"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{billingSaving ? 'Salvando...' : 'Salvar'}</span>
@@ -917,17 +913,17 @@ export default function FinancePage() {
 
       {/* MODAL NOVA FATURA */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/70 p-4 backdrop-blur-sm">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between p-5 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/50">
-              <h3 className="text-sm font-extrabold text-neutral-900 dark:text-white flex items-center gap-2">
-                <Plus className="w-4 h-4 text-[#E85D26]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+          <div className="jm-card w-full max-w-lg overflow-hidden shadow-xl border border-jm-border animate-fadeIn">
+            <div className="flex items-center justify-between p-5 border-b border-jm-border bg-neutral-50/50 dark:bg-neutral-900/50">
+              <h3 className="text-sm font-semibold text-jm-text flex items-center gap-2">
+                <Plus className="w-4 h-4 text-jm-orange" />
                 <span>{editingId ? 'Editar Fatura' : 'Emitir Nova Fatura / Cobrança'}</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-white p-1 rounded-lg"
+                className="text-jm-muted hover:text-jm-text p-1.5 rounded-lg transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -935,46 +931,46 @@ export default function FinancePage() {
 
             <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
               {formError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold">
+                <div className="flex items-center gap-2 p-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-medium">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{formError}</span>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
                     Nº da Fatura
                   </label>
-                  <p className="w-full p-2.5 bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-500 font-mono">
+                  <p className="w-full px-3 py-2 text-xs bg-neutral-100 dark:bg-neutral-900 border border-jm-border rounded-lg text-jm-muted font-mono">
                     {editingId ? records.find((r) => r.id === editingId)?.invoiceNumber : 'Gerado automaticamente'}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
                     Status
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input"
                   >
                     <option value="ABERTO">Em Aberto</option>
                     <option value="PAGO">Pago</option>
                     {editingId && <option value="CANCELADO">Cancelado</option>}
                   </select>
-                  <p className="mt-1 text-[10px] text-neutral-400">Faturas em aberto após o vencimento ficam “Atrasadas” automaticamente.</p>
+                  <p className="mt-1 text-[11px] text-jm-muted">Faturas em aberto após o vencimento ficam “Atrasadas” automaticamente.</p>
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-jm-text mb-1.5">
                   Cliente
                 </label>
                 <select
                   value={formData.customerId}
                   onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 >
                   <option value="">— Cliente não cadastrado (digitar nome) —</option>
                   {customers.map((c) => (
@@ -989,13 +985,13 @@ export default function FinancePage() {
                     value={formData.customer}
                     onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
                     placeholder="Nome / Razão Social do cliente"
-                    className="mt-2 w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                    className="mt-2 jm-input"
                   />
                 )}
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-jm-text mb-1.5">
                   Descrição do Serviço / Contrato
                 </label>
                 <input
@@ -1004,13 +1000,13 @@ export default function FinancePage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Ex: Mensalidade WhatsApp API Enterprise"
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
                     Valor (R$)
                   </label>
                   <input
@@ -1021,12 +1017,12 @@ export default function FinancePage() {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="Ex: 2450.00"
-                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-mono focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-xs font-semibold text-jm-text mb-1.5">
                     Data de Vencimento
                   </label>
                   <input
@@ -1034,19 +1030,19 @@ export default function FinancePage() {
                     required
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-[#E85D26]"
+                    className="jm-input"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                <label className="block text-xs font-semibold text-jm-text mb-1.5">
                   Método de Pagamento
                 </label>
                 <select
                   value={formData.method}
                   onChange={(e) => setFormData({ ...formData, method: e.target.value })}
-                  className="w-full p-2.5 bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl text-neutral-900 dark:text-white font-semibold focus:outline-none focus:border-[#E85D26]"
+                  className="jm-input"
                 >
                   <option value="Boleto / Pix">Boleto / Pix</option>
                   <option value="Pix Oficial">Pix Oficial</option>
@@ -1060,14 +1056,14 @@ export default function FinancePage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition font-bold"
+                  className="jm-btn jm-btn-secondary"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-5 py-2.5 bg-[#E85D26] hover:bg-orange-600 text-white rounded-xl font-bold transition shadow-md shadow-orange-900/20 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  className="jm-btn jm-btn-primary"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{saving ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Emitir Fatura'}</span>
