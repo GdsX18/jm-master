@@ -29,6 +29,8 @@ import {
   Loader2,
   CheckCircle2,
 } from 'lucide-react';
+import { sanitizeArticleHtml } from '@/lib/sanitize';
+import { useNotify } from '../../components/ui/Notifications';
 
 interface BlogEditorProps {
   initialContent?: string;
@@ -49,6 +51,7 @@ export default function BlogEditor({
   title,
   onTitleChange,
 }: BlogEditorProps) {
+  const { toast } = useNotify();
   const effectiveInitial = contentHtml !== undefined ? contentHtml : initialContent;
   const editorRef = useRef<HTMLDivElement>(null);
   const savedSelectionRef = useRef<Range | null>(null);
@@ -175,12 +178,12 @@ export default function BlogEditor({
   // Função para fazer upload direto no Supabase Storage via API
   const uploadImageFileToSupabase = async (file: File): Promise<string | null> => {
     if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP, GIF).');
+      toast.error('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP, GIF).');
       return null;
     }
 
     if (file.size > 4 * 1024 * 1024) {
-      alert('A imagem deve ter no máximo 4MB.');
+      toast.error('A imagem deve ter no máximo 4MB.');
       return null;
     }
 
@@ -263,7 +266,7 @@ export default function BlogEditor({
               }
             } catch (err: any) {
               console.error('Erro ao enviar imagem colada para o Supabase:', err);
-              alert('Erro ao enviar a imagem colada para o Supabase Storage.');
+              toast.error('Erro ao enviar a imagem colada para o Supabase Storage.');
             }
             return;
           }
@@ -315,7 +318,8 @@ export default function BlogEditor({
         }
       });
 
-      const cleanHtml = doc.body.innerHTML;
+      // Remove scripts/handlers do HTML colado (Word, sites, e-mails)
+      const cleanHtml = sanitizeArticleHtml(doc.body.innerHTML);
       document.execCommand('insertHTML', false, cleanHtml);
       handleInput();
     } else if (clipboardText) {
@@ -345,7 +349,7 @@ export default function BlogEditor({
           }
         } catch (err) {
           console.error('Erro no upload de imagem arrastada:', err);
-          alert('Erro ao enviar a imagem para o Supabase Storage.');
+          toast.error('Erro ao enviar a imagem para o Supabase Storage.');
         }
       }
     }
@@ -364,7 +368,7 @@ export default function BlogEditor({
         setUploadStatusMessage('Imagem enviada com sucesso ao Supabase!');
       }
     } catch (err: any) {
-      alert(err.message || 'Erro ao enviar imagem.');
+      toast.error(err.message || 'Erro ao enviar imagem.');
       setUploadStatusMessage('');
     } finally {
       setIsUploadingModalImage(false);

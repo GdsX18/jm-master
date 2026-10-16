@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { Article, ArticleCategory } from '../types';
-import { DEFAULT_CATEGORIES, slugify } from '../mockData';
+import { DEFAULT_CATEGORIES, slugify } from '../constants';
 import MediaUploader from './MediaUploader';
 import SEOModule from './SEOModule';
 

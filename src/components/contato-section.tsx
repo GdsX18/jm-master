@@ -33,6 +33,13 @@ export const ContatoSection: React.FC<ContatoSectionProps> = ({ defaultInterest 
       website: form.get("website"),
       consent: form.get("consent") === "on",
       page: window.location.pathname,
+      referrerPost: (() => {
+        try {
+          return sessionStorage.getItem("jm_last_post") || "";
+        } catch {
+          return "";
+        }
+      })(),
     };
 
     try {

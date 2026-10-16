@@ -21,9 +21,14 @@ import {
   ShieldOff,
   Menu,
   X,
+  FileText,
+  ScrollText,
+  KeyRound,
 } from 'lucide-react';
 import { permissionForPath, type Permissions } from '@/lib/permissions';
 import { clearCache } from './lib/cache';
+import { NotificationsProvider } from './components/ui/Notifications';
+import { ChangePasswordModal } from './components/ChangePasswordModal';
 
 interface PanelUser {
   id: string;
@@ -36,15 +41,19 @@ interface PanelUser {
 // Revalida a sessão/permissões no servidor no máximo uma vez por intervalo,
 // em vez de a cada troca de tela (cada chamada consulta o banco)
 const SESSION_REVALIDATE_MS = 60_000;
+// Contadores do menu (novos leads, faturas vencidas...) — no máximo a cada 2 minutos
+const BADGES_REFRESH_MS = 120_000;
 
 const allMenuItems = [
   { name: 'Dashboard', shortName: 'Dashboard', path: '/painel', icon: LayoutDashboard },
   { name: 'Clientes', shortName: 'Clientes', path: '/painel/customers', icon: Users },
   { name: 'Produtos', shortName: 'Produtos', path: '/painel/products', icon: Package },
   { name: 'Blog', shortName: 'Blog', path: '/painel/blog', icon: PenTool },
-  { name: 'Usuários', shortName: 'Usuários', path: '/painel/users', icon: Shield },
+  { name: 'CRM & Funil', shortName: 'CRM', path: '/painel/crm', icon: History },
+  { name: 'Propostas', shortName: 'Propostas', path: '/painel/proposals', icon: FileText },
   { name: 'Financeiro', shortName: 'Financeiro', path: '/painel/finance', icon: CreditCard },
-  { name: 'CRM', shortName: 'CRM', path: '/painel/crm', icon: History },
+  { name: 'Usuários', shortName: 'Usuários', path: '/painel/users', icon: Shield },
+  { name: 'Auditoria', shortName: 'Auditoria', path: '/painel/audit', icon: ScrollText },
 ];
 
 function readStoredUser(): PanelUser | null {
@@ -57,7 +66,27 @@ function readStoredUser(): PanelUser | null {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <NotificationsProvider>
+      <DashboardShell>{children}</DashboardShell>
+    </NotificationsProvider>
+  );
+}
+
+function Badge({ count }: { count?: number }) {
+  if (!count) return null;
+  return (
+    <span className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-jm-accent-line px-1.5 text-[10px] font-semibold tabular-nums text-white">
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
+function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [badges, setBadges] = useState<Record<string, number>>({});
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const lastBadgesCheck = useRef(0);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [menuLayout, setMenuLayout] = useState<'sidebar' | 'top'>('sidebar');
   const [currentUser, setCurrentUser] = useState<PanelUser | null>(null);
@@ -115,6 +144,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       })
       .catch(() => {});
   }, [pathname]);
+
+  // Alertas internos: contadores no menu (novos leads, retornos vencidos, faturas atrasadas, propostas enviadas)
+  useEffect(() => {
+    if (pathname === '/painel/login' || !currentUser) return;
+    const load = () => {
+      lastBadgesCheck.current = Date.now();
+      fetch('/api/notifications', { cache: 'no-store' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => data?.badges && setBadges(data.badges))
+        .catch(() => {});
+    };
+    if (Date.now() - lastBadgesCheck.current > 15_000) load();
+    const timer = setInterval(load, BADGES_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [pathname, currentUser]);
 
   // Fecha a gaveta do mobile ao trocar de tela
   useEffect(() => {
@@ -229,6 +273,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
                 <span>{item.name}</span>
+                <Badge count={badges[item.path]} />
               </Link>
             );
           })}
@@ -251,6 +296,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         >
           {isDark ? <Sun className="h-4 w-4 shrink-0" strokeWidth={1.75} /> : <Moon className="h-4 w-4 shrink-0" strokeWidth={1.75} />}
           <span>{isDark ? 'Tema claro' : 'Tema escuro'}</span>
+        </button>
+        <button onClick={() => setPasswordOpen(true)} className="jm-side-link">
+          <KeyRound className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+          <span>Alterar minha senha</span>
         </button>
       </div>
 
@@ -337,6 +386,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 >
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
                   <span>{item.shortName}</span>
+                  {!!badges[item.path] && (
+                    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-jm-accent-line px-1 text-[10px] font-semibold tabular-nums text-white">
+                      {badges[item.path] > 99 ? '99+' : badges[item.path]}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -359,6 +413,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="hidden h-8 w-8 items-center justify-center rounded-[4px] text-jm-side-muted hover:bg-jm-side-hover hover:text-white lg:inline-flex"
             >
               <PanelLeft className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => setPasswordOpen(true)}
+              title="Alterar minha senha"
+              aria-label="Alterar minha senha"
+              className="hidden h-8 w-8 items-center justify-center rounded-[4px] text-jm-side-muted hover:bg-jm-side-hover hover:text-white sm:inline-flex"
+            >
+              <KeyRound className="h-4 w-4" strokeWidth={1.75} />
             </button>
             <button
               onClick={toggleTheme}
@@ -390,6 +452,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {drawer}
+        <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
 
         <main className="w-full min-w-0 flex-1 bg-jm-bg">{pageContent}</main>
       </div>
@@ -404,6 +467,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {drawer}
+      <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {mobileBar}

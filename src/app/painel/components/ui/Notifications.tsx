@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useContext, createContext, type ReactNode } from 'react';
 
 // ─── TIPOS ─────────────────────────────────────────────────────────────────
 
@@ -187,4 +187,52 @@ export function ConfirmModal({
       </div>
     </div>
   );
+}
+
+// ─── PROVIDER GLOBAL: useNotify ──────────────────────────────────────────────
+// Um único sistema de toasts + confirmações para todo o painel (substitui alert/confirm nativos).
+// Uso: const { toast, confirm } = useNotify(); toast.success('Salvo!'); if (await confirm({...})) ...
+
+interface NotifyApi {
+  toast: {
+    success: (title: string, message?: string) => void;
+    error: (title: string, message?: string) => void;
+    warning: (title: string, message?: string) => void;
+    info: (title: string, message?: string) => void;
+  };
+  confirm: (opts: ConfirmOptions) => Promise<boolean>;
+}
+
+const NotifyContext = createContext<NotifyApi | null>(null);
+
+export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const { toasts, addToast, removeToast } = useToastState();
+  const { confirm, isOpen, options, handleConfirm, handleCancel } = useConfirm();
+
+  const api = useMemo<NotifyApi>(
+    () => ({
+      toast: {
+        success: (title, message) => addToast('success', title, message),
+        error: (title, message) => addToast('error', title, message),
+        warning: (title, message) => addToast('warning', title, message),
+        info: (title, message) => addToast('info', title, message),
+      },
+      confirm,
+    }),
+    [addToast, confirm]
+  );
+
+  return (
+    <NotifyContext.Provider value={api}>
+      {children}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <ConfirmModal isOpen={isOpen} options={options} onConfirm={handleConfirm} onCancel={handleCancel} />
+    </NotifyContext.Provider>
+  );
+}
+
+export function useNotify(): NotifyApi {
+  const ctx = useContext(NotifyContext);
+  if (!ctx) throw new Error('useNotify precisa estar dentro de <NotificationsProvider>');
+  return ctx;
 }

@@ -11,8 +11,9 @@ import {
   Camera,
   X,
 } from 'lucide-react';
-import { COVER_PRESETS } from '../mockData';
+import { COVER_PRESETS } from '../constants';
 import { ArticleCategory } from '../types';
+import { useNotify } from '../../components/ui/Notifications';
 
 interface MediaUploaderProps {
   coverImage: string;
@@ -31,6 +32,7 @@ export default function MediaUploader({
   onCoverChange,
   onInsertImageIntoContent,
 }: MediaUploaderProps) {
+  const { toast, confirm: confirmDialog } = useNotify();
   const [altText, setAltText] = useState(coverImageAlt || '');
   const [isDragging, setIsDragging] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
@@ -59,11 +61,11 @@ export default function MediaUploader({
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-      alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).');
+      toast.error('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).');
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      alert('A imagem deve ter no máximo 4 MB. Comprima a imagem e tente novamente.');
+      toast.error('A imagem deve ter no máximo 4 MB. Comprima a imagem e tente novamente.');
       return;
     }
     const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
@@ -88,7 +90,7 @@ export default function MediaUploader({
     } catch (err: any) {
       // Sem "plano B" em base64: a imagem precisa estar no Storage para aparecer no site
       console.error('Erro no upload para o Supabase Storage:', err);
-      alert(`Não foi possível enviar a imagem: ${err.message}`);
+      toast.error(`Não foi possível enviar a imagem: ${err.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -140,11 +142,11 @@ export default function MediaUploader({
   };
 
   const handleDeleteLibraryImage = async (name: string) => {
-    if (!confirm('Excluir esta imagem da biblioteca? Artigos que ainda a usam ficarão sem a imagem.')) return;
+    if (!(await confirmDialog({ title: 'Excluir imagem', message: 'Excluir esta imagem da biblioteca? Artigos que ainda a usam ficarão sem a imagem.', confirmLabel: 'Excluir', variant: 'danger' }))) return;
     const res = await fetch(`/api/media?name=${encodeURIComponent(name)}`, { method: 'DELETE' });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.success) {
-      alert(data.error || 'Erro ao excluir imagem');
+      toast.error(data.error || 'Erro ao excluir imagem');
       return;
     }
     setLibrary((prev) => prev.filter((f) => f.name !== name));
@@ -158,11 +160,11 @@ export default function MediaUploader({
 
   const handleBodyFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-      alert('Selecione uma imagem válida.');
+      toast.error('Selecione uma imagem válida.');
       return;
     }
     if (file.size > MAX_UPLOAD_BYTES) {
-      alert('A imagem deve ter no máximo 4 MB.');
+      toast.error('A imagem deve ter no máximo 4 MB.');
       return;
     }
     const defaultAlt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
@@ -188,7 +190,7 @@ export default function MediaUploader({
       setBodyImgUrl(data.url);
     } catch (err: any) {
       console.error('Erro no upload da imagem:', err);
-      alert(`Não foi possível enviar a imagem: ${err.message}`);
+      toast.error(`Não foi possível enviar a imagem: ${err.message}`);
     } finally {
       setIsUploadingBody(false);
     }

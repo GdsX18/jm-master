@@ -18,7 +18,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Article, ArticleCategory, ArticleStatus } from '../types';
-import { getStoredCategories } from '../mockData';
 
 interface ArticleListProps {
   articles: Article[];
@@ -48,12 +47,16 @@ export default function ArticleList({
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [categories, setCategories] = useState<string[]>([]);
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
-
+  // Categorias do filtro: as cadastradas no banco + as já usadas nos artigos
+  const [storedCategories, setStoredCategories] = useState<string[]>([]);
   useEffect(() => {
-    setCategories(getStoredCategories());
+    fetch('/api/blog/categories', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => Array.isArray(d?.categories) && setStoredCategories(d.categories))
+      .catch(() => {});
   }, []);
+  const categories = Array.from(new Set([...storedCategories, ...articles.map((a) => a.category)])).filter(Boolean);
 
   // Filtros combinados
   const filteredArticles = articles.filter((art) => {

@@ -9,65 +9,81 @@ generator client {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  password     String
-  role         String   @default("Criador de Blog")
-  isBlocked    Boolean  @default(false)
-  permissions  Json     @default("{}")
-  prohibitions Json     @default("{}")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           String   @default("Criador de Blog")
+  isBlocked      Boolean  @default(false)
+  permissions    Json     @default("{}")
+  prohibitions   Json     @default("{}")
+  // Incrementado no logout, troca de senha, bloqueio ou troca de perfil: invalida sessões antigas
+  sessionVersion Int      @default(0)
+  ownedLeads     Lead[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("users")
 }
 
 model BlogPost {
-  id            String    @id @default(cuid())
-  slug          String    @unique
+  id            String         @id @default(cuid())
+  slug          String         @unique
   title         String
-  excerpt       String    @db.Text
-  content       Json      @default("[]")
-  contentHtml   String?   @db.Text
-  category      String    @default("WhatsApp API")
-  date          String?   @default("Hoje")
-  readTime      String?   @default("4 min")
-  coverImage    String    @default("/images/blog/whatsapp-thumb.jpg")
-  coverImageAlt String?   @default("")
-  authorName    String    @default("JM MASTER GROUP")
-  authorRole    String    @default("Especialistas em Mensageria & IA")
-  authorAvatar  String    @default("/logos/Icone.png")
-  featured      Boolean   @default(false)
-  status        String    @default("published")
-  tags          Json      @default("[]")
+  excerpt       String         @db.Text
+  content       Json           @default("[]")
+  contentHtml   String?        @db.Text
+  category      String         @default("WhatsApp API")
+  date          String?        @default("Hoje")
+  readTime      String?        @default("4 min")
+  coverImage    String         @default("/images/blog/whatsapp-thumb.jpg")
+  coverImageAlt String?        @default("")
+  authorName    String         @default("JM MASTER GROUP")
+  authorRole    String         @default("Especialistas em Mensageria & IA")
+  authorAvatar  String         @default("/logos/Icone.png")
+  featured      Boolean        @default(false)
+  status        String         @default("published")
+  tags          Json           @default("[]")
   seo           Json?
   faqs          Json?
-  views         Int       @default(0)
-  publishedAt   DateTime? @default(now())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  views         Int            @default(0)
+  dailyViews    BlogPostView[]
+  publishedAt   DateTime?      @default(now())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@map("blog_posts")
 }
 
 model Customer {
-  id           String             @id @default(cuid())
-  name         String
-  company      String?
-  email        String?
-  phone        String?
-  status       String             @default("ATIVO")
-  segment      String?            @default("Enterprise")
-  notes        String?            @db.Text
-  data         Json?              @default("{}")
-  interactions CrmInteraction[]
-  groups       CustomerGroup[]
-  documents    CustomerDocument[]
-  noteEntries  CustomerNote[]
-  invoices     FinancialRecord[]
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  id             String             @id @default(cuid())
+  name           String
+  company        String?
+  email          String?
+  phone          String?
+  status         String             @default("ATIVO")
+  segment        String?            @default("Enterprise")
+  notes          String?            @db.Text
+  // Documento e endereço em colunas próprias (busca, índice e unicidade de CPF/CNPJ)
+  document       String?
+  documentDigits String?            @unique
+  type           String             @default("POS_PAGO") // PRE_PAGO, POS_PAGO
+  code           String?
+  street         String?
+  number         String?
+  city           String?
+  state          String?
+  zipCode        String?
+  data           Json?              @default("{}")
+  interactions   CrmInteraction[]
+  leads          Lead[]
+  proposals      Proposal[]
+  groups         CustomerGroup[]
+  documents      CustomerDocument[]
+  noteEntries    CustomerNote[]
+  invoices       FinancialRecord[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
   @@map("customers")
 }
@@ -90,7 +106,7 @@ model GroupProductPrice {
   group     CustomerGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   productId String
   product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
-  price     Float         @default(0)
+  price     Decimal       @default(0) @db.Decimal(12, 2)
   updatedAt DateTime      @updatedAt
 
   @@unique([groupId, productId])
@@ -129,7 +145,10 @@ model CustomerNote {
 model CrmInteraction {
   id           String    @id @default(cuid())
   customerId   String?
-  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  // SetNull: excluir o cliente não apaga o histórico de atendimento
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  leadId       String?
+  lead         Lead?     @relation(fields: [leadId], references: [id], onDelete: SetNull)
   operator     String
   customerName String?
   title        String
@@ -141,20 +160,25 @@ model CrmInteraction {
   updatedAt    DateTime  @updatedAt
 
   @@index([customerId])
+  @@index([leadId])
+  @@index([createdAt])
   @@map("crm_interactions")
 }
 
 model Product {
-  id          String              @id @default(cuid())
-  name        String
-  description String?             @db.Text
-  price       Float               @default(0.0)
-  category    String?
-  active      Boolean             @default(true)
-  features    Json?               @default("[]")
-  groupPrices GroupProductPrice[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id            String              @id @default(cuid())
+  name          String
+  description   String?             @db.Text
+  price         Decimal             @default(0) @db.Decimal(12, 2)
+  category      String?
+  active        Boolean             @default(true)
+  // true = cobrado todo mês (mensalidade); false = cobrança única (setup, implantação)
+  recurring     Boolean             @default(true)
+  features      Json?               @default("[]")
+  groupPrices   GroupProductPrice[]
+  proposalItems ProposalItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@map("products")
 }
@@ -162,7 +186,7 @@ model Product {
 model FinancialRecord {
   id            String    @id @default(cuid())
   description   String
-  amount        Float
+  amount        Decimal   @db.Decimal(12, 2)
   type          String    @default("RECEITA") // RECEITA, DESPESA
   category      String
   status        String    @default("PAGO") // PENDENTE, PAGO, CANCELADO
@@ -172,10 +196,14 @@ model FinancialRecord {
   invoiceNumber String?   @unique
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  proposalId    String?
+  proposal      Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([customerId])
+  @@index([type, status])
+  @@index([dueDate])
   @@map("financial_records")
 }
 
@@ -198,4 +226,135 @@ model BlogCategory {
   createdAt DateTime @default(now())
 
   @@map("blog_categories")
+}
+
+// Visualizações por dia de cada artigo (gráficos de desempenho do blog)
+model BlogPostView {
+  postId String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  day    DateTime @db.Date
+  views  Int      @default(0)
+
+  @@id([postId, day])
+  @@index([day])
+  @@map("blog_post_views")
+}
+
+// Funil de vendas: leads do site e cadastrados manualmente
+model Lead {
+  id             String           @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  company        String?
+  interest       String?
+  message        String?          @db.Text
+  sourcePage     String?
+  source         String           @default("SITE") // SITE, MANUAL, INDICACAO, OUTRO
+  stage          String           @default("NOVO") // NOVO, CONTATO, QUALIFICADO, PROPOSTA, GANHO, PERDIDO
+  position       Float            @default(0)
+  estimatedValue Decimal?         @db.Decimal(12, 2)
+  nextAction     String?
+  nextActionAt   DateTime?
+  lostReason     String?
+  consent        Boolean          @default(false)
+  ownerId        String?
+  owner          User?            @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  customerId     String?
+  customer       Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  interactions   CrmInteraction[]
+  proposals      Proposal[]
+  stageChangedAt DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([stage, position])
+  @@index([createdAt])
+  @@index([customerId])
+  @@map("leads")
+}
+
+// Propostas comerciais: produtos + tabela de preços; o aceite gera a cobrança
+model Proposal {
+  id             String            @id @default(cuid())
+  number         String            @unique
+  title          String
+  status         String            @default("RASCUNHO") // RASCUNHO, ENVIADA, ACEITA, RECUSADA
+  leadId         String?
+  lead           Lead?             @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  customerId     String?
+  customer       Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  validUntil     DateTime?
+  notes          String?           @db.Text
+  discount       Decimal           @default(0) @db.Decimal(12, 2)
+  oneTimeTotal   Decimal           @default(0) @db.Decimal(12, 2)
+  recurringTotal Decimal           @default(0) @db.Decimal(12, 2)
+  dueDay         Int               @default(10)
+  createdByName  String?
+  sentAt         DateTime?
+  acceptedAt     DateTime?
+  rejectedAt     DateTime?
+  items          ProposalItem[]
+  invoices       FinancialRecord[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([leadId])
+  @@index([customerId])
+  @@index([status])
+  @@map("proposals")
+}
+
+model ProposalItem {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  description String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  recurring   Boolean  @default(true)
+  position    Int      @default(0)
+
+  @@index([proposalId])
+  @@map("proposal_items")
+}
+
+// Trilha de auditoria: quem fez o quê, quando
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String
+  userEmail String?
+  action    String // CREATE, UPDATE, DELETE, LOGIN, LOGIN_FAILED, LOGOUT, STATUS...
+  entity    String // user, customer, invoice, post, lead, proposal, product, group, settings...
+  entityId  String?
+  summary   String
+  changes   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// Limite de tentativas compartilhado entre instâncias (login, formulário de leads)
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+
+  @@map("rate_limits")
+}
+
+// Estado interno do sistema (ex.: última execução da automação financeira)
+model AppState {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("app_state")
 }

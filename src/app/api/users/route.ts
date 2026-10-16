@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/password';
-import { requirePermission, type CurrentUser } from '@/lib/session';
-import { PERMISSION_KEYS, SUPER_ADMIN_ROLE, isValidRole } from '@/lib/permissions';
+import { actorOf, requirePermission, type CurrentUser } from '@/lib/session';
+import { PERMISSION_KEYS, SUPER_ADMIN_ROLE, effectivePermissions, isValidRole, type Permissions } from '@/lib/permissions';
+import { diffFields, logAudit } from '@/lib/audit';
+import { EMAIL_REGEX } from '@/lib/validators';
 
 // Nunca devolver o hash de senha para o navegador
 const PUBLIC_USER_FIELDS = {
@@ -18,7 +20,6 @@ const PUBLIC_USER_FIELDS = {
 } as const;
 
 const MIN_PASSWORD_LENGTH = 8;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function sanitizePermissions(value: unknown) {
   const result: Record<string, boolean> = {};
@@ -40,6 +41,12 @@ async function countActiveSuperAdmins(excludeId?: string) {
 // Só um Super administrador pode criar, editar ou atribuir o perfil de Super administrador
 function canManageTarget(actor: CurrentUser, targetRole: string | undefined) {
   return actor.role === SUPER_ADMIN_ROLE || targetRole !== SUPER_ADMIN_ROLE;
+}
+
+// Quem não é Super administrador não pode conceder a outro usuário uma permissão que ele mesmo não tem
+function grantedBeyondActor(actor: CurrentUser, before: Permissions | null, after: Permissions): string[] {
+  if (actor.role === SUPER_ADMIN_ROLE) return [];
+  return PERMISSION_KEYS.filter((k) => after[k] && !before?.[k] && !actor.permissions[k]);
 }
 
 // GET /api/users - Listar usuários
@@ -105,6 +112,8 @@ export async function POST(req: NextRequest) {
     if (existingUser) {
       const nextRole = role ?? existingUser.role;
       const nextBlocked = typeof isBlocked === 'boolean' ? isBlocked : existingUser.isBlocked;
+      const nextPermissions = permissions !== undefined ? sanitizePermissions(permissions) : (existingUser.permissions as object);
+      const nextProhibitions = prohibitions !== undefined ? sanitizePermissions(prohibitions) : (existingUser.prohibitions as object);
       const isSelf = existingUser.id === auth.id;
 
       if (!canManageTarget(auth, existingUser.role) || !canManageTarget(auth, nextRole)) {
@@ -116,12 +125,33 @@ export async function POST(req: NextRequest) {
       if (isSelf && nextBlocked) {
         return NextResponse.json({ error: 'Você não pode bloquear a sua própria conta' }, { status: 403 });
       }
+      // Compara já normalizado (mesma ordem de chaves, só booleanos)
+      const permissionsChanged =
+        JSON.stringify(sanitizePermissions(nextPermissions)) !== JSON.stringify(sanitizePermissions(existingUser.permissions)) ||
+        JSON.stringify(sanitizePermissions(nextProhibitions)) !== JSON.stringify(sanitizePermissions(existingUser.prohibitions));
+      if (isSelf && permissionsChanged && auth.role !== SUPER_ADMIN_ROLE) {
+        return NextResponse.json({ error: 'Você não pode alterar as suas próprias permissões' }, { status: 403 });
+      }
+
+      const before = effectivePermissions(existingUser.role, existingUser.permissions, existingUser.prohibitions);
+      const after = effectivePermissions(nextRole, nextPermissions, nextProhibitions);
+      const beyond = grantedBeyondActor(auth, before, after);
+      if (beyond.length > 0) {
+        return NextResponse.json(
+          { error: 'Você não pode conceder permissões que o seu próprio perfil não possui' },
+          { status: 403 }
+        );
+      }
 
       const losesSuperAdmin =
         existingUser.role === SUPER_ADMIN_ROLE && !existingUser.isBlocked && (nextRole !== SUPER_ADMIN_ROLE || nextBlocked);
       if (losesSuperAdmin && (await countActiveSuperAdmins(existingUser.id)) === 0) {
         return NextResponse.json({ error: 'O sistema precisa ter pelo menos um Super administrador ativo' }, { status: 409 });
       }
+
+      // Senha, perfil, bloqueio ou permissões alterados: encerra as sessões abertas desse usuário
+      // (a própria sessão de quem edita a si mesmo é preservada: só muda a senha)
+      const endSessions = !isSelf && (!!newPassword || nextRole !== existingUser.role || nextBlocked || permissionsChanged);
 
       const updatedUser = await prisma.user.update({
         where: { id: existingUser.id },
@@ -131,10 +161,28 @@ export async function POST(req: NextRequest) {
           password: newPassword ? await hashPassword(newPassword) : existingUser.password,
           role: nextRole,
           isBlocked: nextBlocked,
-          permissions: permissions !== undefined ? sanitizePermissions(permissions) : (existingUser.permissions as object),
-          prohibitions: prohibitions !== undefined ? sanitizePermissions(prohibitions) : (existingUser.prohibitions as object),
+          permissions: nextPermissions,
+          prohibitions: nextProhibitions,
+          ...(endSessions ? { sessionVersion: { increment: 1 } } : {}),
         },
         select: PUBLIC_USER_FIELDS,
+      });
+
+      const changes = diffFields(existingUser as unknown as Record<string, unknown>, {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        isBlocked: updatedUser.isBlocked,
+        permissions: updatedUser.permissions,
+        prohibitions: updatedUser.prohibitions,
+      });
+      await logAudit({
+        actor: actorOf(auth),
+        action: 'UPDATE',
+        entity: 'user',
+        entityId: updatedUser.id,
+        summary: `Usuário ${updatedUser.name} atualizado${newPassword ? ' (senha redefinida)' : ''}`,
+        changes: { ...changes, ...(newPassword ? { password: 'redefinida' } : {}) },
       });
 
       return NextResponse.json({ success: true, user: updatedUser, passwordChanged: !!newPassword });
@@ -150,6 +198,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Apenas um Super administrador pode criar Super administradores' }, { status: 403 });
     }
 
+    const newPermissions = sanitizePermissions(permissions);
+    const newProhibitions = sanitizePermissions(prohibitions);
+    if (grantedBeyondActor(auth, null, effectivePermissions(newRole, newPermissions, newProhibitions)).length > 0) {
+      return NextResponse.json(
+        { error: 'Você não pode criar um usuário com permissões que o seu próprio perfil não possui' },
+        { status: 403 }
+      );
+    }
+
     const newUser = await prisma.user.create({
       data: {
         name: name.trim(),
@@ -157,10 +214,18 @@ export async function POST(req: NextRequest) {
         password: await hashPassword(newPassword),
         role: newRole,
         isBlocked: !!isBlocked,
-        permissions: sanitizePermissions(permissions),
-        prohibitions: sanitizePermissions(prohibitions),
+        permissions: newPermissions,
+        prohibitions: newProhibitions,
       },
       select: PUBLIC_USER_FIELDS,
+    });
+
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'CREATE',
+      entity: 'user',
+      entityId: newUser.id,
+      summary: `Usuário ${newUser.name} (${newUser.role}) criado`,
     });
 
     return NextResponse.json({ success: true, user: newUser, passwordChanged: true });
@@ -198,6 +263,13 @@ export async function DELETE(req: NextRequest) {
     }
 
     await prisma.user.delete({ where: { id } });
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'DELETE',
+      entity: 'user',
+      entityId: id,
+      summary: `Usuário ${target.name} (${target.email}) excluído`,
+    });
 
     return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {

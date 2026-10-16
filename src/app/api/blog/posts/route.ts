@@ -1,12 +1,28 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import prisma from '@/lib/prisma';
 import { getStoredPosts, saveStoredPost, deleteStoredPost } from '@/lib/blog-storage';
 import { BlogPost } from '@/data/posts';
 import { DEFAULT_OG_IMAGE, resolvePostCanonical } from '@/lib/site';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+const STATUS_LABEL: Record<string, string> = { draft: 'rascunho', published: 'publicado', scheduled: 'agendado' };
+
+function revalidateBlog(slugs: (string | undefined | null)[]) {
+  try {
+    revalidatePath('/blog');
+    revalidatePath('/blog/[slug]', 'page');
+    for (const slug of new Set(slugs.filter(Boolean))) revalidatePath(`/blog/${slug}`);
+    revalidatePath('/');
+    revalidatePath('/sitemap.xml');
+  } catch (revalidateErr) {
+    console.warn('[BlogAPI] Aviso ao revalidar cache:', revalidateErr);
+  }
+}
 
 export async function GET() {
   const auth = await requirePermission('manageBlog');
@@ -19,16 +35,14 @@ export async function GET() {
       {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+          Pragma: 'no-cache',
+          Expires: '0',
         },
       }
     );
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erro ao carregar posts' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('[BlogAPI GET Error]:', error);
+    return NextResponse.json({ success: false, error: 'Erro ao carregar posts' }, { status: 500 });
   }
 }
 
@@ -42,17 +56,14 @@ export async function POST(request: Request) {
     const postData = body.post || body;
 
     if (!postData || !postData.title || !postData.slug) {
-      return NextResponse.json(
-        { success: false, error: 'Título e slug são obrigatórios' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'Título e slug são obrigatórios' }, { status: 400 });
     }
 
     // Normalizar e extrair SEO com segurança e fallbacks
     const rawSeo = postData.seo && typeof postData.seo === 'object' ? postData.seo : {};
     const seoTitle = rawSeo.metaTitle || rawSeo.seoTitle || postData.title;
     const seoDesc = rawSeo.metaDescription || rawSeo.seoDescription || postData.excerpt || '';
-    
+
     let seoKeywords: string[] = [];
     if (Array.isArray(rawSeo.keywords)) {
       seoKeywords = rawSeo.keywords;
@@ -90,7 +101,11 @@ export async function POST(request: Request) {
       category: postData.category || 'WhatsApp API',
       coverImage: postData.coverImage || DEFAULT_OG_IMAGE,
       coverImageAlt: postData.coverImageAlt || postData.title,
-      date: postData.date || (postData.publishedAt ? new Date(postData.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Hoje'),
+      date:
+        postData.date ||
+        (postData.publishedAt
+          ? new Date(postData.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+          : 'Hoje'),
       readTime: postData.readTime || `${postData.readingTimeMinutes || 4} min`,
       author: {
         name: postData.author?.name || 'JM MASTER GROUP',
@@ -100,49 +115,49 @@ export async function POST(request: Request) {
       featured: postData.featured ?? postData.isFeatured ?? false,
       status: postData.status === 'draft' ? 'draft' : postData.status === 'scheduled' ? 'scheduled' : 'published',
       publishedAt: postData.publishedAt || undefined,
-      tags: Array.isArray(postData.tags) && postData.tags.length > 0 ? postData.tags : (seoKeywords.length > 0 ? seoKeywords : [postData.category || 'Mensageria', 'JM Master']),
+      tags:
+        Array.isArray(postData.tags) && postData.tags.length > 0
+          ? postData.tags
+          : seoKeywords.length > 0
+            ? seoKeywords
+            : [postData.category || 'Mensageria', 'JM Master'],
       seo: seoObject,
       faqs: Array.isArray(postData.faqs) ? postData.faqs : [],
     };
 
+    const previous = postData.id
+      ? await prisma.blogPost.findUnique({ where: { id: postData.id }, select: { status: true, slug: true } }).catch(() => null)
+      : null;
+
     const savedPost = await saveStoredPost(post);
     if (!savedPost) {
-      return NextResponse.json(
-        { success: false, error: 'Falha ao salvar no banco de posts do Supabase' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: 'Falha ao salvar no banco de posts do Supabase' }, { status: 500 });
     }
-
-    const updatedPosts = await getStoredPosts();
 
     // Invalida o cache do blog para publicação e sincronização imediata
-    try {
-      revalidatePath('/blog');
-      revalidatePath('/blog/[slug]', 'page');
-      revalidatePath(`/blog/${savedPost.slug}`);
-      if (postData.previousSlug && postData.previousSlug !== savedPost.slug) {
-        revalidatePath(`/blog/${postData.previousSlug}`);
-      }
-      if (postData.slug && postData.slug !== savedPost.slug) {
-        revalidatePath(`/blog/${postData.slug}`);
-      }
-      revalidatePath('/');
-      revalidatePath('/sitemap.xml');
-    } catch (revalidateErr) {
-      console.warn('[BlogAPI] Aviso ao revalidar cache:', revalidateErr);
-    }
+    revalidateBlog([savedPost.slug, postData.previousSlug, postData.slug, previous?.slug]);
+
+    const statusChanged = previous && previous.status !== savedPost.status;
+    await logAudit({
+      actor: actorOf(auth),
+      action: previous ? (statusChanged ? 'STATUS' : 'UPDATE') : 'CREATE',
+      entity: 'post',
+      entityId: savedPost.id,
+      summary: previous
+        ? `Artigo "${savedPost.title}" salvo como ${STATUS_LABEL[savedPost.status || 'published']}${
+            statusChanged ? ` (antes: ${STATUS_LABEL[previous.status] || previous.status})` : ''
+          }`
+        : `Artigo "${savedPost.title}" criado como ${STATUS_LABEL[savedPost.status || 'published']}`,
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Artigo salvo e sincronizado com sucesso!',
       post: savedPost,
-      posts: updatedPosts,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erro ao processar publicação' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('[BlogAPI POST Error]:', error);
+    return NextResponse.json({ success: false, error: 'Erro ao processar publicação' }, { status: 500 });
   }
 }
 
@@ -151,43 +166,36 @@ export async function DELETE(request: Request) {
   if (auth instanceof NextResponse) return auth;
 
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
+    const id = new URL(request.url).searchParams.get('id');
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: 'ID ou slug do artigo é obrigatório' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'ID ou slug do artigo é obrigatório' }, { status: 400 });
     }
+
+    const target = await prisma.blogPost.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
+      select: { id: true, slug: true, title: true },
+    });
 
     const success = await deleteStoredPost(id);
     if (!success) {
-      return NextResponse.json(
-        { success: false, error: 'Erro ao excluir artigo do banco de dados' },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: 'Erro ao excluir artigo do banco de dados' }, { status: 500 });
     }
 
-    try {
-      revalidatePath('/blog');
-      revalidatePath('/blog/[slug]', 'page');
-      revalidatePath(`/blog/${id}`);
-      revalidatePath('/');
-      revalidatePath('/sitemap.xml');
-    } catch {}
+    revalidateBlog([target?.slug]);
 
-    const updatedPosts = await getStoredPosts();
+    if (target) {
+      await logAudit({
+        actor: actorOf(auth),
+        action: 'DELETE',
+        entity: 'post',
+        entityId: target.id,
+        summary: `Artigo "${target.title}" excluído`,
+      });
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Artigo removido com sucesso do site oficial!',
-      posts: updatedPosts,
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || 'Erro ao excluir artigo' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, message: 'Artigo removido com sucesso do site oficial!' });
+  } catch (error) {
+    console.error('[BlogAPI DELETE Error]:', error);
+    return NextResponse.json({ success: false, error: 'Erro ao excluir artigo' }, { status: 500 });
   }
 }

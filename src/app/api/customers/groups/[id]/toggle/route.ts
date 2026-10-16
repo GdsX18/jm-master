@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { logAudit } from '@/lib/audit';
 
 // PUT /api/customers/groups/[id]/toggle - Ativar/desativar grupo
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,6 +16,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updated = await prisma.customerGroup.update({
       where: { id },
       data: { isActive: !group.isActive },
+    });
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'STATUS',
+      entity: 'group',
+      entityId: id,
+      summary: `Grupo "${group.name}" ${updated.isActive ? 'ativado' : 'desativado'}`,
     });
     return NextResponse.json({ success: true, isActive: updated.isActive });
   } catch (error) {

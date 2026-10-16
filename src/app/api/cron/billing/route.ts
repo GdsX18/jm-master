@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await runBillingAutomation();
+    const result = await runBillingAutomation({ minIntervalMs: 60_000, trigger: 'cron diário' });
     console.log('[Cron Billing]', JSON.stringify(result));
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

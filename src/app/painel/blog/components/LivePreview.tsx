@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Article, PreviewDevice, PreviewTab } from '../types';
+import { sanitizeArticleHtml } from '@/lib/sanitize';
 
 interface LivePreviewProps {
   article: Article;
@@ -277,7 +278,7 @@ export default function LivePreview({ article }: LivePreviewProps) {
               {/* CORPO DO ARTIGO RENDERIZADO */}
               <div
                 className="blog-wysiwyg-rendered-content text-base leading-relaxed text-neutral-800 dark:text-neutral-200 space-y-4"
-                dangerouslySetInnerHTML={{ __html: article.contentHtml || '<p>Nenhum conteúdo inserido ainda.</p>' }}
+                dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(article.contentHtml) || '<p>Nenhum conteúdo inserido ainda.</p>' }}
               />
 
               {/* SEÇÃO DE PERGUNTAS FREQUENTES (FAQ ACCORDION) NO PREVIEW */}

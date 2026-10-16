@@ -35,6 +35,8 @@ export const SinglePostView: React.FC<SinglePostViewProps> = ({ post, relatedPos
   useEffect(() => {
     const key = `jm_view_${post.slug}`;
     try {
+      // Último artigo lido: o formulário de contato usa para atribuir o lead ao artigo
+      sessionStorage.setItem('jm_last_post', `/blog/${post.slug}`);
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, '1');
     } catch {}

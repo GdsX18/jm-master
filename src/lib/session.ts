@@ -12,7 +12,7 @@ export interface CurrentUser {
   permissions: Permissions;
 }
 
-// Usuário da sessão, sempre conferido no banco: bloqueio, exclusão ou troca de perfil valem na hora
+// Usuário da sessão, sempre conferido no banco: bloqueio, exclusão, troca de perfil ou logout valem na hora
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const store = await cookies();
   const session = await verifySessionToken(store.get(SESSION_COOKIE)?.value);
@@ -20,9 +20,20 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   const user = await prisma.user.findUnique({
     where: { id: session.uid },
-    select: { id: true, name: true, email: true, role: true, isBlocked: true, permissions: true, prohibitions: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isBlocked: true,
+      permissions: true,
+      prohibitions: true,
+      sessionVersion: true,
+    },
   });
   if (!user || user.isBlocked) return null;
+  // Sessão encerrada (logout, troca de senha, bloqueio ou troca de perfil)
+  if ((session.sv ?? 0) !== user.sessionVersion) return null;
 
   return {
     id: user.id,
@@ -31,6 +42,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     role: user.role,
     permissions: effectivePermissions(user.role, user.permissions, user.prohibitions),
   };
+}
+
+// Autor das ações registradas na auditoria
+export function actorOf(user: Pick<CurrentUser, 'id' | 'name' | 'email'>) {
+  return { id: user.id, name: user.name, email: user.email };
 }
 
 // Uso nas rotas: const auth = await requirePermission('manageCrm'); if (auth instanceof NextResponse) return auth;

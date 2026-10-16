@@ -7,7 +7,7 @@ export default function RedirectToCustomersPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/painel/customers');
+    router.replace('/painel/customers?new=1');
   }, [router]);
 
   return (

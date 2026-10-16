@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabaseAdmin } from '@/lib/supabase';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { logAudit } from '@/lib/audit';
 import { CUSTOMER_DOCS_BUCKET } from '@/lib/customers';
 
 // DELETE /api/customers/[id]/documents/[docId]
@@ -18,6 +19,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (error) console.warn('[Customer Document Delete] Arquivo não removido do Storage:', error.message);
 
     await prisma.customerDocument.delete({ where: { id: docId } });
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'DELETE',
+      entity: 'customer',
+      entityId: id,
+      summary: `Documento "${document.name}" removido do cliente`,
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[API Customer Document DELETE Error]:', error);

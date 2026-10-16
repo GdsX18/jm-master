@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { logAudit } from '@/lib/audit';
 
 // POST /api/customers/[id]/notes - Registrar observação no cliente
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -18,6 +19,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const note = await prisma.customerNote.create({
       data: { customerId: id, content: text.slice(0, 5000), userEmail: auth.email },
+    });
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'CREATE',
+      entity: 'customer',
+      entityId: id,
+      summary: 'Observação registrada no cliente',
     });
     return NextResponse.json({ success: true, note });
   } catch (error) {

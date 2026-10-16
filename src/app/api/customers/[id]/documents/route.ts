@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { supabaseAdmin } from '@/lib/supabase';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { documentMatchesType } from '@/lib/files';
+import { logAudit } from '@/lib/audit';
 import { CUSTOMER_DOCS_BUCKET, MAX_DOCUMENT_SIZE, ensureCustomerDocsBucket } from '@/lib/customers';
 
 const ALLOWED_TYPES = [
@@ -25,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   try {
     const { id } = await params;
-    const customer = await prisma.customer.findUnique({ where: { id }, select: { id: true } });
+    const customer = await prisma.customer.findUnique({ where: { id }, select: { id: true, name: true } });
     if (!customer) return NextResponse.json({ message: 'Cliente não encontrado' }, { status: 404 });
 
     const form = await req.formData();
@@ -40,6 +42,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ message: 'Tipo de arquivo não permitido (use PDF, imagem, Word, Excel, CSV, TXT ou ZIP)' }, { status: 400 });
     }
 
+    const bytes = Buffer.from(await file.arrayBuffer());
+    // O conteúdo precisa bater com o tipo declarado (impede, por exemplo, um executável renomeado para .pdf)
+    if (!documentMatchesType(bytes, file.type)) {
+      return NextResponse.json({ message: 'O conteúdo do arquivo não corresponde ao tipo informado' }, { status: 400 });
+    }
+
     const displayName = String(form.get('name') || file.name).trim().slice(0, 200) || file.name;
     const safeName = file.name.normalize('NFD').replace(/[^\w.-]/g, '_').slice(-120);
     const storagePath = `${id}/${Date.now()}-${safeName}`;
@@ -47,7 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await ensureCustomerDocsBucket();
     const { error } = await supabaseAdmin.storage
       .from(CUSTOMER_DOCS_BUCKET)
-      .upload(storagePath, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: false });
+      .upload(storagePath, bytes, { contentType: file.type, upsert: false });
     if (error) {
       console.error('[Customer Document Upload Error]:', error);
       return NextResponse.json({ message: 'Falha ao enviar o arquivo para o armazenamento' }, { status: 500 });
@@ -63,6 +71,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         storagePath,
         userEmail: auth.email,
       },
+    });
+
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'CREATE',
+      entity: 'customer',
+      entityId: id,
+      summary: `Documento "${displayName}" anexado ao cliente "${customer.name}"`,
     });
 
     return NextResponse.json({ success: true, document });

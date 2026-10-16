@@ -10,6 +10,8 @@ export interface SessionPayload {
   uid: string;
   role: string;
   exp: number;
+  // Versão da sessão do usuário: logout/troca de senha incrementam e invalidam tokens antigos
+  sv?: number;
 }
 
 const encoder = new TextEncoder();
@@ -48,10 +50,11 @@ async function getKey(): Promise<CryptoKey> {
   );
 }
 
-export async function createSessionToken(uid: string, role: string): Promise<string> {
+export async function createSessionToken(uid: string, role: string, sv = 0): Promise<string> {
   const payload: SessionPayload = {
     uid,
     role,
+    sv,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
   };
   const body = toBase64Url(encoder.encode(JSON.stringify(payload)));

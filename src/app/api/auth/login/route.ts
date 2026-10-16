@@ -2,33 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { BLOG_ONLY_ROLE, SESSION_COOKIE, createSessionToken, sessionCookieOptions } from '@/lib/auth';
 import { hashPassword, isPasswordHashed, verifyPassword } from '@/lib/password';
+import { clientIp, isRateLimited, resetRateLimit } from '@/lib/rate-limit';
+import { logAudit } from '@/lib/audit';
 
-// Limite simples de tentativas por IP (best-effort: vale por instância)
-const MAX_ATTEMPTS = 10;
+// Limite de tentativas por IP e por e-mail, compartilhado entre instâncias (tabela rate_limits)
+const MAX_ATTEMPTS_PER_IP = 20;
+const MAX_ATTEMPTS_PER_EMAIL = 8;
 const WINDOW_MS = 15 * 60 * 1000;
-const attempts = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = attempts.get(ip);
-  if (!entry || entry.resetAt < now) {
-    attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return false;
-  }
-  entry.count += 1;
-  return entry.count > MAX_ATTEMPTS;
-}
 
 const INVALID_CREDENTIALS = 'E-mail ou senha inválidos';
+const TOO_MANY = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
 
 export async function POST(req: NextRequest) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' },
-        { status: 429 }
-      );
+    const ip = clientIp(req);
+    if (await isRateLimited(`login:ip:${ip}`, MAX_ATTEMPTS_PER_IP, WINDOW_MS)) {
+      return NextResponse.json({ error: TOO_MANY }, { status: 429 });
     }
 
     const { email, password } = await req.json();
@@ -40,11 +29,23 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.toLowerCase().trim();
     const cleanPassword = password.trim();
 
+    if (await isRateLimited(`login:email:${cleanEmail}`, MAX_ATTEMPTS_PER_EMAIL, WINDOW_MS)) {
+      return NextResponse.json({ error: TOO_MANY }, { status: 429 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { email: cleanEmail },
     });
 
     if (!user || !(await verifyPassword(cleanPassword, user.password))) {
+      await logAudit({
+        actor: { id: user?.id, name: user?.name || cleanEmail, email: cleanEmail },
+        action: 'LOGIN_FAILED',
+        entity: 'user',
+        entityId: user?.id,
+        summary: `Tentativa de login falhou para ${cleanEmail}`,
+        ip,
+      });
       return NextResponse.json({ error: INVALID_CREDENTIALS }, { status: 401 });
     }
 
@@ -59,6 +60,16 @@ export async function POST(req: NextRequest) {
         data: { password: await hashPassword(cleanPassword) },
       });
     }
+
+    await resetRateLimit(`login:email:${cleanEmail}`);
+    await logAudit({
+      actor: { id: user.id, name: user.name, email: user.email },
+      action: 'LOGIN',
+      entity: 'user',
+      entityId: user.id,
+      summary: `${user.name} entrou no painel`,
+      ip,
+    });
 
     const redirectUrl = user.role === BLOG_ONLY_ROLE ? '/painel/blog' : '/painel';
 
@@ -75,7 +86,11 @@ export async function POST(req: NextRequest) {
       redirectUrl,
     });
 
-    response.cookies.set(SESSION_COOKIE, await createSessionToken(user.id, user.role), sessionCookieOptions());
+    response.cookies.set(
+      SESSION_COOKIE,
+      await createSessionToken(user.id, user.role, user.sessionVersion),
+      sessionCookieOptions()
+    );
     return response;
   } catch (error) {
     console.error('[Auth Login Error]:', error);

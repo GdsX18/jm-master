@@ -1,16 +1,36 @@
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import prisma from './prisma';
 import { supabaseAdmin } from './supabase';
+import { documentError, onlyDigits } from './validators';
 
-export const CUSTOMER_INCLUDE = {
+export { onlyDigits };
+
+// Lista: só o necessário para a tabela (documentos e observações vêm no detalhe)
+export const CUSTOMER_LIST_SELECT = {
+  id: true,
+  name: true,
+  status: true,
+  document: true,
+  type: true,
+  code: true,
+  city: true,
+  state: true,
+  phone: true,
+  email: true,
+  createdAt: true,
+  groups: { select: { id: true, name: true, isActive: true } },
+} satisfies Prisma.CustomerSelect;
+
+export const CUSTOMER_DETAIL_INCLUDE = {
   groups: { select: { id: true, name: true, isActive: true } },
   documents: { orderBy: { createdAt: 'desc' as const } },
   noteEntries: { orderBy: { createdAt: 'desc' as const } },
 } satisfies Prisma.CustomerInclude;
 
-type CustomerWithRelations = Prisma.CustomerGetPayload<{ include: typeof CUSTOMER_INCLUDE }>;
+type CustomerListRow = Prisma.CustomerGetPayload<{ select: typeof CUSTOMER_LIST_SELECT }>;
+type CustomerDetailRow = Prisma.CustomerGetPayload<{ include: typeof CUSTOMER_DETAIL_INCLUDE }>;
 
-// "type" (e não interface) para ser aceito como JSON pelo Prisma
 export type ContactInput = {
   name: string;
   phone: string;
@@ -18,27 +38,32 @@ export type ContactInput = {
   role: string;
 };
 
-export function onlyDigits(value: unknown): string {
-  return String(value ?? '').replace(/\D/g, '');
-}
-
-// Formato que o painel de clientes espera
-export function mapCustomer(c: CustomerWithRelations) {
-  const data = (c.data as Record<string, any>) || {};
+export function mapCustomerListItem(c: CustomerListRow) {
   return {
     id: c.id,
     name: c.name,
-    document: data.document || '',
-    street: data.street || '',
-    number: data.number || '',
-    city: data.city || '',
-    state: data.state || '',
-    zipCode: data.zipCode || '',
-    code: data.code || '',
-    type: data.type === 'PRE_PAGO' ? 'PRE_PAGO' : 'POS_PAGO',
+    document: c.document || '',
+    type: c.type === 'PRE_PAGO' ? 'PRE_PAGO' : 'POS_PAGO',
+    code: c.code || '',
+    city: c.city || '',
+    state: c.state || '',
+    phone: c.phone || '',
+    email: c.email || '',
     isActive: c.status === 'ATIVO',
     groupIds: c.groups.map((g) => g.id),
     groups: c.groups,
+    createdAt: c.createdAt.toISOString(),
+  };
+}
+
+// Formato completo que o formulário do painel espera
+export function mapCustomerDetail(c: CustomerDetailRow) {
+  const data = (c.data as Record<string, any>) || {};
+  return {
+    ...mapCustomerListItem(c),
+    street: c.street || '',
+    number: c.number || '',
+    zipCode: c.zipCode || '',
     contacts: Array.isArray(data.contacts) ? data.contacts : [],
     documents: c.documents.map((d) => ({
       id: d.id,
@@ -55,61 +80,80 @@ export function mapCustomer(c: CustomerWithRelations) {
       userEmail: n.userEmail || '',
       createdAt: n.createdAt.toISOString(),
     })),
-    createdAt: c.createdAt.toISOString(),
   };
 }
+
+const text = (max: number) => z.preprocess((v) => (v === null || v === undefined ? '' : String(v)), z.string().trim().max(max));
+
+const contactSchema = z.object({
+  name: text(120),
+  phone: text(40),
+  email: text(160),
+  role: text(80),
+});
+
+export const customerInputSchema = z
+  .object({
+    name: text(200).pipe(z.string().min(1, 'Razão social / Nome é obrigatório')),
+    document: text(30),
+    code: text(40),
+    type: z.enum(['PRE_PAGO', 'POS_PAGO']).catch('POS_PAGO'),
+    isActive: z.boolean().catch(true),
+    groupIds: z.array(z.string().min(1)).catch([]),
+    street: text(200),
+    number: text(20),
+    city: text(120),
+    state: text(2),
+    zipCode: text(10),
+    contacts: z.array(contactSchema).catch([]),
+  })
+  .superRefine((value, ctx) => {
+    const error = documentError(value.document);
+    if (error) ctx.addIssue({ code: z.ZodIssueCode.custom, message: error, path: ['document'] });
+    for (const contact of value.contacts) {
+      if (contact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `E-mail inválido no contato "${contact.name || contact.email}"`, path: ['contacts'] });
+      }
+    }
+  });
 
 // Valida e normaliza o corpo de criação/edição de cliente
-export function parseCustomerBody(body: any) {
-  const name = typeof body?.name === 'string' ? body.name.trim() : '';
-  if (!name) return { error: 'Razão social / Nome é obrigatório' as const };
-
-  const contacts: ContactInput[] = Array.isArray(body.contacts)
-    ? body.contacts
-        .map((c: any) => ({
-          name: String(c?.name ?? '').trim(),
-          phone: String(c?.phone ?? '').trim(),
-          email: String(c?.email ?? '').trim(),
-          role: String(c?.role ?? '').trim(),
-        }))
-        .filter((c: ContactInput) => c.name || c.phone || c.email)
-    : [];
-
-  const groupIds: string[] = Array.isArray(body.groupIds)
-    ? body.groupIds.filter((id: unknown): id is string => typeof id === 'string' && !!id)
-    : [];
-
-  const document = typeof body.document === 'string' ? body.document.trim() : '';
+export function parseCustomerBody(body: unknown) {
+  const parsed = customerInputSchema.safeParse(body ?? {});
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message || 'Dados inválidos' };
+  const input = parsed.data;
+  const contacts = input.contacts.filter((c) => c.name || c.phone || c.email);
+  const documentDigits = onlyDigits(input.document);
 
   return {
-    name,
-    isActive: body.isActive !== false,
-    groupIds,
+    name: input.name,
+    isActive: input.isActive,
+    groupIds: Array.from(new Set(input.groupIds)),
     contacts,
-    documentDigits: onlyDigits(document),
-    data: {
-      document,
-      documentDigits: onlyDigits(document),
-      street: String(body.street ?? '').trim(),
-      number: String(body.number ?? '').trim(),
-      city: String(body.city ?? '').trim(),
-      state: String(body.state ?? '').trim(),
-      zipCode: String(body.zipCode ?? '').trim(),
-      code: String(body.code ?? '').trim(),
-      type: body.type === 'PRE_PAGO' ? 'PRE_PAGO' : 'POS_PAGO',
-      contacts,
-    } satisfies Prisma.InputJsonObject,
+    columns: {
+      name: input.name,
+      company: input.name,
+      email: contacts[0]?.email || null,
+      phone: contacts[0]?.phone || null,
+      status: input.isActive ? 'ATIVO' : 'INATIVO',
+      document: input.document || null,
+      documentDigits: documentDigits || null,
+      type: input.type,
+      code: input.code || null,
+      street: input.street || null,
+      number: input.number || null,
+      city: input.city || null,
+      state: input.state.toUpperCase() || null,
+      zipCode: input.zipCode || null,
+    },
   };
 }
 
-// CPF/CNPJ duplicado em outro cliente
-export async function findDocumentOwner(documentDigits: string, excludeId?: string) {
+// CPF/CNPJ duplicado em outro cliente (a coluna documentDigits também é UNIQUE no banco)
+export async function findDocumentOwner(documentDigits: string | null, excludeId?: string) {
   if (!documentDigits) return null;
   return prisma.customer.findFirst({
-    where: {
-      data: { path: ['documentDigits'], equals: documentDigits },
-      ...(excludeId ? { NOT: { id: excludeId } } : {}),
-    },
+    where: { documentDigits, ...(excludeId ? { NOT: { id: excludeId } } : {}) },
     select: { id: true, name: true },
   });
 }

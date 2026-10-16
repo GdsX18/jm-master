@@ -1,6 +1,7 @@
 import prisma from './prisma';
 import { BlogPost, SEOData } from '@/data/posts';
 import { DEFAULT_OG_IMAGE, resolvePostCanonical } from './site';
+import { sanitizeArticleHtml } from './sanitize';
 
 function toIsoString(value: unknown): string | undefined {
   if (!value) return undefined;
@@ -72,7 +73,8 @@ function mapDbToBlogPost(dbPost: any): BlogPost {
     title: dbPost.title,
     excerpt: dbPost.excerpt,
     content: Array.isArray(dbPost.content) ? dbPost.content : [],
-    contentHtml: dbPost.contentHtml || undefined,
+    // Sanitizado também na leitura: cobre artigos gravados antes da sanitização na escrita
+    contentHtml: dbPost.contentHtml ? sanitizeArticleHtml(dbPost.contentHtml) : undefined,
     category: dbPost.category,
     date: dbPost.date || 'Hoje',
     readTime: dbPost.readTime || '4 min',
@@ -170,7 +172,7 @@ export async function saveStoredPost(post: BlogPost): Promise<BlogPost | null> {
           title: post.title,
           excerpt: post.excerpt,
           content: post.content as any,
-          contentHtml: post.contentHtml || null,
+          contentHtml: sanitizeArticleHtml(post.contentHtml) || null,
           category: post.category,
           date: post.date,
           readTime: post.readTime,
@@ -218,7 +220,7 @@ export async function saveStoredPost(post: BlogPost): Promise<BlogPost | null> {
         title: post.title,
         excerpt: post.excerpt,
         content: post.content as any,
-        contentHtml: post.contentHtml || null,
+        contentHtml: sanitizeArticleHtml(post.contentHtml) || null,
         category: post.category,
         date: post.date,
         readTime: post.readTime,

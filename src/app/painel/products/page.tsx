@@ -1,691 +1,533 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '../lib/api';
 import { peekCache, setCache } from '../lib/cache';
+import { formatBRL, parseMoney } from '../lib/format';
+import { useNotify } from '../components/ui/Notifications';
+import { clearQueryParams, useQueryParams } from '../hooks/useQueryParams';
 
 interface Product {
   id: string;
   name: string;
+  description: string;
+  price: number;
+  category: string;
   isRequired: boolean;
+  active: boolean;
+  recurring: boolean;
 }
 
 interface Group {
   id: string;
   name: string;
   isActive: boolean;
+  customerCount: number;
+  priceCount: number;
 }
 
-interface GroupProductPrice {
-  groupId: string;
-  productId: string;
-  price: number;
+type ProductDraft = Omit<Product, 'id'> & { priceText: string };
+
+const EMPTY_DRAFT: ProductDraft = {
+  name: '',
+  description: '',
+  price: 0,
+  priceText: '',
+  category: '',
+  isRequired: false,
+  active: true,
+  recurring: true,
+};
+
+// Campo monetário "digitando centavos": 1234 → R$ 12,34
+function centsInput(raw: string) {
+  const digits = raw.replace(/\D/g, '');
+  return digits ? parseFloat(digits) / 100 : 0;
 }
 
 export default function ProductsPage() {
-  // Estado de listagem
-  const [mainTab, setMainTab] = useState<'precos' | 'catalogo'>('precos');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
-
-  // Estado de controle de carregamento
+  const { toast, confirm } = useNotify();
+  const params = useQueryParams();
+  const [tab, setTab] = useState<'precos' | 'catalogo'>('precos');
+  const [products, setProducts] = useState<Product[]>(() => peekCache<Product[]>('/api/products') || []);
+  const [groups, setGroups] = useState<Group[]>(() => peekCache<Group[]>('/api/products/groups') || []);
   const [loadingList, setLoadingList] = useState(true);
+
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [prices, setPrices] = useState<Record<string, number>>({});
   const [loadingPrices, setLoadingPrices] = useState(false);
-  const [loadingSave, setLoadingSave] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [savingPrices, setSavingPrices] = useState(false);
+  const [pricesDirty, setPricesDirty] = useState(false);
 
-  // Estado de preços locais do grupo selecionado
-  const [productPrices, setProductPrices] = useState<Record<string, number>>({});
-
-  // Filtros locais
   const [groupSearch, setGroupSearch] = useState('');
   const [productSearch, setProductSearch] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
 
-  // Criação e Exclusão de Produtos
-  const [newProductName, setNewProductName] = useState('');
-  const [newProductIsRequired, setNewProductIsRequired] = useState(false);
-  const [creatingProduct, setCreatingProduct] = useState(false);
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string | null; draft: ProductDraft } | null>(null);
+  const [savingProduct, setSavingProduct] = useState(false);
 
-  // Edição de Produto
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editProductName, setEditProductName] = useState('');
-  const [editProductIsRequired, setEditProductIsRequired] = useState(false);
-  const [savingEdit, setSavingEdit] = useState(false);
-
-  // 1. Carregar grupos e catálogo de produtos do backend
-  const loadCatalogAndGroups = async () => {
-    // Com dados em cache a lista continua visível enquanto atualiza
-    if (!peekCache('/api/products/groups')) setLoadingList(true);
+  const load = async () => {
     try {
-      const token = localStorage.getItem('@JMMaster:token');
-
-      // Produtos e grupos em paralelo
-      const [prodRes, groupRes] = await Promise.all([
-        fetch('/api/products', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        fetch('/api/products/groups', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-      ]);
-      let prodData: Product[] = [];
-      if (prodRes.ok) {
-        prodData = await prodRes.json();
-        setProducts(prodData);
-        setCache('/api/products', prodData);
-      }
-
-      if (groupRes.ok) {
-        const groupData = await groupRes.json();
-        setGroups(groupData);
-        setCache('/api/products/groups', groupData);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar dados do catálogo:', err);
-      setMessage({ type: 'error', text: 'Não foi possível se conectar com o servidor.' });
+      const [prod, grp] = await Promise.all([api<Product[]>('/api/products'), api<Group[]>('/api/products/groups')]);
+      setProducts(prod);
+      setGroups(grp);
+      setCache('/api/products', prod);
+      setCache('/api/products/groups', grp);
+      return { prod, grp };
+    } catch (e) {
+      toast.error('Erro ao carregar o catálogo', e instanceof Error ? e.message : undefined);
+      return null;
     } finally {
       setLoadingList(false);
     }
   };
 
   useEffect(() => {
-    // Dados da última visita aparecem na hora; a requisição atualiza em seguida
-    const cachedProducts = peekCache<Product[]>('/api/products');
-    const cachedGroups = peekCache<Group[]>('/api/products/groups');
-    if (cachedProducts) setProducts(cachedProducts);
-    if (cachedGroups) {
-      setGroups(cachedGroups);
-      setLoadingList(false);
-    }
-    loadCatalogAndGroups();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 2. Carregar preços específicos quando um grupo for selecionado
-  const handleSelectGroup = async (group: Group) => {
+  // ?group=<id> (vindo da aba Grupos de Clientes) já abre a tabela daquele grupo
+  useEffect(() => {
+    const groupId = params?.get('group');
+    if (!groupId || groups.length === 0) return;
+    const group = groups.find((g) => g.id === groupId);
+    if (group) selectGroup(group);
+    clearQueryParams('group');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params, groups.length]);
+
+  const activeProducts = useMemo(() => products.filter((p) => p.active), [products]);
+
+  const selectGroup = async (group: Group) => {
+    if (pricesDirty) {
+      const ok = await confirm({ title: 'Descartar alterações?', message: 'Os preços alterados neste grupo ainda não foram salvos.', confirmLabel: 'Descartar', variant: 'warning' });
+      if (!ok) return;
+    }
     setSelectedGroup(group);
     setLoadingPrices(true);
-    setMessage(null);
+    setPricesDirty(false);
     try {
-      const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`/api/products/group-prices/${group.id}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Erro ao carregar os preços definidos para o grupo.');
-      }
-
-      const pricesData: GroupProductPrice[] = await res.json();
-      const initialPrices: Record<string, number> = {};
-      // Inicializar com 0 todos os produtos
-      products.forEach(p => {
-        initialPrices[p.id] = 0;
-      });
-      // Sobrescrever com os preços já configurados no banco
-      pricesData.forEach(gp => {
-        initialPrices[gp.productId] = gp.price;
-      });
-      setProductPrices(initialPrices);
-    } catch (err: any) {
-      console.error('Erro ao carregar preços do grupo:', err);
+      const data = await api<{ productId: string; price: number }[]>(`/api/products/group-prices/${group.id}`);
+      const initial: Record<string, number> = {};
+      data.forEach((gp) => (initial[gp.productId] = gp.price));
+      setPrices(initial);
+    } catch (e) {
       // Sem os preços carregados não deixamos salvar, para não apagar a tabela existente
       setSelectedGroup(null);
-      setProductPrices({});
-      setMessage({ type: 'error', text: err.message || 'Erro ao carregar os preços definidos para o grupo.' });
+      toast.error('Erro ao carregar preços', e instanceof Error ? e.message : undefined);
     } finally {
       setLoadingPrices(false);
     }
   };
 
-  // Formatador monetário
-  const formatBRL = (value: number | undefined) => {
-    const val = value ?? 0;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(val);
+  const setPrice = (productId: string, value: number | undefined) => {
+    setPrices((prev) => {
+      const next = { ...prev };
+      if (value === undefined) delete next[productId];
+      else next[productId] = value;
+      return next;
+    });
+    setPricesDirty(true);
   };
 
-  // Alteração de preços
-  const handlePriceChangeRaw = (productId: string, rawValue: string) => {
-    const digits = rawValue.replace(/\D/g, '');
-    if (!digits) {
-      setProductPrices(prev => ({ ...prev, [productId]: 0 }));
-      return;
-    }
-    const numericValue = parseFloat(digits) / 100;
-    setProductPrices(prev => ({ ...prev, [productId]: numericValue }));
+  const fillWithBasePrices = () => {
+    setPrices((prev) => {
+      const next = { ...prev };
+      activeProducts.forEach((p) => {
+        if (next[p.id] === undefined) next[p.id] = p.price;
+      });
+      return next;
+    });
+    setPricesDirty(true);
   };
 
-  // 3. Salvar valores dos produtos para o grupo selecionado
-  const handleSavePrices = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const savePrices = async () => {
     if (!selectedGroup) return;
-    setLoadingSave(true);
-    setMessage(null);
-
-    // Validação de itens obrigatórios (valores informados, aceitando 0)
-    const missingRequired = products
-      .filter(p => p.isRequired)
-      .some(p => productPrices[p.id] === undefined);
-
-    if (missingRequired) {
-      setMessage({ type: 'error', text: 'Por favor, insira valores (mesmo que R$ 0,00) para todos os produtos obrigatórios (*).' });
-      setLoadingSave(false);
-      return;
+    const missing = activeProducts.filter((p) => p.isRequired && prices[p.id] === undefined);
+    if (missing.length) {
+      return toast.warning('Preços obrigatórios', `Defina o preço de: ${missing.map((p) => p.name).join(', ')}`);
     }
-
+    setSavingPrices(true);
     try {
-      const token = localStorage.getItem('@JMMaster:token');
-
-      const payload = {
-        products: Object.entries(productPrices).map(([productId, price]) => ({
-          productId,
-          price
-        }))
-      };
-
-      const response = await fetch(`/api/products/group-prices/${selectedGroup.id}`, {
+      await api(`/api/products/group-prices/${selectedGroup.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
+        json: { products: Object.entries(prices).map(([productId, price]) => ({ productId, price })) },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Falha ao salvar a tabela de preços do grupo.');
-      }
-
-      setMessage({ type: 'success', text: `Tabela de preços do grupo "${selectedGroup.name}" atualizada com sucesso!` });
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      setPricesDirty(false);
+      toast.success('Tabela salva', `Preços do grupo "${selectedGroup.name}" atualizados.`);
+      load();
+    } catch (e) {
+      toast.error('Erro ao salvar preços', e instanceof Error ? e.message : undefined);
     } finally {
-      setLoadingSave(false);
+      setSavingPrices(false);
     }
   };
 
-  const handleCreateProduct = async (e: React.FormEvent) => {
+  const monthlyTotal = activeProducts.filter((p) => p.recurring).reduce((s, p) => s + (prices[p.id] ?? 0), 0);
+  const oneTimeTotal = activeProducts.filter((p) => !p.recurring).reduce((s, p) => s + (prices[p.id] ?? 0), 0);
+
+  const openNew = () => setEditing({ id: null, draft: { ...EMPTY_DRAFT } });
+  const openEdit = (p: Product) =>
+    setEditing({ id: p.id, draft: { ...p, priceText: p.price ? p.price.toFixed(2).replace('.', ',') : '' } });
+
+  const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProductName.trim()) return;
-    setCreatingProduct(true);
-    setMessage(null);
+    if (!editing) return;
+    const { draft, id } = editing;
+    setSavingProduct(true);
     try {
-      const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: newProductName.trim(),
-          isRequired: newProductIsRequired
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Falha ao criar o produto.');
-      }
-
-      setMessage({ type: 'success', text: `Produto "${newProductName}" cadastrado com sucesso!` });
-      setNewProductName('');
-      setNewProductIsRequired(false);
-      await loadCatalogAndGroups(); // recarrega a lista
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      const payload = { ...draft, price: parseMoney(draft.priceText) };
+      if (id) await api(`/api/products/${id}`, { method: 'PUT', json: payload });
+      else await api('/api/products', { method: 'POST', json: payload });
+      toast.success(id ? 'Produto atualizado' : 'Produto cadastrado', draft.name);
+      setEditing(null);
+      load();
+    } catch (err) {
+      toast.error('Erro ao salvar produto', err instanceof Error ? err.message : undefined);
     } finally {
-      setCreatingProduct(false);
+      setSavingProduct(false);
     }
   };
 
-  const handleDeleteProduct = async (product: Product) => {
-    if (!window.confirm(`ATENÇÃO: Deseja realmente excluir o produto "${product.name}"? Esta ação não poderá ser desfeita.`)) return;
-
-    setDeletingProductId(product.id);
-    setMessage(null);
+  const toggleActive = async (p: Product) => {
     try {
-      const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`/api/products/${product.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Falha ao excluir o produto.');
-      }
-
-      setMessage({ type: 'success', text: `Produto "${product.name}" excluído com sucesso!` });
-      await loadCatalogAndGroups(); // recarrega a lista
-    } catch (err: any) {
-      // Aqui exibiremos os alertas de grupos vinculados, retornados pelo backend
-      setMessage({ type: 'error', text: err.message });
-    } finally {
-      setDeletingProductId(null);
+      await api(`/api/products/${p.id}`, { method: 'PUT', json: { active: !p.active } });
+      toast.success(p.active ? 'Produto inativado' : 'Produto reativado', p.active ? 'Ele deixa de aparecer em tabelas de preço e propostas novas.' : p.name);
+      load();
+    } catch (e) {
+      toast.error('Erro ao alterar status', e instanceof Error ? e.message : undefined);
     }
   };
 
-  const handleOpenEdit = (product: Product) => {
-    setEditingProduct(product);
-    setEditProductName(product.name);
-    setEditProductIsRequired(product.isRequired);
-    setMessage(null);
-  };
-
-  const handleUpdateProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProduct || !editProductName.trim()) return;
-    setSavingEdit(true);
-    setMessage(null);
+  const removeProduct = async (p: Product) => {
+    const ok = await confirm({
+      title: 'Excluir produto',
+      message: `Excluir "${p.name}"? Os preços dele em todos os grupos serão apagados. Se o produto só saiu de linha, prefira inativar.`,
+      confirmLabel: 'Sim, excluir',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
-      const token = localStorage.getItem('@JMMaster:token');
-      const res = await fetch(`/api/products/${editingProduct.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: editProductName.trim(),
-          isRequired: editProductIsRequired
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Falha ao atualizar o produto.');
-      }
-
-      setMessage({ type: 'success', text: `Produto "${editProductName}" atualizado com sucesso!` });
-      setEditingProduct(null);
-      await loadCatalogAndGroups(); // recarrega a lista
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
-    } finally {
-      setSavingEdit(false);
+      await api(`/api/products/${p.id}`, { method: 'DELETE' });
+      toast.success('Produto excluído', p.name);
+      load();
+    } catch (e) {
+      toast.error('Não foi possível excluir', e instanceof Error ? e.message : undefined);
     }
   };
 
-  // Filtrar lista de grupos pela busca
-  const filteredGroups = groups.filter(g =>
-    g.name.toLowerCase().includes(groupSearch.toLowerCase())
+  const filteredGroups = groups.filter((g) => g.name.toLowerCase().includes(groupSearch.toLowerCase()));
+  const visibleProducts = products.filter(
+    (p) =>
+      (showInactive || p.active) &&
+      (p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.category.toLowerCase().includes(productSearch.toLowerCase()))
   );
+  const categories = Array.from(new Set(products.map((p) => p.category).filter(Boolean))).sort();
 
   return (
     <div className="jm-page">
-
-      {/* Cabeçalho da Página */}
       <header className="jm-page-header">
         <div>
           <h1 className="jm-page-title">Produtos e tabela de preços</h1>
-          <p className="jm-page-desc">
-            Defina os valores comerciais por grupo ou adicione novos produtos ao catálogo.
-          </p>
+          <p className="jm-page-desc">Catálogo comercial (mensalidades e cobranças únicas) e preços por grupo corporativo.</p>
         </div>
+        {tab === 'catalogo' && (
+          <button onClick={openNew} className="jm-btn jm-btn-accent self-start sm:self-auto">
+            + Novo produto
+          </button>
+        )}
       </header>
 
-      {/* Controle de Abas */}
       <div className="jm-tabs">
-        <button
-          onClick={() => { setMainTab('precos'); setMessage(null); }}
-          className={`jm-tab ${mainTab === 'precos' ? 'jm-tab-active' : ''}`}
-        >
+        <button onClick={() => setTab('precos')} className={`jm-tab ${tab === 'precos' ? 'jm-tab-active' : ''}`}>
           Tabela de preços
         </button>
-        <button
-          onClick={() => { setMainTab('catalogo'); setMessage(null); }}
-          className={`jm-tab ${mainTab === 'catalogo' ? 'jm-tab-active' : ''}`}
-        >
-          Catálogo de produtos
+        <button onClick={() => setTab('catalogo')} className={`jm-tab ${tab === 'catalogo' ? 'jm-tab-active' : ''}`}>
+          Catálogo ({activeProducts.length})
         </button>
       </div>
 
-      {mainTab === 'precos' ? (
-        /* ABA 1: TABELA DE PREÇOS */
+      {tab === 'precos' ? (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-
-        {/* COLUNA ESQUERDA: LISTA DE GRUPOS CORPORATIVOS */}
-        <div className="jm-card flex flex-col overflow-hidden lg:self-start">
-          <div className="border-b border-jm-border px-4 py-3">
-            <h3 className="jm-card-title">Grupos corporativos</h3>
-            <p className="mt-0.5 text-xs text-jm-muted">Selecione um grupo para configurar os preços.</p>
-            <div className="relative mt-3">
-              <input
-                type="text"
-                value={groupSearch}
-                onChange={(e) => setGroupSearch(e.target.value)}
-                placeholder="Pesquisar grupo..."
-                className="jm-input"
-              />
+          <div className="jm-card flex flex-col overflow-hidden lg:self-start">
+            <div className="border-b border-jm-border px-4 py-3">
+              <h3 className="jm-card-title">Grupos corporativos</h3>
+              <p className="mt-0.5 text-xs text-jm-muted">Selecione um grupo para configurar os preços.</p>
+              <input value={groupSearch} onChange={(e) => setGroupSearch(e.target.value)} placeholder="Pesquisar grupo..." className="jm-input mt-3" />
+            </div>
+            <div className="max-h-[300px] divide-y divide-jm-border overflow-y-auto lg:max-h-[520px]">
+              {loadingList && groups.length === 0 ? (
+                <div className="jm-empty py-8">Carregando...</div>
+              ) : filteredGroups.length === 0 ? (
+                <div className="jm-empty py-8">Nenhum grupo. Crie em Clientes → Grupos.</div>
+              ) : (
+                filteredGroups.map((group) => {
+                  const selected = selectedGroup?.id === group.id;
+                  return (
+                    <button
+                      key={group.id}
+                      onClick={() => selectGroup(group)}
+                      className={`relative flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors ${
+                        selected
+                          ? 'bg-jm-primary-soft before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-jm-accent-line'
+                          : 'hover:bg-jm-hover'
+                      }`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-jm-fg">{group.name}</span>
+                        <span className="block text-[11px] text-jm-muted">
+                          {group.customerCount} cliente(s) · {group.priceCount} preço(s)
+                        </span>
+                      </span>
+                      <span className={`jm-badge shrink-0 ${group.isActive ? 'jm-badge-success' : 'jm-badge-danger'}`}>
+                        {group.isActive ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
-          {/* Lista de Grupos */}
-          <div className="max-h-[300px] divide-y divide-jm-border overflow-y-auto lg:max-h-[520px]">
-            {loadingList ? (
-              <div className="jm-empty py-8">Carregando grupos corporativos...</div>
-            ) : filteredGroups.length === 0 ? (
-              <div className="jm-empty py-8">Nenhum grupo corporativo cadastrado.</div>
-            ) : (
-              filteredGroups.map((group) => {
-                const isSelected = selectedGroup?.id === group.id;
-                return (
-                  <button
-                    key={group.id}
-                    onClick={() => handleSelectGroup(group)}
-                    className={`relative flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition-colors duration-100 cursor-pointer ${
-                      isSelected
-                        ? 'bg-jm-primary-soft text-jm-fg before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-jm-accent-line'
-                        : 'text-jm-fg hover:bg-jm-hover'
-                    }`}
-                  >
-                    <span className="min-w-0 truncate text-sm font-medium">{group.name}</span>
-                    <span className={`jm-badge shrink-0 ${group.isActive ? 'jm-badge-success' : 'jm-badge-danger'}`}>
-                      {group.isActive ? 'Ativo' : 'Inativo'}
-                    </span>
+          <div className="min-w-0">
+            {selectedGroup ? (
+              <div className="jm-card overflow-hidden">
+                <div className="flex flex-col gap-2 border-b border-jm-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-5">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-sm font-semibold text-jm-fg">
+                      Tabela comercial · <span className="text-jm-primary-text">{selectedGroup.name}</span>
+                    </h2>
+                    <p className="mt-0.5 text-xs text-jm-muted">
+                      Deixe em branco os produtos que o grupo não contrata. <span className="font-semibold text-jm-accent-text">*</span> obrigatório.
+                    </p>
+                  </div>
+                  <button type="button" onClick={fillWithBasePrices} className="jm-btn jm-btn-secondary jm-btn-sm self-start">
+                    Preencher vazios com preço base
                   </button>
-                );
-              })
+                </div>
+
+                {loadingPrices ? (
+                  <div className="jm-empty py-16">Buscando tabela de valores...</div>
+                ) : activeProducts.length === 0 ? (
+                  <div className="jm-empty py-16">Nenhum produto ativo no catálogo.</div>
+                ) : (
+                  <div className="max-h-[520px] divide-y divide-jm-border overflow-y-auto">
+                    {activeProducts.map((p) => {
+                      const value = prices[p.id];
+                      return (
+                        <div key={p.id} className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-jm-hover md:px-5">
+                          <div className="min-w-0">
+                            <span className="flex items-center gap-1.5 text-sm font-medium text-jm-fg">
+                              <span className="truncate">{p.name}</span>
+                              {p.isRequired && <span className="font-semibold text-jm-accent-text">*</span>}
+                              <span className={`jm-badge ${p.recurring ? 'jm-badge-primary' : 'jm-badge-neutral'}`}>
+                                {p.recurring ? 'Mensal' : 'Único'}
+                              </span>
+                            </span>
+                            <span className="block text-xs text-jm-muted">Preço base: {formatBRL(p.price)}</span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <input
+                              value={value === undefined ? '' : formatBRL(value)}
+                              placeholder="Não contratado"
+                              onChange={(e) => setPrice(p.id, e.target.value.replace(/\D/g, '') ? centsInput(e.target.value) : undefined)}
+                              className="jm-input w-36 text-right font-mono tabular-nums"
+                            />
+                            {value !== undefined && !p.isRequired && (
+                              <button type="button" onClick={() => setPrice(p.id, undefined)} className="jm-icon-btn h-8 w-8" title="Remover do grupo">
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="jm-card-footer flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-jm-muted">
+                    Mensalidade sugerida: <strong className="tabular-nums text-jm-fg">{formatBRL(monthlyTotal)}</strong>
+                    {oneTimeTotal > 0 && (
+                      <>
+                        {' · '}Cobrança única: <strong className="tabular-nums text-jm-fg">{formatBRL(oneTimeTotal)}</strong>
+                      </>
+                    )}
+                  </p>
+                  <button onClick={savePrices} disabled={loadingPrices || savingPrices || !pricesDirty} className="jm-btn jm-btn-primary w-full sm:w-auto">
+                    {savingPrices ? 'Salvando...' : pricesDirty ? 'Salvar tabela de preços' : 'Tabela salva'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="jm-card jm-empty h-full min-h-[280px]">
+                <h3 className="text-sm font-semibold text-jm-fg">Nenhum grupo selecionado</h3>
+                <p className="max-w-sm text-xs text-jm-muted">Selecione um grupo corporativo para configurar os preços dos produtos contratados.</p>
+              </div>
             )}
           </div>
         </div>
-
-        {/* COLUNA DIREITA: FORMULÁRIO DE PREÇOS */}
-        <div className="min-w-0">
-          {selectedGroup ? (
-            <form onSubmit={handleSavePrices} className="jm-card overflow-hidden">
-
-              {/* Cabeçalho do Formulário */}
-              <div className="flex flex-col gap-2 border-b border-jm-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-5">
-                <div className="min-w-0">
-                  <h2 className="truncate text-sm font-semibold text-jm-fg">
-                    Tabela comercial · <span className="text-jm-primary-text">{selectedGroup.name}</span>
-                  </h2>
-                  <p className="mt-0.5 text-xs text-jm-muted">
-                    Itens com <span className="font-semibold text-jm-accent-text">*</span> são de preenchimento obrigatório.
-                  </p>
-                </div>
-                <span className="jm-badge jm-badge-neutral self-start font-mono sm:self-auto">
-                  Grupo ID: {selectedGroup.id.substring(0, 8)}...
-                </span>
-              </div>
-
-              {/* Feedback do Salvamento */}
-              {message && (
-                <div className="px-4 pt-4 md:px-5">
-                  <div className={`jm-alert ${message.type === 'success' ? 'jm-alert-success' : 'jm-alert-danger'}`}>
-                    {message.text}
-                  </div>
-                </div>
-              )}
-
-              {/* Listagem de Produtos com inputs de valores */}
-              {loadingPrices ? (
-                <div className="jm-empty py-16">Buscando tabela de valores...</div>
-              ) : (
-                <div className="max-h-[520px] divide-y divide-jm-border overflow-y-auto">
-                  {products.map((product) => {
-                    const priceValue = productPrices[product.id] ?? 0;
-                    return (
-                      <div
-                        key={product.id}
-                        className="flex items-center justify-between gap-3 px-4 py-2.5 transition-colors duration-75 hover:bg-jm-hover md:px-5"
-                      >
-                        <div className="min-w-0">
-                          <span className="flex items-center text-sm font-medium text-jm-fg">
-                            <span className="truncate">{product.name}</span>
-                            {product.isRequired && <span className="ml-1 font-semibold text-jm-accent-text">*</span>}
-                          </span>
-                          <span className="block text-xs text-jm-muted">
-                            {product.isRequired ? 'Obrigatório' : 'Opcional'}
-                          </span>
-                        </div>
-                        <div className="flex shrink-0 items-center">
-                          <input
-                            type="text"
-                            value={formatBRL(priceValue)}
-                            onChange={(e) => handlePriceChangeRaw(product.id, e.target.value)}
-                            className="jm-input w-32 text-right font-mono tabular-nums sm:w-36"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Botões de Ação */}
-              <div className="jm-card-footer">
-                <button
-                  type="submit"
-                  disabled={loadingPrices || loadingSave}
-                  className="jm-btn jm-btn-primary w-full sm:w-auto"
-                >
-                  {loadingSave ? 'Salvando valores...' : 'Salvar tabela de preços'}
-                </button>
-              </div>
-
-            </form>
-          ) : (
-            <div className="jm-card jm-empty h-full min-h-[280px]">
-              <h3 className="text-sm font-semibold text-jm-fg">Nenhum grupo selecionado</h3>
-              <p className="max-w-sm text-xs text-jm-muted">
-                Selecione um grupo corporativo na lista para carregar e configurar os preços dos produtos contratados.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
       ) : (
-        /* ABA 2: CATÁLOGO DE PRODUTOS */
-        <div className="space-y-5">
-          {/* Feedback de mensagens globais para catálogo */}
-          {message && (
-            <div className={`jm-alert ${message.type === 'success' ? 'jm-alert-success' : 'jm-alert-danger'}`}>
-              {message.text}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)]">
-            {/* COLUNA ESQUERDA: CADASTRAR NOVO PRODUTO */}
-            <div className="lg:self-start">
-              <form onSubmit={handleCreateProduct} className="jm-card overflow-hidden">
-                <div className="border-b border-jm-border px-4 py-3">
-                  <h3 className="jm-card-title">Novo produto</h3>
-                  <p className="mt-0.5 text-xs text-jm-muted">Adicione serviços ou produtos ao catálogo comercial.</p>
-                </div>
-
-                <div className="space-y-4 p-4">
-                  <div>
-                    <label className="jm-label">Nome do produto *</label>
-                    <input
-                      type="text"
-                      value={newProductName}
-                      onChange={(e) => setNewProductName(e.target.value)}
-                      placeholder="Ex: Assinatura Mensal"
-                      className="jm-input"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="isRequired"
-                        checked={newProductIsRequired}
-                        onChange={(e) => setNewProductIsRequired(e.target.checked)}
-                        className="h-4 w-4 cursor-pointer"
-                      />
-                      <label htmlFor="isRequired" className="cursor-pointer text-sm font-medium text-jm-fg">
-                        Produto obrigatório
-                      </label>
-                    </div>
-                    <p className="jm-help">
-                      Produtos obrigatórios exigem que o administrador informe um preço (mesmo que R$ 0,00) ao salvar a tabela de um grupo.
-                    </p>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={creatingProduct || !newProductName.trim()}
-                    className="jm-btn jm-btn-primary w-full"
-                  >
-                    {creatingProduct ? 'Cadastrando...' : '+ Cadastrar produto'}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* COLUNA DIREITA: LISTA DE PRODUTOS */}
-            <div className="min-w-0">
-              <div className="jm-table-wrap">
-                <div className="flex flex-col gap-3 border-b border-jm-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="jm-card-title">
-                    Produtos cadastrados <span className="font-normal text-jm-muted tabular-nums">({products.length})</span>
-                  </h3>
-                  <input
-                    type="text"
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    placeholder="Buscar produto..."
-                    className="jm-input sm:max-w-xs"
-                  />
-                </div>
-
-                <div className="max-h-[600px] overflow-auto">
-                  <table className="jm-table min-w-[480px]">
-                    <thead>
-                      <tr>
-                        <th className="jm-th">Produto</th>
-                        <th className="jm-th">Tipo</th>
-                        <th className="jm-th text-right">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products
-                        .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
-                        .map((product) => (
-                          <tr key={product.id} className="jm-tr">
-                            <td className="jm-td font-medium text-jm-fg">
-                              {product.name}
-                            </td>
-                            <td className="jm-td">
-                              <span className={`jm-badge ${
-                                product.isRequired
-                                  ? 'jm-badge-accent'
-                                  : 'jm-badge-neutral'
-                              }`}>
-                                {product.isRequired ? 'Obrigatório' : 'Opcional'}
-                              </span>
-                            </td>
-                            <td className="jm-td">
-                              <div className="flex justify-end gap-1.5">
-                                <button
-                                  onClick={() => handleOpenEdit(product)}
-                                  className="jm-btn jm-btn-secondary jm-btn-sm"
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteProduct(product)}
-                                  disabled={deletingProductId === product.id}
-                                  className="jm-btn jm-btn-danger jm-btn-sm"
-                                >
-                                  {deletingProductId === product.id ? 'Excluindo...' : 'Excluir'}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      }
-                      {products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="jm-td py-8 text-center text-jm-muted">Nenhum produto encontrado.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+        <div className="jm-table-wrap">
+          <div className="flex flex-col gap-3 border-b border-jm-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <input value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Buscar por nome ou categoria..." className="jm-input sm:max-w-xs" />
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-jm-muted">
+              <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
+              Mostrar inativos ({products.length - activeProducts.length})
+            </label>
           </div>
+          <table className="jm-table min-w-[760px]">
+            <thead>
+              <tr>
+                <th className="jm-th">Produto</th>
+                <th className="jm-th">Categoria</th>
+                <th className="jm-th">Cobrança</th>
+                <th className="jm-th text-right">Preço base</th>
+                <th className="jm-th">Status</th>
+                <th className="jm-th text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleProducts.map((p) => (
+                <tr key={p.id} className={`jm-tr ${!p.active ? 'opacity-60' : ''}`}>
+                  <td className="jm-td">
+                    <span className="font-medium text-jm-fg">{p.name}</span>
+                    {p.isRequired && <span className="jm-badge jm-badge-accent ml-2">Obrigatório</span>}
+                    {p.description && <p className="mt-0.5 line-clamp-1 text-xs text-jm-muted">{p.description}</p>}
+                  </td>
+                  <td className="jm-td text-jm-fg2">{p.category || '—'}</td>
+                  <td className="jm-td">
+                    <span className={`jm-badge ${p.recurring ? 'jm-badge-primary' : 'jm-badge-neutral'}`}>{p.recurring ? 'Mensal' : 'Única'}</span>
+                  </td>
+                  <td className="jm-td text-right tabular-nums">{formatBRL(p.price)}</td>
+                  <td className="jm-td">
+                    <span className={`jm-badge ${p.active ? 'jm-badge-success' : 'jm-badge-danger'}`}>{p.active ? 'Ativo' : 'Inativo'}</span>
+                  </td>
+                  <td className="jm-td">
+                    <div className="flex justify-end gap-1.5">
+                      <button onClick={() => openEdit(p)} className="jm-btn jm-btn-secondary jm-btn-sm">
+                        Editar
+                      </button>
+                      <button onClick={() => toggleActive(p)} className="jm-btn jm-btn-ghost jm-btn-sm">
+                        {p.active ? 'Inativar' : 'Reativar'}
+                      </button>
+                      <button onClick={() => removeProduct(p)} className="jm-btn jm-btn-danger jm-btn-sm">
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {visibleProducts.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="jm-td py-8 text-center text-jm-muted">
+                    {products.length === 0 ? 'Nenhum produto cadastrado. Clique em "+ Novo produto".' : 'Nenhum produto encontrado.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* MODAL DE EDIÇÃO DE PRODUTO */}
-      {editingProduct && (
-        <div className="jm-overlay">
-          <div className="jm-modal sm:max-w-md">
+      {editing && (
+        <div className="jm-overlay" onClick={() => setEditing(null)}>
+          <form className="jm-modal sm:max-w-lg" onClick={(e) => e.stopPropagation()} onSubmit={saveProduct}>
             <div className="jm-modal-header">
-              <div>
-                <h3 className="jm-modal-title">Editar produto</h3>
-                <p className="mt-0.5 text-xs text-jm-muted">Altere o nome ou o tipo do produto.</p>
-              </div>
-              <button
-                onClick={() => setEditingProduct(null)}
-                className="jm-icon-btn"
-                aria-label="Fechar"
-              >
+              <h3 className="jm-modal-title">{editing.id ? 'Editar produto' : 'Novo produto'}</h3>
+              <button type="button" onClick={() => setEditing(null)} className="jm-icon-btn" aria-label="Fechar">
                 ✕
               </button>
             </div>
-            <form onSubmit={handleUpdateProduct} className="flex min-h-0 flex-col">
-              <div className="jm-modal-body space-y-4">
-                <div>
-                  <label className="jm-label">Nome do produto *</label>
-                  <input
-                    type="text"
-                    value={editProductName}
-                    onChange={(e) => setEditProductName(e.target.value)}
-                    className="jm-input"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
+            <div className="jm-modal-body grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="jm-label">Nome *</label>
+                <input
+                  required
+                  autoFocus
+                  value={editing.draft.name}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, name: e.target.value } })}
+                  placeholder="Ex.: Plataforma WhatsApp API — plano Pro"
+                  className="jm-input"
+                />
+              </div>
+              <div>
+                <label className="jm-label">Preço base (R$)</label>
+                <input
+                  inputMode="decimal"
+                  value={editing.draft.priceText}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, priceText: e.target.value.replace(/[^\d,.]/g, '') } })}
+                  placeholder="0,00"
+                  className="jm-input text-right tabular-nums"
+                />
+                <p className="jm-help">Sugestão em propostas; cada grupo pode ter o próprio preço.</p>
+              </div>
+              <div>
+                <label className="jm-label">Categoria</label>
+                <input
+                  list="product-categories"
+                  value={editing.draft.category}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, category: e.target.value } })}
+                  placeholder="Ex.: Mensageria, Setup, Chatbot"
+                  className="jm-input"
+                />
+                <datalist id="product-categories">
+                  {categories.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="jm-label">Descrição (aparece na proposta)</label>
+                <textarea
+                  rows={2}
+                  value={editing.draft.description}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, description: e.target.value } })}
+                  className="jm-input"
+                />
+              </div>
+              <div>
+                <label className="jm-label">Tipo de cobrança</label>
+                <select
+                  value={editing.draft.recurring ? 'mensal' : 'unica'}
+                  onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, recurring: e.target.value === 'mensal' } })}
+                  className="jm-input"
+                >
+                  <option value="mensal">Mensal (entra na mensalidade)</option>
+                  <option value="unica">Única (setup, implantação)</option>
+                </select>
+              </div>
+              <div className="flex flex-col justify-end gap-2 pb-1">
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-jm-fg">
                   <input
                     type="checkbox"
-                    id="editIsRequired"
-                    checked={editProductIsRequired}
-                    onChange={(e) => setEditProductIsRequired(e.target.checked)}
-                    className="h-4 w-4 cursor-pointer"
+                    checked={editing.draft.isRequired}
+                    onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, isRequired: e.target.checked } })}
                   />
-                  <label htmlFor="editIsRequired" className="cursor-pointer text-sm font-medium text-jm-fg">
-                    Produto obrigatório
-                  </label>
-                </div>
+                  Obrigatório em toda tabela de grupo
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 text-sm text-jm-fg">
+                  <input
+                    type="checkbox"
+                    checked={editing.draft.active}
+                    onChange={(e) => setEditing({ ...editing, draft: { ...editing.draft, active: e.target.checked } })}
+                  />
+                  Ativo
+                </label>
               </div>
-
-              <div className="jm-modal-footer">
-                <button
-                  type="button"
-                  onClick={() => setEditingProduct(null)}
-                  className="jm-btn jm-btn-secondary"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingEdit || !editProductName.trim()}
-                  className="jm-btn jm-btn-primary"
-                >
-                  {savingEdit ? 'Salvando...' : 'Salvar alterações'}
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div className="jm-modal-footer">
+              <button type="button" onClick={() => setEditing(null)} className="jm-btn jm-btn-secondary">
+                Cancelar
+              </button>
+              <button type="submit" disabled={savingProduct || !editing.draft.name.trim()} className="jm-btn jm-btn-primary">
+                {savingProduct ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
-
     </div>
   );
 }

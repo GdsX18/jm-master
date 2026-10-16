@@ -6,8 +6,6 @@ import {
   Send,
   Calendar,
   Save,
-  CheckCircle2,
-  Info,
   Edit,
   Eye,
   Columns,
@@ -18,14 +16,20 @@ import {
   OFFICIAL_AUTHOR,
   slugify,
   calculateReadingTime,
-} from './mockData';
+} from './constants';
 import ArticleList from './components/ArticleList';
 import BlogEditor from './components/BlogEditor';
 import ArticleMetadata from './components/ArticleMetadata';
 import LivePreview from './components/LivePreview';
 import FAQModule from './components/FAQModule';
 import TrackingSettingsModal from './components/TrackingSettingsModal';
+import BlogAnalytics from './components/BlogAnalytics';
 import { peekCache, setCache } from '../lib/cache';
+import { useNotify } from '../components/ui/Notifications';
+import { clearQueryParams, useQueryParams } from '../hooks/useQueryParams';
+
+// Rascunhos são salvos sozinhos alguns segundos depois da última alteração
+const AUTOSAVE_DELAY_MS = 20_000;
 
 function mapServerPosts(postsArray: any[]): Article[] {
   return postsArray.map((p: any) => {
@@ -87,13 +91,16 @@ function mapServerPosts(postsArray: any[]): Article[] {
 const POSTS_CACHE_KEY = '/api/blog/posts';
 
 export default function BlogDashboardPage() {
+  const { toast, confirm } = useNotify();
+  const params = useQueryParams();
+  const [listTab, setListTab] = useState<'artigos' | 'desempenho'>('artigos');
+  const [autoSaving, setAutoSaving] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [editorSubMode, setEditorSubMode] = useState<'editor_meta' | 'split' | 'preview_only'>('editor_meta');
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
   const [lastSavedTime, setLastSavedTime] = useState<string>('');
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -167,11 +174,11 @@ export default function BlogDashboardPage() {
     };
   }, []);
 
+  // Avisos no sistema global de notificações do painel
   const showToast = (text: string, type: 'success' | 'info' = 'success') => {
-    setToastMessage({ text, type });
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4000);
+    if (type === 'success') toast.success(text);
+    else if (/falha|erro|não foi possível/i.test(text)) toast.error(text);
+    else toast.info(text);
   };
 
   // Sincronizar com a API real
@@ -188,10 +195,16 @@ export default function BlogDashboardPage() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Falha ao sincronizar com o banco de dados.');
       }
+      const saved = data.post ? mapServerPosts([data.post])[0] : undefined;
+      // O servidor devolve só o artigo salvo: atualiza a lista localmente
       if (Array.isArray(data.posts)) {
         setArticles(mapServerPosts(data.posts));
+      } else if (saved) {
+        setArticles((list) => {
+          const rest = list.filter((a) => a.id !== saved.id && a.id !== articleToSync.id);
+          return [saved, ...rest];
+        });
       }
-      const saved = data.post ? mapServerPosts([data.post])[0] : undefined;
       // O artigo aberto passa a usar o id e o slug definitivos do servidor (evita criar duplicatas)
       if (saved) {
         setCurrentArticle((current) =>
@@ -324,8 +337,17 @@ export default function BlogDashboardPage() {
   };
 
   // Voltar à lista avisando se há alterações não salvas
-  const handleBackToList = () => {
-    if (dirtyRef.current && !confirm('Há alterações não salvas neste artigo. Sair mesmo assim e descartar?')) return;
+  const handleBackToList = async () => {
+    if (
+      dirtyRef.current &&
+      !(await confirm({
+        title: 'Descartar alterações?',
+        message: 'Há alterações não salvas neste artigo. Sair mesmo assim e descartar?',
+        confirmLabel: 'Sair sem salvar',
+        variant: 'warning',
+      }))
+    )
+      return;
     markDirty(false);
     setViewMode('list');
     loadPostsFromApi();
@@ -466,28 +488,52 @@ export default function BlogDashboardPage() {
     }
   };
 
+  // Atalhos vindos do dashboard: ?new=1 abre um artigo novo; ?tab=desempenho abre as métricas
+  useEffect(() => {
+    if (!params) return;
+    if (params.get('tab') === 'desempenho') setListTab('desempenho');
+    if (params.get('new') === '1') handleNewArticle();
+    if (params.get('tab') || params.get('new')) clearQueryParams('tab', 'new');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
+
+  // Salvamento automático de rascunhos (artigos publicados/agendados só salvam pelo botão, para não alterar o site sem querer)
+  useEffect(() => {
+    if (viewMode !== 'editor' || !currentArticle || !isDirty || isSaving) return;
+    if (currentArticle.status !== 'draft' || !currentArticle.title.trim()) return;
+    const timer = setTimeout(async () => {
+      setAutoSaving(true);
+      const res = await syncWithApi(prepareArticleForSync(currentArticle, 'draft'));
+      setAutoSaving(false);
+      if (res.success) markSaved();
+      else toast.error('Falha no salvamento automático', res.message);
+    }, AUTOSAVE_DELAY_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentArticle, isDirty, viewMode, isSaving]);
+
   if (!isMounted) {
     return <div className="min-h-screen bg-jm-bg" />;
   }
 
   return (
     <div className="mx-auto w-full max-w-[1400px] min-h-screen px-4 py-5 text-jm-fg sm:px-6 lg:px-8 lg:py-7">
-      {/* TOAST DE NOTIFICAÇÃO */}
-      {toastMessage && (
-        <div className="fixed inset-x-4 bottom-4 z-[110] sm:inset-x-auto sm:bottom-6 sm:right-6 sm:max-w-sm" role="status" style={{ animation: 'jm-pop-in 140ms ease-out' }}>
-          <div className="flex items-start gap-2.5 rounded-[4px] border border-jm-border bg-jm-surface px-3.5 py-2.5 text-sm text-jm-fg shadow-jm-pop">
-            {toastMessage.type === 'success' ? (
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-jm-success-fg" />
-            ) : (
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-jm-primary-text" />
-            )}
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
-
       {/* 1. MODO LISTAGEM */}
       {viewMode === 'list' && (
+        <div className="jm-tabs mb-5">
+          <button onClick={() => setListTab('artigos')} className={`jm-tab ${listTab === 'artigos' ? 'jm-tab-active' : ''}`}>
+            Artigos
+          </button>
+          <button onClick={() => setListTab('desempenho')} className={`jm-tab ${listTab === 'desempenho' ? 'jm-tab-active' : ''}`}>
+            Desempenho & leads
+          </button>
+        </div>
+      )}
+      {viewMode === 'list' && listTab === 'desempenho' && <BlogAnalytics onEditArticle={(id) => {
+        const art = articles.find((a) => a.id === id);
+        if (art) handleEditArticle(art);
+      }} />}
+      {viewMode === 'list' && listTab === 'artigos' && (
         <ArticleList
           articles={articles}
           onNewArticle={handleNewArticle}
@@ -557,8 +603,12 @@ export default function BlogDashboardPage() {
                 </h2>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-jm-muted">
                   <span>{currentArticle.status === 'published' ? 'Publicado' : currentArticle.status === 'scheduled' ? 'Agendado' : 'Rascunho'}</span>
-                  {isDirty ? (
-                    <span className="font-medium text-jm-warning-fg">• Alterações não salvas</span>
+                  {autoSaving ? (
+                    <span>• Salvando automaticamente...</span>
+                  ) : isDirty ? (
+                    <span className="font-medium text-jm-warning-fg">
+                      • Alterações não salvas{currentArticle.status === 'draft' && currentArticle.title.trim() ? ' (salvamento automático em instantes)' : ''}
+                    </span>
                   ) : (
                     lastSavedTime && <span>• Salvo no servidor às {lastSavedTime}</span>
                   )}

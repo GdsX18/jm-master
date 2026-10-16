@@ -1,39 +1,27 @@
+// Garante RLS em TODAS as tabelas do schema public (inclusive as criadas depois).
+// O app usa o Prisma (role dona das tabelas, que ignora RLS); sem policies, a API REST
+// do Supabase com a chave anônima não lê nem grava nada.
+// Uso: node scripts/fix-security.mjs   (rode após criar tabelas novas)
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function fixSecurity() {
-  console.log('🔒 Aplicando correções de segurança (RLS e Índices) no Supabase...');
+  const tables = await prisma.$queryRaw`SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`;
 
-  const tables = [
-    'users',
-    'blog_posts',
-    'customers',
-    'crm_interactions',
-    'products',
-    'financial_records',
-    'site_settings',
-  ];
-
-  for (const table of tables) {
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE public."${table}" ENABLE ROW LEVEL SECURITY;`);
-      console.log(`✅ RLS ativado na tabela: ${table}`);
-    } catch (err) {
-      console.warn(`Aviso na tabela ${table}:`, err);
+  for (const { tablename, rowsecurity } of tables) {
+    if (rowsecurity) {
+      console.log(`✓ ${tablename} (RLS já ativo)`);
+      continue;
     }
+    await prisma.$executeRawUnsafe(`ALTER TABLE public."${tablename.replace(/"/g, '""')}" ENABLE ROW LEVEL SECURITY;`);
+    console.log(`✅ RLS ativado: ${tablename}`);
   }
 
-  try {
-    await prisma.$executeRawUnsafe(
-      `CREATE INDEX IF NOT EXISTS "idx_crm_interactions_customer_id" ON public."crm_interactions"("customerId");`
-    );
-    console.log('✅ Índice criado na chave estrangeira de crm_interactions.');
-  } catch (err) {
-    console.warn('Aviso no índice:', err);
+  const policies = await prisma.$queryRaw`SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public'`;
+  if (policies.length > 0) {
+    console.warn('⚠️  Existem policies no schema public — confira se nenhuma libera acesso à chave anônima:', policies);
   }
-
-  console.log('🛡️ Todas as recomendações de segurança foram resolvidas com sucesso!');
 }
 
 fixSecurity()

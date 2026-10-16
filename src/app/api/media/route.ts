@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { logAudit } from '@/lib/audit';
 
 const BUCKET = 'blog-images';
 
@@ -46,6 +47,7 @@ export async function DELETE(req: NextRequest) {
     }
     const { error } = await supabaseAdmin.storage.from(BUCKET).remove([name]);
     if (error) throw new Error(error.message);
+    await logAudit({ actor: actorOf(auth), action: 'DELETE', entity: 'media', entityId: name, summary: `Imagem "${name}" excluída da biblioteca` });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[API Media DELETE Error]:', error);

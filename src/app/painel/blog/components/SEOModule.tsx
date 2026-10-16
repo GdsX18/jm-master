@@ -21,7 +21,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { Article, ArticleSEO } from '../types';
-import { slugify } from '../mockData';
+import { slugify } from '../constants';
 
 interface SEOModuleProps {
   article: Article;

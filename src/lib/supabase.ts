@@ -1,36 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Uso exclusivo no servidor (rotas de API). O navegador nunca fala direto com o Supabase:
+// todas as tabelas têm RLS ativo sem policies, então a chave anônima não lê nem grava nada.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-if (typeof window === 'undefined' && !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn('[Supabase] SUPABASE_SERVICE_ROLE_KEY ausente: uploads usarão a chave anônima e podem falhar.');
+if (typeof window === 'undefined' && !supabaseServiceKey) {
+  console.warn('[Supabase] SUPABASE_SERVICE_ROLE_KEY ausente: uploads e documentos não vão funcionar.');
 }
 
-// Cliente para uso no navegador (Client Components)
-export const supabaseClient = createClient(
-  supabaseUrl || 'http://localhost:54321',
-  supabaseAnonKey || 'dummy'
-);
-
 // Cliente administrativo para uso em rotas de API do backend (Server-side)
-export const supabaseAdmin = createClient(
-  supabaseUrl || 'http://localhost:54321',
-  supabaseServiceKey || supabaseAnonKey || 'dummy',
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  }
-);
+export const supabaseAdmin = createClient(supabaseUrl || 'http://localhost:54321', supabaseServiceKey || 'dummy', {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
 
 /**
  * Faz upload de um arquivo para o Supabase Storage
- * @param file Buffer ou Blob do arquivo
- * @param filename Nome do arquivo com extensão
- * @param bucket Nome do bucket (padrão: 'blog-images')
  * @returns URL pública da imagem
  */
 export async function uploadImageToStorage(
@@ -42,21 +30,17 @@ export async function uploadImageToStorage(
   try {
     const cleanFileName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
 
-    const { data, error } = await supabaseAdmin.storage
-      .from(bucket)
-      .upload(cleanFileName, file, {
-        contentType,
-        upsert: true,
-      });
+    const { error } = await supabaseAdmin.storage.from(bucket).upload(cleanFileName, file, {
+      contentType,
+      upsert: false,
+    });
 
     if (error) {
       console.error('[Supabase Storage Upload Error]:', error);
       return { success: false, error: error.message };
     }
 
-    const { data: publicUrlData } = supabaseAdmin.storage
-      .from(bucket)
-      .getPublicUrl(cleanFileName);
+    const { data: publicUrlData } = supabaseAdmin.storage.from(bucket).getPublicUrl(cleanFileName);
 
     return {
       success: true,

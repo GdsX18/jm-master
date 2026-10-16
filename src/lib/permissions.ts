@@ -106,6 +106,8 @@ export const PAGE_PERMISSIONS: Record<string, PermissionKey> = {
   '/painel/blog': 'manageBlog',
   '/painel/users': 'manageUsers',
   '/painel/crm': 'manageCrm',
+  '/painel/proposals': 'manageCrm',
+  '/painel/audit': 'manageUsers',
   '/painel/customers': 'manageCrm',
   '/painel/finance': 'manageFinance',
   '/painel/products': 'manageProducts',

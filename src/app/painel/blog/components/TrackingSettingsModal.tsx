@@ -15,6 +15,7 @@ import {
   Save,
   Radio,
 } from 'lucide-react';
+import { useNotify } from '../../components/ui/Notifications';
 
 interface TrackingSettingsModalProps {
   isOpen: boolean;
@@ -27,10 +28,14 @@ export default function TrackingSettingsModal({
   onClose,
   onSuccessToast,
 }: TrackingSettingsModalProps) {
+  const { toast } = useNotify();
   const [isMounted, setIsMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'pixels' | 'scripts'>('pixels');
+  // Permissões vindas do servidor: IDs exigem "Gerenciamento estrutural"; scripts, Super administrador
+  const [canEdit, setCanEdit] = useState(false);
+  const [canEditScripts, setCanEditScripts] = useState(false);
 
   const [formData, setFormData] = useState({
     gtmId: '',
@@ -56,6 +61,8 @@ export default function TrackingSettingsModal({
           return data;
         })
         .then((data) => {
+          setCanEdit(!!data.canEdit);
+          setCanEditScripts(!!data.canEditScripts);
           if (data.settings) {
             setFormData({
               gtmId: data.settings.gtmId || '',
@@ -69,7 +76,7 @@ export default function TrackingSettingsModal({
         })
         .catch((err) => {
           console.error('Erro ao buscar configurações:', err);
-          alert(`${err.message}. Feche e tente novamente antes de salvar, para não sobrescrever as tags atuais.`);
+          toast.error(`${err.message}. Feche e tente novamente antes de salvar, para não sobrescrever as tags atuais.`);
           onClose();
         })
         .finally(() => setLoading(false));
@@ -92,10 +99,10 @@ export default function TrackingSettingsModal({
         }
         onClose();
       } else {
-        alert('Erro ao salvar: ' + (data.error || 'Tente novamente'));
+        toast.error('Erro ao salvar: ' + (data.error || 'Tente novamente'));
       }
     } catch (e: any) {
-      alert('Erro de conexão ao salvar: ' + e.message);
+      toast.error('Erro de conexão ao salvar: ' + e.message);
     } finally {
       setSaving(false);
     }
@@ -276,8 +283,14 @@ export default function TrackingSettingsModal({
                   value={formData.customHeaderScript}
                   onChange={(e) => setFormData({ ...formData, customHeaderScript: e.target.value })}
                   placeholder="<!-- Cole aqui scripts como Hotjar, Microsoft Clarity, RD Station... -->&#10;<script>...</script>"
-                  className="jm-input font-mono text-xs"
+                  className="jm-input font-mono text-xs disabled:opacity-60"
+                  disabled={!canEditScripts}
                 />
+                {!canEditScripts && (
+                  <p className="text-[11px] text-jm-muted">
+                    Somente o Super administrador pode alterar scripts personalizados (eles executam código em todo o site).
+                  </p>
+                )}
               </div>
 
               {/* SCRIPT BODY */}
@@ -294,7 +307,8 @@ export default function TrackingSettingsModal({
                   value={formData.customBodyScript}
                   onChange={(e) => setFormData({ ...formData, customBodyScript: e.target.value })}
                   placeholder="<!-- Cole aqui tags que devem rodar no body -->&#10;<script>...</script>"
-                  className="jm-input font-mono text-xs"
+                  className="jm-input font-mono text-xs disabled:opacity-60"
+                  disabled={!canEditScripts}
                 />
               </div>
 
@@ -306,7 +320,9 @@ export default function TrackingSettingsModal({
         <div className="jm-modal-footer sm:!justify-between sm:items-center">
           <div className="hidden items-center gap-2 text-xs text-jm-muted sm:flex">
             <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
-            <span className="hidden sm:inline">Salvo com criptografia no Supabase.</span>
+            <span className="hidden sm:inline">
+              {canEdit ? 'Toda alteração fica registrada na auditoria.' : 'Somente leitura: seu perfil não pode alterar as tags.'}
+            </span>
           </div>
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
@@ -319,7 +335,7 @@ export default function TrackingSettingsModal({
             </button>
             <button
               type="button"
-              disabled={saving || loading}
+              disabled={saving || loading || !canEdit}
               onClick={handleSave}
               className="jm-btn jm-btn-accent"
             >

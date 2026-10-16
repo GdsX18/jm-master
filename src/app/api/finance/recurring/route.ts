@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requirePermission } from '@/lib/session';
-import { readBilling, suggestedAmountForCustomer } from '@/lib/billing';
+import { actorOf, requirePermission } from '@/lib/session';
+import { firstBillingPeriod, readBilling, suggestedAmountForCustomer } from '@/lib/billing';
+import { round2, toNumber } from '@/lib/money';
+import { diffFields, logAudit } from '@/lib/audit';
 
 // GET /api/finance/recurring - Clientes com sua configuração de cobrança recorrente
 export async function GET() {
@@ -17,7 +19,15 @@ export async function GET() {
         status: true,
         phone: true,
         data: true,
-        groups: { select: { name: true, prices: { select: { price: true } } } },
+        groups: {
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+          take: 1,
+          select: {
+            name: true,
+            prices: { where: { product: { active: true, recurring: true } }, select: { price: true } },
+          },
+        },
       },
     });
 
@@ -29,9 +39,7 @@ export async function GET() {
         isActive: c.status === 'ATIVO',
         phone: c.phone,
         groupName: c.groups[0]?.name || null,
-        suggestedAmount: c.groups[0]
-          ? Math.round(c.groups[0].prices.reduce((sum, p) => sum + p.price, 0) * 100) / 100
-          : 0,
+        suggestedAmount: c.groups[0] ? round2(c.groups[0].prices.reduce((sum, p) => sum + toNumber(p.price), 0)) : 0,
         billing: readBilling(c.data),
       })),
     });
@@ -41,7 +49,7 @@ export async function GET() {
   }
 }
 
-// PUT /api/finance/recurring - Salvar configuração { customerId, billing: {...} }
+// PUT /api/finance/recurring - Salvar configuração { customerId, billing: {...}, useGroupPrice? }
 export async function PUT(req: NextRequest) {
   const auth = await requirePermission('manageFinance');
   if (auth instanceof NextResponse) return auth;
@@ -50,10 +58,11 @@ export async function PUT(req: NextRequest) {
     const { customerId, billing, useGroupPrice } = await req.json();
     if (!customerId) return NextResponse.json({ error: 'Cliente é obrigatório' }, { status: 400 });
 
-    const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { data: true } });
+    const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { name: true, data: true } });
     if (!customer) return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
 
-    const config = readBilling({ billing });
+    const previous = readBilling(customer.data);
+    const config = readBilling({ billing: { ...billing, startPeriod: undefined } });
     if (useGroupPrice) {
       config.amount = await suggestedAmountForCustomer(customerId);
     }
@@ -61,9 +70,20 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Informe um valor mensal maior que zero para ativar a cobrança' }, { status: 400 });
     }
 
-    await prisma.customer.update({
-      where: { id: customerId },
-      data: { data: { ...((customer.data as object) || {}), billing: { ...config } } },
+    // Primeiro mês faturado: definido ao ativar; mantido enquanto continuar ativa
+    if (config.enabled) {
+      config.startPeriod = previous.enabled && previous.startPeriod ? previous.startPeriod : firstBillingPeriod(config.dueDay);
+    }
+
+    await updateBilling(customerId, customer.data, config);
+
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'UPDATE',
+      entity: 'billing',
+      entityId: customerId,
+      summary: `Cobrança recorrente de ${customer.name} ${config.enabled ? 'ativa' : 'desativada'}`,
+      changes: diffFields(previous as unknown as Record<string, unknown>, config as unknown as Record<string, unknown>),
     });
 
     return NextResponse.json({ success: true, billing: config });
@@ -71,4 +91,11 @@ export async function PUT(req: NextRequest) {
     console.error('[API Recurring PUT Error]:', error);
     return NextResponse.json({ error: 'Erro ao salvar cobrança recorrente' }, { status: 500 });
   }
+}
+
+async function updateBilling(customerId: string, data: unknown, config: object) {
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: { data: { ...((data as object) || {}), billing: { ...config } } },
+  });
 }

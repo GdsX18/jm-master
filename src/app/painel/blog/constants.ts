@@ -53,31 +53,6 @@ export const COVER_PRESETS = [
   },
 ];
 
-export const INITIAL_ARTICLES: Article[] = [];
-
-const STORAGE_KEY = '@JMMaster:blog_articles_v2';
-
-export function getStoredArticles(): Article[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveStoredArticles(articles: Article[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(articles));
-  } catch (err) {
-    console.error('Erro ao salvar artigos no localStorage:', err);
-  }
-}
-
 export function slugify(text: string): string {
   return text
     .toString()
@@ -112,32 +87,3 @@ export const DEFAULT_CATEGORIES: string[] = [
   'Marketing Digital',
   'Vendas & CRM',
 ];
-
-const CATEGORIES_STORAGE_KEY = '@JMMaster:blog_categories_v2';
-
-export function getStoredCategories(): string[] {
-  if (typeof window === 'undefined') return DEFAULT_CATEGORIES;
-  try {
-    const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(DEFAULT_CATEGORIES));
-      return DEFAULT_CATEGORIES;
-    }
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return Array.from(new Set([...DEFAULT_CATEGORIES, ...parsed]));
-    }
-    return DEFAULT_CATEGORIES;
-  } catch {
-    return DEFAULT_CATEGORIES;
-  }
-}
-
-export function saveStoredCategories(categories: string[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-  } catch (err) {
-    console.error('Erro ao salvar categorias no localStorage:', err);
-  }
-}

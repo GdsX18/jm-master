@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
-import { requirePermission } from '@/lib/session';
+import { actorOf, requirePermission } from '@/lib/session';
+import { logAudit } from '@/lib/audit';
 
 const DEFAULT_CATEGORIES = ['WhatsApp API', 'Automação', 'Chatbots', 'Marketing Digital', 'Vendas & CRM'];
 
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
 
     const existing = await prisma.blogCategory.findFirst({ where: { name: { equals: clean, mode: 'insensitive' } } });
     const category = existing || (await prisma.blogCategory.create({ data: { name: clean } }));
+    if (!existing) {
+      await logAudit({ actor: actorOf(auth), action: 'CREATE', entity: 'category', entityId: category.id, summary: `Categoria do blog "${category.name}" criada` });
+    }
     return NextResponse.json({ success: true, name: category.name });
   } catch (error) {
     console.error('[API Blog Categories POST Error]:', error);
@@ -69,6 +73,12 @@ export async function DELETE(req: NextRequest) {
     ]);
 
     if (inUse > 0) revalidatePath('/blog', 'layout');
+    await logAudit({
+      actor: actorOf(auth),
+      action: 'DELETE',
+      entity: 'category',
+      summary: `Categoria do blog "${name}" excluída${inUse > 0 ? ` (${inUse} artigo(s) movido(s) para "${moveTo}")` : ''}`,
+    });
     return NextResponse.json({ success: true, moved: inUse });
   } catch (error) {
     console.error('[API Blog Categories DELETE Error]:', error);
