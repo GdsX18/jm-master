@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { supabaseAdmin } from '@/lib/supabase';
+import { STORAGE_LABEL, checkStorage } from '@/lib/storage';
 import { requirePermission } from '@/lib/session';
 import { brazilToday } from '@/lib/dates';
 import { round2, toNumber } from '@/lib/money';
@@ -138,17 +138,12 @@ export async function GET() {
     }
 
     const health = await Promise.all([
-      check('Banco de dados (Supabase PostgreSQL)', async () => {
+      check('Banco de dados (PostgreSQL)', async () => {
         const started = Date.now();
         await prisma.$queryRaw`SELECT 1`;
         return `Conectado (${Date.now() - started} ms)`;
       }),
-      check('Armazenamento de arquivos (Supabase Storage)', async () => {
-        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Chave de serviço não configurada');
-        const { error } = await supabaseAdmin.storage.from('blog-images').list('', { limit: 1 });
-        if (error) throw new Error(error.message);
-        return 'Conectado';
-      }),
+      check(STORAGE_LABEL, checkStorage),
       check('Tags de rastreamento (GTM / Pixels)', async () => {
         const s = await prisma.siteSetting.findUnique({ where: { id: 'default' } });
         const configured = [

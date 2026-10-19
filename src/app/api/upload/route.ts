@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadImageToStorage } from '@/lib/supabase';
+import { publicUrl, putObject } from '@/lib/storage';
 import { actorOf, requirePermission } from '@/lib/session';
 import { isRealImage } from '@/lib/files';
 import { logAudit } from '@/lib/audit';
@@ -40,26 +40,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const uploadResult = await uploadImageToStorage(buffer, file.name, realType, bucket);
-
-    if (!uploadResult.success || !uploadResult.url) {
-      return NextResponse.json(
-        { error: uploadResult.error || 'Falha ao enviar imagem para o Supabase Storage' },
-        { status: 500 }
-      );
+    const objectName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    try {
+      await putObject(bucket, objectName, buffer, realType);
+    } catch (error) {
+      console.error('[API Upload Storage Error]:', error);
+      return NextResponse.json({ error: 'Falha ao enviar imagem para o armazenamento' }, { status: 500 });
     }
+    const url = publicUrl(bucket, objectName);
 
     await logAudit({
       actor: actorOf(auth),
       action: 'CREATE',
       entity: 'media',
-      entityId: uploadResult.url.split('/').pop() || null,
+      entityId: objectName,
       summary: `Imagem enviada à biblioteca do blog (${file.name})`,
     });
 
     return NextResponse.json({
       success: true,
-      url: uploadResult.url,
+      url,
       filename: file.name,
     });
   } catch (error) {

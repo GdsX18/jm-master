@@ -21,6 +21,11 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.production
+
+# arquivos e backups da VPS (driver de storage local)
+/storage/
+/backups/
 
 # vercel
 .vercel

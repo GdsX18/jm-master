@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { supabaseAdmin } from '@/lib/supabase';
+import { putObject } from '@/lib/storage';
 import { actorOf, requirePermission } from '@/lib/session';
 import { documentMatchesType } from '@/lib/files';
 import { logAudit } from '@/lib/audit';
@@ -53,10 +53,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const storagePath = `${id}/${Date.now()}-${safeName}`;
 
     await ensureCustomerDocsBucket();
-    const { error } = await supabaseAdmin.storage
-      .from(CUSTOMER_DOCS_BUCKET)
-      .upload(storagePath, bytes, { contentType: file.type, upsert: false });
-    if (error) {
+    try {
+      await putObject(CUSTOMER_DOCS_BUCKET, storagePath, bytes, file.type);
+    } catch (error) {
       console.error('[Customer Document Upload Error]:', error);
       return NextResponse.json({ message: 'Falha ao enviar o arquivo para o armazenamento' }, { status: 500 });
     }

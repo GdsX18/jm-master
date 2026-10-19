@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from './prisma';
-import { supabaseAdmin } from './supabase';
+import { ensureBucket } from './storage';
 import { documentError, onlyDigits } from './validators';
 
 export { onlyDigits };
@@ -158,21 +158,11 @@ export async function findDocumentOwner(documentDigits: string | null, excludeId
   });
 }
 
-// ─── Arquivos de clientes (bucket privado no Supabase Storage) ───────────────
+// ─── Arquivos de clientes (bucket privado, ver src/lib/storage.ts) ───────────
 
 export const CUSTOMER_DOCS_BUCKET = 'customer-documents';
 export const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
 
-let bucketReady = false;
 export async function ensureCustomerDocsBucket() {
-  if (bucketReady) return;
-  const { data } = await supabaseAdmin.storage.getBucket(CUSTOMER_DOCS_BUCKET);
-  if (!data) {
-    const { error } = await supabaseAdmin.storage.createBucket(CUSTOMER_DOCS_BUCKET, {
-      public: false,
-      fileSizeLimit: MAX_DOCUMENT_SIZE,
-    });
-    if (error && !/already exists/i.test(error.message)) throw new Error(error.message);
-  }
-  bucketReady = true;
+  await ensureBucket(CUSTOMER_DOCS_BUCKET, { public: false, fileSizeLimit: MAX_DOCUMENT_SIZE });
 }

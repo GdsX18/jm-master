@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { supabaseAdmin } from '@/lib/supabase';
+import { removeObjects } from '@/lib/storage';
 import { actorOf, requirePermission } from '@/lib/session';
 import {
   CUSTOMER_DOCS_BUCKET,
@@ -116,10 +116,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     }
 
     if (customer.documents.length > 0) {
-      const { error } = await supabaseAdmin.storage
-        .from(CUSTOMER_DOCS_BUCKET)
-        .remove(customer.documents.map((d) => d.storagePath));
-      if (error) console.warn('[Customer Delete] Arquivos não removidos do Storage:', error.message);
+      await removeObjects(
+        CUSTOMER_DOCS_BUCKET,
+        customer.documents.map((d) => d.storagePath)
+      ).catch((error) => console.warn('[Customer Delete] Arquivos não removidos do Storage:', error.message));
     }
 
     await prisma.customer.delete({ where: { id } });

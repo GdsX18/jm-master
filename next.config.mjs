@@ -15,6 +15,8 @@ const LEGACY_BLOG_SLUGS = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Build da VPS (Dockerfile define NEXT_OUTPUT=standalone); na Vercel fica o padrão
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   transpilePackages: ["framer-motion", "lucide-react"],
   images: {
     formats: ["image/avif", "image/webp"],

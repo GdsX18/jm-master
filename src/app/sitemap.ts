@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getPublishedPosts } from "@/lib/blog-storage";
 import { SERVICES } from "@/data/services";
-import { SITE_URL, resolvePostCanonical } from "@/lib/site";
+import { SITE_URL, absoluteUrl, resolvePostCanonical } from "@/lib/site";
 
 // Regenerado quando um post é salvo (revalidatePath('/sitemap.xml')) ou a cada hora
 export const revalidate = 300; // 5 min: posts agendados entram no ar perto do horário
@@ -40,7 +40,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: post.updatedAt || post.publishedAt ? new Date((post.updatedAt || post.publishedAt)!) : undefined,
       changeFrequency: "monthly",
       priority: 0.7,
-      images: post.coverImage && /^https?:\/\//.test(post.coverImage) ? [post.coverImage] : undefined,
+      // Capas enviadas pelo painel: URL absoluta (Supabase) ou "/files/..." (disco da VPS)
+      images: post.coverImage && /^(https?:\/\/|\/files\/)/.test(post.coverImage) ? [absoluteUrl(post.coverImage)] : undefined,
     }));
 
   return [...staticRoutes, ...postRoutes];

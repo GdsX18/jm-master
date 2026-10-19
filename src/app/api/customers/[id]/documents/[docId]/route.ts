@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { supabaseAdmin } from '@/lib/supabase';
+import { removeObjects } from '@/lib/storage';
 import { actorOf, requirePermission } from '@/lib/session';
 import { logAudit } from '@/lib/audit';
 import { CUSTOMER_DOCS_BUCKET } from '@/lib/customers';
@@ -15,8 +15,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const document = await prisma.customerDocument.findFirst({ where: { id: docId, customerId: id } });
     if (!document) return NextResponse.json({ message: 'Documento não encontrado' }, { status: 404 });
 
-    const { error } = await supabaseAdmin.storage.from(CUSTOMER_DOCS_BUCKET).remove([document.storagePath]);
-    if (error) console.warn('[Customer Document Delete] Arquivo não removido do Storage:', error.message);
+    await removeObjects(CUSTOMER_DOCS_BUCKET, [document.storagePath]).catch((error) =>
+      console.warn('[Customer Document Delete] Arquivo não removido do Storage:', error.message)
+    );
 
     await prisma.customerDocument.delete({ where: { id: docId } });
     await logAudit({

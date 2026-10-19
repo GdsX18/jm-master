@@ -1,0 +1,23 @@
+# Proxy reverso com certificado HTTPS automático (Let's Encrypt).
+# DOMAIN vem do .env.production SEM "www" (ex.: jmmaster.com.br).
+# O site oficial é o www (SITE_URL em src/lib/site.ts); o domínio sem www redireciona para ele.
+
+{$DOMAIN} {
+	redir https://www.{$DOMAIN}{uri} permanent
+}
+
+www.{$DOMAIN} {
+	encode zstd gzip
+
+	# Documentos de clientes chegam a 10 MB
+	request_body {
+		max_size 12MB
+	}
+
+	reverse_proxy app:3000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

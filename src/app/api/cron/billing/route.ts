@@ -3,8 +3,8 @@ import { runBillingAutomation } from '@/lib/billing';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/cron/billing - Executado diariamente pela Vercel Cron (ver vercel.json).
-// A Vercel envia "Authorization: Bearer <CRON_SECRET>" quando a variável CRON_SECRET está configurada.
+// GET /api/cron/billing - Executado diariamente pela Vercel Cron (vercel.json) ou, na VPS, pelo crontab (deploy/HOSTINGER.md).
+// Os dois enviam "Authorization: Bearer <CRON_SECRET>".
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get('authorization') !== `Bearer ${secret}`) {

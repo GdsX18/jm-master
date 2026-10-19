@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { supabaseAdmin } from '@/lib/supabase';
+import { signedDownloadUrl } from '@/lib/storage';
 import { requirePermission } from '@/lib/session';
 import { CUSTOMER_DOCS_BUCKET } from '@/lib/customers';
 
@@ -14,14 +14,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ docI
     const document = await prisma.customerDocument.findUnique({ where: { id: docId } });
     if (!document) return NextResponse.json({ message: 'Documento não encontrado' }, { status: 404 });
 
-    const { data, error } = await supabaseAdmin.storage
-      .from(CUSTOMER_DOCS_BUCKET)
-      .createSignedUrl(document.storagePath, 60, { download: document.originalName });
-    if (error || !data?.signedUrl) {
+    let signedUrl: string;
+    try {
+      signedUrl = await signedDownloadUrl(CUSTOMER_DOCS_BUCKET, document.storagePath, 60, document.originalName);
+    } catch {
       return NextResponse.json({ message: 'Arquivo indisponível no armazenamento' }, { status: 404 });
     }
 
-    return NextResponse.redirect(data.signedUrl);
+    // No driver local o link é relativo ("/files/..."): resolve contra o domínio da requisição
+    return NextResponse.redirect(new URL(signedUrl, req.url));
   } catch (error) {
     console.error('[API Customer Document Download Error]:', error);
     return NextResponse.json({ message: 'Erro ao baixar documento' }, { status: 500 });
